@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import AspectRatio from '@mui/joy/AspectRatio';
@@ -17,12 +17,8 @@ import Card from '@mui/joy/Card';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import StarIcon from '@mui/icons-material/Star';
 import Alert from '@mui/joy/Alert';
-import Modal from '@mui/joy/Modal';
-import CircularProgress from '@mui/joy/CircularProgress';
-import ReportIcon from '@mui/icons-material/Report';
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -30,13 +26,17 @@ import CheckIcon from '@mui/icons-material/Check';
 import { CssVarsProvider } from '@mui/joy/styles';
 import CssBaseline from '@mui/joy/CssBaseline';
 import GlobalStyles from '@mui/joy/GlobalStyles';
-import Skeleton from '@mui/joy/Skeleton';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import {Helmet} from "react-helmet-async";
+import {Checkbox} from "@mui/joy";
+
 import UserDeals from '../components/profile/UserDeals';
 import ConnectButtons from '../components/profile/ConnectButtons';
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
 import LanguageSwitcher from '../components/core/LanguageSwitcher';
+import AvatarUploadModal from '../components/profile/AvatarUploadModal';
+import ReportModal from "../components/profile/ReportModal";
 
 export default function AccountPage() {
     const { t } = useTranslation();
@@ -44,24 +44,28 @@ export default function AccountPage() {
     const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
     const username = queryParams.get('username') || 'defaultUsername';
+
     const [isOwner, setIsOwner] = React.useState(false);
     const [shareEmail, setShareEmail] = React.useState(false);
-    const [shareCountry, setShareCountry] = React.useState(false);
     const [accountExists, setAccountExists] = React.useState(true);
     const [loading, setLoading] = React.useState(true);
-    const [balance, setBalance] = React.useState(0); // Для баланса кошелька
+    const [balance, setBalance] = React.useState(0);
+    const [tokenBalance, setTokenBalance] = React.useState(0);
     const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
     const [isEditable, setIsEditable] = React.useState(false);
-    const [showAlert, setShowAlert] = React.useState(false); // Всплывающее уведомление
+    const [showAlert, setShowAlert] = React.useState(false);
+    const [copied, setCopied] = React.useState(false);
+
     const [showModal, setShowModal] = React.useState(false);
+    const [showAvatarModal, setShowAvatarModal] = React.useState(false);
     const [reportLoading, setReportLoading] = React.useState(false);
-    const [copied, setCopied] = React.useState(false); // Состояние для копирования кошелька
+    const [showReportModal, setShowReportModal] = React.useState(false);
 
     const [profileData, setProfileData] = React.useState({
         username: '',
         realname: '',
         email: '',
-        role: '',
+        aboutMe: '',
         country: '',
         public_key: '',
         rating: 0,
@@ -81,8 +85,13 @@ export default function AccountPage() {
             }
         }
 
+        setAccountExists(true);
+        setLoading(true);
+
         const fetchProfile = async () => {
             try {
+                const token = localStorage.getItem('token');
+
                 const response = await axios.get(`${API_URL}/api/users/profile?username=${username}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -91,23 +100,20 @@ export default function AccountPage() {
                 const data = response.data;
                 setProfileData(data);
                 setShareEmail(data.shareEmail);
-                setShareCountry(data.shareCountry);
                 setAccountExists(true);
 
                 const balanceResponse = await axios.get(`${API_URL}/api/wallet/${data.public_key}/balance`);
                 setBalance(balanceResponse.data.balance);
 
+                const tokenBalanceResponse = await axios.get(`${API_URL}/api/tokens/${data.public_key}/balance`);
+                setTokenBalance(tokenBalanceResponse.data.balance);
+
                 setShowAlert(true);
                 setTimeout(() => {
                     setShowAlert(false);
                 }, 5000);
-
             } catch (error) {
-                if (axios.isAxiosError(error) && error.response?.status === 401) {
-                    console.error("Unauthorized: Invalid or missing token");
-                } else {
-                    console.error("Error fetching profile:", error);
-                }
+                console.error("Error fetching profile:", error);
                 setAccountExists(false);
             } finally {
                 setLoading(false);
@@ -122,15 +128,21 @@ export default function AccountPage() {
             const token = localStorage.getItem('token');
             const originalUsername = queryParams.get('username') || profileData.username;
 
-            const response = await axios.put(`${API_URL}/api/users/profile/${originalUsername}`, {
-                newUsername: profileData.username,
-                realname: profileData.realname,
-                email: profileData.email,
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
+            const response = await axios.put(
+                `${API_URL}/api/users/profile/${originalUsername}`,
+                {
+                    newUsername: profileData.username,
+                    realname: profileData.realname,
+                    email: profileData.email,
+                    aboutMe: profileData.aboutMe,
+                    shareEmail: shareEmail,
                 },
-            });
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
 
             const updatedProfile = response.data.user;
             const newToken = response.data.token;
@@ -151,7 +163,6 @@ export default function AccountPage() {
         }
     };
 
-
     const handleCopyPublicKey = () => {
         navigator.clipboard.writeText(profileData.public_key);
         setCopied(true);
@@ -169,13 +180,13 @@ export default function AccountPage() {
         }, 2000);
     };
 
-    const defaultAvatarUrl = `https://via.placeholder.com/150?text=${username}}`;
+    const defaultAvatarUrl = `https://via.placeholder.com/150?text=${username}`;
 
     if (!accountExists) {
         return (
             <CssVarsProvider defaultMode="dark">
                 <CssBaseline />
-                <Box sx={{ flex: 1, width: '100%' }}>
+                <Box sx={{ flex: 1, width: '100%', textAlign: 'center', py: 5 }}>
                     <Typography level="h4" color="danger">
                         {t('accountNotFound')}
                     </Typography>
@@ -194,31 +205,9 @@ export default function AccountPage() {
                             <Link underline="none" color="neutral" href="/" aria-label="Home">
                                 <HomeRoundedIcon />
                             </Link>
-                            <Skeleton width="150px" height="20px" sx={{ margin: '0 auto' }} />
+                            <Typography sx={{ fontWeight: 'bold' }}>{t('loading')}</Typography>
                         </Breadcrumbs>
-                        <Skeleton width="200px" height="40px" sx={{ mt: 2, mb: 2, margin: '0 auto' }} />
                     </Box>
-                    <Stack spacing={4} sx={{ display: 'flex', maxWidth: '800px', mx: 'auto', px: { xs: 2, md: 6 }, py: { xs: 2, md: 3 } }}>
-                        <Card>
-                            <Box sx={{ mb: 1 }}>
-                                <Skeleton width="120px" height="30px" />
-                            </Box>
-                            <Divider />
-                            <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ my: 1, width: '100%' }}>
-                                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, width: '100%' }}>
-                                    <Skeleton variant="circular" width={120} height={120} />
-                                    <Box sx={{ flex: 1 }}>
-                                        <Skeleton width="80%" height="80px" sx={{ mt: 1 }} />
-                                        <Skeleton width="60%" height="20px" sx={{ mt: 1 }} />
-                                        <Skeleton width="40%" height="20px" sx={{ mt: 1 }} />
-                                    </Box>
-                                </Box>
-                            </Stack>
-                        </Card>
-                        <Card>
-                            <Skeleton width="200px" height="40px" />
-                        </Card>
-                    </Stack>
                 </Box>
             </CssVarsProvider>
         );
@@ -226,6 +215,9 @@ export default function AccountPage() {
 
     return (
         <CssVarsProvider defaultMode="dark">
+            <Helmet>
+                <title>{`${t('profile')} ${username}`}</title>
+            </Helmet>
             <CssBaseline />
             <GlobalStyles
                 styles={{
@@ -235,20 +227,13 @@ export default function AccountPage() {
                 }}
             />
             <Box sx={{ flex: 1, width: '100%' }}>
-                <Box sx={{
-
-                    top: { sm: -100, md: -110 },
-                    bgcolor: 'background.body',
-                    zIndex: 9995,
-                }}>
+                <Box sx={{ top: { sm: -100, md: -110 }, bgcolor: 'background.body', zIndex: 9995 }}>
                     <Box sx={{ px: { xs: 2, md: 6 }, textAlign: 'center' }}>
-                        <Breadcrumbs size="sm" aria-label="breadcrumbs" separator={<ChevronRightRoundedIcon />} sx={{ pl: 0, justifyContent: 'center' }}>
+                        <Breadcrumbs size="sm" aria-label="breadcrumbs" separator={<ChevronRightRoundedIcon />} sx={{ justifyContent: 'center' }}>
                             <Link underline="none" color="neutral" href="/" aria-label="Home">
                                 <HomeRoundedIcon />
                             </Link>
-                            <Typography color="primary" fontWeight={500} fontSize={12}>
-                                {t('myProfile')} {username}
-                            </Typography>
+                            <Typography>{t('myProfile')} {username}</Typography>
                         </Breadcrumbs>
                         <Typography level="h2" component="h1" sx={{ mt: 1, mb: 2 }}>
                             {t('profile')} {username}
@@ -261,7 +246,8 @@ export default function AccountPage() {
                         <LanguageSwitcher />
                     </Box>
                 </Box>
-                <Stack spacing={4} sx={{ display: 'flex', maxWidth: '800px', mx: 'auto', px: { xs: 2, md: 6 }, py: { xs: 2, md: 3 } }}>
+
+                <Stack spacing={4} sx={{ maxWidth: '800px', mx: 'auto', px: { xs: 2, md: 6 }, py: { xs: 2, md: 3 } }}>
                     <Card>
                         <Box sx={{ mb: 1 }}>
                             <Typography level="title-md">{t('personalInfo')}</Typography>
@@ -272,19 +258,6 @@ export default function AccountPage() {
                                 <AspectRatio ratio="1" sx={{ width: '100%', maxWidth: 120, borderRadius: '50%' }}>
                                     <img src={profileData.avatar || defaultAvatarUrl} loading="lazy" alt="Anonymous avatar" />
                                 </AspectRatio>
-                                {isEditable && (
-                                    <IconButton aria-label="upload new picture" size="sm" variant="outlined" color="neutral"
-                                                sx={{
-                                                    position: 'absolute',
-                                                    borderRadius: '50%',
-                                                    bottom: 0,
-                                                    right: 0,
-                                                    transform: 'translate(25%, 25%)',
-                                                    boxShadow: 'sm',
-                                                }}>
-                                        <EditRoundedIcon />
-                                    </IconButton>
-                                )}
                                 <Box sx={{ textAlign: 'center', mt: 2 }}>
                                     <Typography sx={{ fontSize: '1.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         {profileData.rating}
@@ -299,42 +272,45 @@ export default function AccountPage() {
                                 </Box>
                             </Stack>
                             <Stack spacing={2} sx={{ flexGrow: 1, width: '100%' }}>
-                                <FormControl>
-                                    <FormLabel>{t('username')}</FormLabel>
-                                    <Input size="sm" value={profileData.username} onChange={(e) => setProfileData({ ...profileData, username: e.target.value })} disabled={!isEditable} />
-                                </FormControl>
-                                <FormControl>
-                                    <FormLabel>{t('realname')}</FormLabel>
-                                    <Input size="sm" value={profileData.realname} onChange={(e) => setProfileData({ ...profileData, realname: e.target.value })} disabled={!isEditable} />
-                                </FormControl>
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: '100%' }}>
-                                    <FormControl sx={{ flexGrow: 1, width: '100%' }}>
-                                        <FormLabel>{t('role')}</FormLabel>
-                                        <Input size="sm" value={profileData.role} disabled={!isEditable} sx={{ width: '100%' }} />
+                                    <FormControl sx={{ flexGrow: 1 }}>
+                                        <FormLabel>{t('username')}</FormLabel>
+                                        <Input size="sm" value={profileData.username} onChange={(e) => setProfileData({ ...profileData, username: e.target.value })} disabled={!isEditable} />
                                     </FormControl>
-
-                                    {shareEmail && (
-                                        <FormControl sx={{ flexGrow: 1, width: '100%' }}>
-                                            <FormLabel>{t('email')}</FormLabel>
-                                            <Input
-                                                size="sm"
-                                                type="email"
-                                                startDecorator={<EmailRoundedIcon />}
-                                                value={profileData.email}
-                                                onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                                                disabled={!isEditable}
-                                                sx={{
-                                                    width: '100%',
-                                                    '@media (max-width: 600px)': {
-                                                        width: '100%',
-                                                    },
-                                                }}
-                                            />
-                                        </FormControl>
-                                    )}
+                                    <FormControl sx={{ flexGrow: 1 }}>
+                                        <FormLabel>{t('realname')}</FormLabel>
+                                        <Input size="sm" value={profileData.realname} onChange={(e) => setProfileData({ ...profileData, realname: e.target.value })} disabled={!isEditable} />
+                                    </FormControl>
                                 </Stack>
                                 <FormControl>
-                                    <FormLabel>{t('wallet')} ({balance} SOL)</FormLabel>
+                                    <FormLabel>{t('aboutMe')}</FormLabel>
+                                    <Input size="sm" value={profileData.aboutMe} onChange={(e) => setProfileData({ ...profileData, aboutMe: e.target.value })} disabled={!isEditable} />
+                                </FormControl>
+                                <FormControl>
+                                    <FormLabel sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        {t('email')}
+                                        <Box sx={{ ml: 1 }} />
+                                        <Checkbox
+                                            size="sm"
+                                            checked={shareEmail}
+                                            onChange={() => setShareEmail(!shareEmail)}
+                                            disabled={!isEditable}
+                                        /> {t('hideEmail')}
+                                    </FormLabel>
+                                    <Input
+                                        size="sm"
+                                        type="email"
+                                        startDecorator={<EmailRoundedIcon />}
+                                        value={profileData.email}
+                                        onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                                        disabled={!isEditable}
+                                        sx={{
+                                            width: '100%',
+                                        }}
+                                    />
+                                </FormControl>
+                                <FormControl>
+                                    <FormLabel>{t('wallet')} ({balance} SOL, {tokenBalance} {t('tokens')})</FormLabel>
                                     <Input
                                         size="sm"
                                         value={profileData.public_key}
@@ -353,28 +329,42 @@ export default function AccountPage() {
                                         sx={{ pointerEvents: 'auto' }}
                                     />
                                 </FormControl>
-
-
-                                <Stack direction="row" spacing={2} sx={{ mt: 2, justifyContent: 'flex-end' }}>
-                                    <Button variant="outlined" color="danger" onClick={() => setShowModal(true)}>
-                                        <ReportIcon /> Report
+                                <Stack
+                                    direction={{ xs: 'column', sm: 'row' }}
+                                    spacing={2}
+                                    sx={{
+                                        mt: 2,
+                                        justifyContent: { xs: 'center', sm: 'flex-end' },
+                                        width: '100%',
+                                        '& > *': {
+                                            flexGrow: 1,
+                                            textAlign: 'center'
+                                        }
+                                    }}
+                                >
+                                    <Button variant="outlined" color="danger" onClick={() => setShowReportModal(true)}>
+                                        {t('report')}
                                     </Button>
-                                    {isOwner && (
+                                    {isOwner && !isEditable && (
                                         <Button variant="outlined" color="primary" onClick={() => setIsEditable(true)}>
-                                            <EditRoundedIcon /> Edit
+                                            {t('edit')}
                                         </Button>
                                     )}
+                                    {isEditable && (
+                                        <>
+                                            <Button variant="solid" color="success" onClick={handleSave}>
+                                                {t('save')}
+                                            </Button>
+                                            <Button variant="outlined" color="danger" onClick={() => setIsEditable(false)}>
+                                                {t('cancel')}
+                                            </Button>
+                                            <Button variant="outlined" color="primary" onClick={() => setShowAvatarModal(true)}>
+                                                {t('uploadAvatar')}
+                                            </Button>
+                                        </>
+                                    )}
                                 </Stack>
-                                {isEditable && (
-                                    <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                                        <Button variant="solid" color="success" onClick={handleSave}>
-                                            Save
-                                        </Button>
-                                        <Button variant="outlined" color="danger" onClick={() => setIsEditable(false)}>
-                                            Cancel
-                                        </Button>
-                                    </Stack>
-                                )}
+
                             </Stack>
                         </Stack>
                     </Card>
@@ -384,45 +374,17 @@ export default function AccountPage() {
                     <ConnectButtons />
 
                     {/* Modal for Report */}
-                    <Modal open={showModal} onClose={() => setShowModal(false)}>
-                        <Box sx={{
-                            p: 3,
-                            backgroundColor: 'black',
-                            borderRadius: 'md',
-                            maxWidth: 500,
-                            mx: 'auto',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                        }}>
-                            <Typography level="h4" sx={{ color: 'white' }}>Report {username}</Typography>
-                            <Typography sx={{ color: 'white' }}>What did this account violate in your opinion?</Typography>
-                            <Input
-                                placeholder="Describe the violation"
-                                fullWidth
-                                sx={{
-                                    mt: 2,
-                                    mb: 2,
-                                    minHeight: '100px',
-                                    backgroundColor: '#333',
-                                    color: 'white'
-                                }}
-                            />
-                            <Stack direction="row" spacing={2}>
-                                <Button variant="outlined" color="danger" onClick={() => setShowModal(false)}>
-                                    Cancel
-                                </Button>
-                                <Button variant="solid" color="success" onClick={handleReportSubmit}>
-                                    {reportLoading ? <CircularProgress size="md" /> : 'Send'}
-                                </Button>
-                            </Stack>
-                        </Box>
-                    </Modal>
+                    <ReportModal
+                        open={showReportModal}
+                        onClose={() => setShowReportModal(false)}
+                        onSubmit={handleReportSubmit}
+                        loading={reportLoading}
+                        username={username}
+                    />
+
+                    {/* Modal for Upload Avatar */}
+                    <AvatarUploadModal open={showAvatarModal} onClose={() => setShowAvatarModal(false)} />
+
                     {showAlert && (
                         <Box
                             sx={{

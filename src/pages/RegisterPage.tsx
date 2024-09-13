@@ -1,6 +1,6 @@
 import * as React from 'react';
-import {useNavigate} from 'react-router-dom';
-import {CssVarsProvider} from '@mui/joy/styles';
+import { useNavigate } from 'react-router-dom';
+import { CssVarsProvider } from '@mui/joy/styles';
 import GlobalStyles from '@mui/joy/GlobalStyles';
 import CssBaseline from '@mui/joy/CssBaseline';
 import Box from '@mui/joy/Box';
@@ -16,18 +16,17 @@ import Stack from '@mui/joy/Stack';
 import Alert from '@mui/joy/Alert';
 import GoogleIcon from '../components/core/GoogleIcon';
 import TelegramIcon from '../components/core/TelegramIcon';
-import {Link as RouterLink} from 'react-router-dom';
-import {useTranslation} from 'react-i18next';
-import {Header} from '../components/core/ColorSchemeToggle';
-import {UserProfile} from '../api/auth';
+import { Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Header } from '../components/core/ColorSchemeToggle';
 import axios from 'axios';
-import {ethers} from 'ethers';
+import PhantomConnectButton from '../components/core/PhantomConnectButton';
 
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import Person from '@mui/icons-material/Person';
-import {Helmet} from "react-helmet-async";
+import { Helmet } from "react-helmet-async";
 
 interface FormElements extends HTMLFormControlsCollection {
     username: HTMLInputElement;
@@ -45,16 +44,17 @@ interface SignUpFormElement extends HTMLFormElement {
 }
 
 const RegisterPage: React.FC = () => {
-    const {t} = useTranslation();
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+    const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
     const [buttonColor, setButtonColor] = React.useState<string | undefined>(undefined);
 
     const handleSubmit = async (event: React.FormEvent<SignUpFormElement>) => {
         event.preventDefault();
         const formElements = event.currentTarget.elements;
 
-        const userData: UserProfile = {
+        const userData = {
             username: formElements.username.value,
             realname: formElements.realname.value,
             email: formElements.email.value,
@@ -68,8 +68,8 @@ const RegisterPage: React.FC = () => {
             shareCountry: false,
             timezone: '',
             shareTimezone: false,
-            rating: 0,
-            wallet: ''
+            rating: 1,
+            wallet: walletAddress || ''
         };
 
         if (userData.password !== userData.confirmPassword) {
@@ -79,8 +79,12 @@ const RegisterPage: React.FC = () => {
             return;
         }
 
-        const wallet = ethers.Wallet.createRandom();
-        userData.wallet = wallet.address;
+        if (!userData.wallet) {
+            setErrorMessage(t('phantomWalletRequired'));
+            return;
+        }
+
+        console.log('User data:', userData);
 
         try {
             const response = await axios.post(`${API_URL}/api/users/register`, userData);
@@ -89,7 +93,7 @@ const RegisterPage: React.FC = () => {
             if (userData.persistent) {
                 localStorage.setItem('persistent', 'true');
             }
-            navigate('/account?username=' + encodeURIComponent(userData.username));
+            navigate('/login');
         } catch (error) {
             if (error instanceof Error) {
                 setErrorMessage(`Registration failed: ${error.message}`);
@@ -99,12 +103,17 @@ const RegisterPage: React.FC = () => {
         }
     };
 
+    const handlePhantomConnect = (walletAddress: string) => {
+        setWalletAddress(walletAddress);
+        setErrorMessage(null);
+    };
+
     return (
         <CssVarsProvider defaultMode="dark" disableTransitionOnChange>
             <Helmet>
                 <title>{t('title.register')}</title>
             </Helmet>
-            <CssBaseline/>
+            <CssBaseline />
             <GlobalStyles
                 styles={{
                     ':root': {
@@ -115,7 +124,7 @@ const RegisterPage: React.FC = () => {
             />
             <Box
                 sx={(theme) => ({
-                    width: {xs: '100%', md: '50vw'},
+                    width: { xs: '100%', md: '50vw' },
                     transition: 'width var(--Transition-duration)',
                     transitionDelay: 'calc(var(--Transition-duration) + 0.1s)',
                     position: 'relative',
@@ -138,7 +147,7 @@ const RegisterPage: React.FC = () => {
                         px: 2,
                     }}
                 >
-                    <Header/>
+                    <Header />
 
                     <Box
                         component="main"
@@ -175,7 +184,7 @@ const RegisterPage: React.FC = () => {
                             </Typography>
                         </Stack>
                         {errorMessage && (
-                            <Alert color="danger" sx={{mb: 2}}>
+                            <Alert color="danger" sx={{ mb: 2 }}>
                                 {errorMessage}
                             </Alert>
                         )}
@@ -185,7 +194,7 @@ const RegisterPage: React.FC = () => {
                                 <Input
                                     type="text"
                                     name="username"
-                                    startDecorator={<Person/>}
+                                    startDecorator={<Person />}
                                     sx={{
                                         '& .MuiInputBase-input': {
                                             pl: '32px',
@@ -198,7 +207,7 @@ const RegisterPage: React.FC = () => {
                                 <Input
                                     type="text"
                                     name="realname"
-                                    startDecorator={<Person/>}
+                                    startDecorator={<Person />}
                                     sx={{
                                         '& .MuiInputBase-input': {
                                             pl: '32px',
@@ -211,7 +220,7 @@ const RegisterPage: React.FC = () => {
                                 <Input
                                     type="email"
                                     name="email"
-                                    startDecorator={<EmailIcon/>}
+                                    startDecorator={<EmailIcon />}
                                     sx={{
                                         '& .MuiInputBase-input': {
                                             pl: '32px',
@@ -224,7 +233,7 @@ const RegisterPage: React.FC = () => {
                                 <Input
                                     type="password"
                                     name="password"
-                                    startDecorator={<LockIcon/>}
+                                    startDecorator={<LockIcon />}
                                     sx={{
                                         '& .MuiInputBase-input': {
                                             pl: '32px',
@@ -237,7 +246,7 @@ const RegisterPage: React.FC = () => {
                                 <Input
                                     type="password"
                                     name="confirmPassword"
-                                    startDecorator={<LockOpenIcon/>}
+                                    startDecorator={<LockOpenIcon />}
                                     sx={{
                                         '& .MuiInputBase-input': {
                                             pl: '32px',
@@ -245,7 +254,7 @@ const RegisterPage: React.FC = () => {
                                     }}
                                 />
                             </FormControl>
-                            <Stack gap={4} sx={{mt: 2}}>
+                            <Stack gap={4} sx={{ mt: 2 }}>
                                 <Box
                                     sx={{
                                         display: 'flex',
@@ -253,12 +262,12 @@ const RegisterPage: React.FC = () => {
                                         alignItems: 'center',
                                     }}
                                 >
-                                    <Checkbox size="sm" label={t('rememberMe')} name="persistent"/>
+                                    <Checkbox size="sm" label={t('rememberMe')} name="persistent" />
                                     <Link component={RouterLink} to="/forgotpassword" level="title-sm">
                                         {t('forgotPassword')}
                                     </Link>
                                 </Box>
-                                <Button type="submit" fullWidth sx={{backgroundColor: buttonColor}}>
+                                <Button type="submit" fullWidth>
                                     {t('signUp')}
                                 </Button>
                             </Stack>
@@ -266,12 +275,13 @@ const RegisterPage: React.FC = () => {
                         <Divider
                             sx={(theme) => ({
                                 [theme.getColorSchemeSelector('light')]: {
-                                    color: {xs: '#FFF', md: 'text.tertiary'},
+                                    color: { xs: '#FFF', md: 'text.tertiary' },
                                 },
                             })}
                         >
                             {t('or')}
                         </Divider>
+                        <PhantomConnectButton onConnect={handlePhantomConnect} />
                         <Stack gap={4} sx={{mb: 2}}>
                             <Button
                                 variant="soft"

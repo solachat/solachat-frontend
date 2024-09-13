@@ -42,6 +42,7 @@ export default extendTheme({
         },
         background: {
           body: 'var(--joy-palette-common-black)',
+          // var(--joy-palette-neutral-800, #171A1C)
           surface: 'var(--joy-palette-neutral-900)',
         },
       },

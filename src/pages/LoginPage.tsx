@@ -18,10 +18,10 @@ import {Link as RouterLink, useNavigate} from 'react-router-dom'; // Импор�
 import {useTranslation} from 'react-i18next';
 import GoogleIcon from '../components/core/GoogleIcon';
 import {Header} from "../components/core/ColorSchemeToggle";
-import LanguageSwitcher from '../components/core/LanguageSwitcher';
 import TelegramIcon from "../components/core/TelegramIcon";
 import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
+import PhantomIconPurple from "../components/core/PhantomIconPurple";
 
 interface FormElements extends HTMLFormControlsCollection {
     email: HTMLInputElement;
@@ -37,7 +37,8 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
 const Login = () => {
     const {t} = useTranslation();
-    const navigate = useNavigate(); // Создаем экземпляр navigate
+    const navigate = useNavigate();
+    const [isConnected, setIsConnected] = React.useState(false);
 
     const handleLogin = async (event: React.FormEvent<SignInFormElement>) => {
         event.preventDefault();
@@ -46,29 +47,27 @@ const Login = () => {
             email: formElements.email.value,
             password: formElements.password.value,
             persistent: formElements.persistent.checked,
+            lastlogin: new Date().toISOString(),
         };
 
-        // Логируем данные, которые отправляем на сервер
         console.log('Sending login data:', data);
 
         try {
             const response = await axios.post(`${API_URL}/api/users/login`, {
                 email: data.email,
                 password: data.password,
+                lastlogin: data.lastlogin,
             });
 
             console.log('Received response:', response.data);
 
             if (response.data.token && response.data.user) {
-                const userData = response.data.user; // Получаем данные пользователя
+                const userData = response.data.user;
                 localStorage.setItem('token', response.data.token);
 
                 alert('Login successful');
 
-                // Задержка на 2 секунды перед редиректом
-                setTimeout(() => {
-                    navigate(`/account?username=${encodeURIComponent(userData.username)}`);
-                }, 2000);
+                navigate('/account?username=' + encodeURIComponent(userData.username));
             } else {
                 alert('Invalid email or password');
             }
@@ -78,6 +77,34 @@ const Login = () => {
             alert('Login failed: ' + errorMessage);
         }
     };
+
+    const connectPhantom = async () => {
+        try {
+            const {solana} = window;
+            if (solana && solana.isPhantom) {
+                const response = await solana.connect();
+                const walletAddress = response.publicKey.toString();
+
+                const loginResponse = await axios.post(`${API_URL}/api/users/phantom-login`, {
+                    wallet: walletAddress,
+                });
+
+                if (loginResponse.data.token) {
+                    localStorage.setItem('token', loginResponse.data.token);
+                    setIsConnected(true);
+                    navigate(`/account?username=${loginResponse.data.user.username}`);
+                } else {
+                    alert('Failed to login with Phantom');
+                }
+            } else {
+                alert(t('phantomNotFound'));
+            }
+        } catch (error) {
+            console.error('Connection to Phantom failed:', error);
+            alert(t('phantomConnectFailed'));
+        }
+    };
+
 
     return (
         <CssVarsProvider defaultMode="dark" disableTransitionOnChange>
@@ -210,6 +237,15 @@ const Login = () => {
                             {t('or')}
                         </Divider>
                         <Stack gap={4} sx={{mb: 2}}>
+                            <Button
+                                variant="soft"
+                                color="neutral"
+                                fullWidth
+                                startDecorator={<PhantomIconPurple/>}
+                                onClick={connectPhantom}
+                            >
+                                {isConnected ? t('phantomConnected') : t('connectPhantom')}
+                            </Button>
                             <Button
                                 variant="soft"
                                 color="neutral"
