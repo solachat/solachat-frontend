@@ -1,31 +1,60 @@
 import React, { useState } from 'react';
-import { Modal, Box, Button, Typography, IconButton, CircularProgress } from '@mui/joy';
+import { Modal, Box, Button, Typography, IconButton, CircularProgress, Alert } from '@mui/joy';
 import { Upload as UploadIcon, Close as CloseIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 
 interface AvatarUploadModalProps {
     open: boolean;
     onClose: () => void;
+    onSuccess: (avatarUrl: string) => void;
 }
 
-export default function AvatarUploadModal({ open, onClose }: AvatarUploadModalProps) {
+export default function AvatarUploadModal({ open, onClose, onSuccess }: AvatarUploadModalProps) {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState<File | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
-    const handleUpload = () => {
+    const handleUpload = async () => {
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
         setLoading(true);
-        // Имитируем загрузку
-        setTimeout(() => {
+        setError(null);
+
+        try {
+            const response = await axios.put(`${API_URL}/api/users/avatar`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+                onUploadProgress: (progressEvent) => {
+                    if (progressEvent.total) {
+                        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    } else {
+                    }
+                },
+            });
+
+            const avatarUrl = response.data.avatar;
             setLoading(false);
-            alert(t('uploadSuccess')); // Используем локализацию для успешного сообщения
+            onSuccess(avatarUrl);
             onClose();
-        }, 2000);
+        } catch (error: any) {
+            setLoading(false);
+            setError(t('uploadFailed'));
+            console.error(error);
+        }
     };
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        setFile(file || null);
+        const selectedFile = event.target.files?.[0];
+        setFile(selectedFile || null);
+        setError(null);
     };
 
     return (
@@ -83,6 +112,12 @@ export default function AvatarUploadModal({ open, onClose }: AvatarUploadModalPr
                         }}
                     />
                 </Box>
+
+                {error && (
+                    <Alert color="danger" sx={{ mb: 2 }}>
+                        {error}
+                    </Alert>
+                )}
 
                 <Button
                     variant="solid"

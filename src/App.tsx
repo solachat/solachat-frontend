@@ -12,6 +12,7 @@ import ContactsPage from './pages/ContactsPage';
 import MyMessages from './components/messages/MyMessages';
 import NotFoundPage from './pages/NotFoundPage';
 import UnderConstruction from './pages/UnderConstruction';
+import MainPage from "./pages/MainPage";
 
 const underDevelopmentRoutes = [
     '/connect/telegram',
@@ -37,6 +38,7 @@ const App: React.FC = () => {
                         ))}
                         <Route path="*" element={<NotFoundPage />} />
                         <Route path="/new-feature" element={<UnderConstruction />} />
+                        <Route path="/main" element={<MainPage />} />
                     </Routes>
                 </Router>
             </ThemeProvider>

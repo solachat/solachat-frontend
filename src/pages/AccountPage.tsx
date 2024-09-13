@@ -163,6 +163,10 @@ export default function AccountPage() {
         }
     };
 
+    const handleAvatarUploadSuccess = (avatarUrl: string) => {
+        setProfileData((prevData) => ({ ...prevData, avatar: avatarUrl }));
+    };
+
     const handleCopyPublicKey = () => {
         navigator.clipboard.writeText(profileData.public_key);
         setCopied(true);
@@ -255,8 +259,22 @@ export default function AccountPage() {
                         <Divider />
                         <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ my: 1, width: '100%' }}>
                             <Stack direction="column" spacing={1} sx={{ position: 'relative', alignItems: 'center' }}>
-                                <AspectRatio ratio="1" sx={{ width: '100%', maxWidth: 120, borderRadius: '50%' }}>
-                                    <img src={profileData.avatar || defaultAvatarUrl} loading="lazy" alt="Anonymous avatar" />
+                                <AspectRatio
+                                    ratio="1"
+                                    sx={{
+                                        width: '100%',
+                                        maxWidth: 120,
+                                        borderRadius: '50%',
+                                        overflow: 'hidden',
+                                        cursor: 'pointer',
+                                        transition: '0.3s ease',
+                                        '&:hover img': {
+                                            filter: 'brightness(0.7)',
+                                        },
+                                    }}
+                                    onClick={() => setShowAvatarModal(true)}
+                                >
+                                    <img src={profileData.avatar || defaultAvatarUrl} loading="lazy" alt="Avatar" />
                                 </AspectRatio>
                                 <Box sx={{ textAlign: 'center', mt: 2 }}>
                                     <Typography sx={{ fontSize: '1.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -358,9 +376,6 @@ export default function AccountPage() {
                                             <Button variant="outlined" color="danger" onClick={() => setIsEditable(false)}>
                                                 {t('cancel')}
                                             </Button>
-                                            <Button variant="outlined" color="primary" onClick={() => setShowAvatarModal(true)}>
-                                                {t('uploadAvatar')}
-                                            </Button>
                                         </>
                                     )}
                                 </Stack>
@@ -383,7 +398,11 @@ export default function AccountPage() {
                     />
 
                     {/* Modal for Upload Avatar */}
-                    <AvatarUploadModal open={showAvatarModal} onClose={() => setShowAvatarModal(false)} />
+                    <AvatarUploadModal
+                        open={showAvatarModal}
+                        onClose={() => setShowAvatarModal(false)}
+                        onSuccess={handleAvatarUploadSuccess}
+                    />
 
                     {showAlert && (
                         <Box
