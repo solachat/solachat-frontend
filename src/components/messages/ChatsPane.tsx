@@ -7,7 +7,7 @@ import { Box, Chip, Input, List } from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChatListItem from './ChatListItem';
 import { ChatProps, UserProps } from '../core/types';
-import { searchUsers, createPrivateChat, fetchChatsFromServer } from '../../api/api';
+import {searchUsers, createPrivateChat, fetchChatsFromServer, fetchChatWithMessages} from '../../api/api';
 import LanguageSwitcher from '../core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
 import { CssVarsProvider } from '@mui/joy/styles';
@@ -16,7 +16,7 @@ type ChatsPaneProps = {
     chats: ChatProps[];
     setSelectedChat: (chat: ChatProps) => void;
     selectedChatId: string;
-    currentUser: { id: number };
+    currentUser: { id: number }; // currentUser передается, как и раньше
 };
 
 export default function ChatsPane(props: ChatsPaneProps) {
@@ -26,15 +26,23 @@ export default function ChatsPane(props: ChatsPaneProps) {
     const [searchTerm, setSearchTerm] = React.useState('');
     const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
     const [loadingChats, setLoadingChats] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         const loadChats = async () => {
             try {
-                const chatsFromServer = await fetchChatsFromServer(currentUser.id.toString());
-                setChats(chatsFromServer);
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    console.error('Authorization token is missing');
+                    setError('Authorization token is missing');
+                    return;
+                }
+
+                const chatsFromServer = await fetchChatsFromServer(currentUser.id, token);
+                setChats(chatsFromServer || []);
                 setLoadingChats(false);
             } catch (error) {
-                console.error("Error fetching chats:", error);
+                console.error('Error fetching chats:', error);
                 setLoadingChats(false);
             }
         };
@@ -46,33 +54,35 @@ export default function ChatsPane(props: ChatsPaneProps) {
         setSearchTerm(e.target.value);
         if (e.target.value.trim()) {
             const results = await searchUsers(e.target.value);
-            console.log("Search results from API:", results);
-            if (results.length === 0) {
-                console.log("No users found matching the search term.");
-            }
-            setSearchResults(results);
+            console.log('Search results from API:', results);
+            setSearchResults(results || []);
         } else {
-            console.log("Search term is empty, resetting search results.");
             setSearchResults([]);
         }
     };
 
     const handleUserSelect = async (user: UserProps) => {
-        try {
-            console.log("Creating chat with user:", user);
-            const newChat = await createPrivateChat(currentUser.id, user.id);
-            console.log("Chat created successfully:", newChat);
+        console.log('User selected (before creating chat):', user);
+        const token = localStorage.getItem('token'); // Получаем токен
+        if (token) {
+            try {
+                const newChat = await createPrivateChat(currentUser.id, user.id, token);
+                console.log('Chat created successfully:', newChat);
 
-            if (newChat && newChat.id) {
-                setChats(prevChats => [...prevChats, newChat]);
-                setSelectedChat(newChat);
-            } else {
-                console.error('Ошибка при создании чата: данные чата отсутствуют');
-                alert('Error creating chat: chat data is missing.');
+                // После создания чата, обновляем список чатов и выбираем этот чат
+                if (newChat && newChat.id) {
+                    const updatedChat = await fetchChatWithMessages(newChat.id, token);
+                    setChats((prevChats) => [...prevChats, updatedChat]); // Добавляем чат в список
+                    setSelectedChat(updatedChat); // Выбираем новый чат
+                } else {
+                    console.error('Error creating chat: chat data is missing.');
+                }
+            } catch (error) {
+                console.error('Error creating chat:', error);
+                alert('Error creating chat. Please try again.');
             }
-        } catch (error) {
-            console.error('Ошибка при создании чата:', error);
-            alert('Error creating chat. Please try again.');
+        } else {
+            console.error('Token is missing');
         }
     };
 
@@ -129,7 +139,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                     />
                 </Box>
 
-                {/* Отображаем результаты поиска */}
+                {/* Show search results */}
                 {searchResults.length > 0 ? (
                     <List
                         sx={{
@@ -142,19 +152,11 @@ export default function ChatsPane(props: ChatsPaneProps) {
                             <ChatListItem
                                 key={user.id.toString()}
                                 id={user.id.toString()}
-                                sender={{
-                                    id: user.id,
-                                    realname: user.realname,
-                                    username: user.username,
-                                    avatar: user.avatar,
-                                    online: user.online,
-                                }}
+                                sender={user}
                                 messages={[]}
                                 setSelectedChat={setSelectedChat}
-                                onClick={() => {
-                                    console.log("User clicked:", user);
-                                    handleUserSelect(user);
-                                }}
+                                currentUserId={currentUser.id} // Передаем currentUserId
+                                chats={chats} // Передаем все чаты
                             />
                         ))}
                     </List>
@@ -174,9 +176,12 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                     {chats.map((chat) => (
                                         <ChatListItem
                                             key={chat.id.toString()}
-                                            {...chat}
+                                            id={chat.id.toString()}
+                                            sender={chat.users[0]}
+                                            messages={chat.messages}
                                             setSelectedChat={setSelectedChat}
-                                            selectedChatId={selectedChatId}
+                                            currentUserId={currentUser.id}
+                                            chats={chats}
                                         />
                                     ))}
                                 </List>

@@ -17,12 +17,12 @@ type MessagesPaneProps = {
 export default function MessagesPane(props: MessagesPaneProps) {
     const { chat } = props;
 
-    const [chatMessages, setChatMessages] = useState<MessageProps[]>(chat ? chat.messages : []);
+    const [chatMessages, setChatMessages] = useState<MessageProps[]>(chat?.messages || []);
     const [textAreaValue, setTextAreaValue] = useState('');
 
     useEffect(() => {
         if (chat) {
-            setChatMessages(chat.messages);
+            setChatMessages(chat.messages || []);
         }
     }, [chat]);
 
@@ -98,16 +98,13 @@ export default function MessagesPane(props: MessagesPaneProps) {
                 setTextAreaValue={setTextAreaValue}
                 onSubmit={() => {
                     const newId = chatMessages.length + 1;
-                    const newIdString = newId.toString();
-                    setChatMessages([
-                        ...chatMessages,
-                        {
-                            id: newIdString,
-                            sender: 'You',
-                            content: textAreaValue,
-                            timestamp: 'Just now',
-                        },
-                    ]);
+                    const newMessage: MessageProps = {
+                        id: newId.toString(),
+                        sender: { id: 1, realname: 'You', username: 'you', avatar: '', online: true },
+                        content: textAreaValue,
+                        timestamp: 'Just now',
+                    };
+                    setChatMessages([...chatMessages, newMessage]);
                     setTextAreaValue('');
                 }}
             />

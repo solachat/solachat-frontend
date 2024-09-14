@@ -4,24 +4,50 @@ import MessagesPane from './MessagesPane';
 import ChatsPane from './ChatsPane';
 import { ChatProps } from '../core/types';
 import { useParams, useNavigate } from 'react-router-dom';
-import { chats as initialChats } from '../../utils/data';
-import { loadChatsFromStorage, saveChatsToStorage } from '../../utils/utils';
+import { fetchChatsFromServer } from '../../api/api';
+import {Typography} from "@mui/joy";
 
 export default function MyProfile() {
-    const [chats, setChats] = React.useState<ChatProps[]>(loadChatsFromStorage());
+    const [chats, setChats] = React.useState<ChatProps[]>([]);
+    const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
     const currentUser = { id: 1 };
 
     React.useEffect(() => {
-        if (!chats.length) {
-            setChats(initialChats);
-            saveChatsToStorage(initialChats);
-        }
-    }, [chats]);
+        const loadChats = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    setError('Authorization token is missing');
+                    return;
+                }
 
-    const selectedChat = chats.find((chat) => chat.id === id) || chats[0];
+                const fetchedChats = await fetchChatsFromServer(currentUser.id, token);
+
+                // Убедимся, что fetchedChats — массив
+                if (Array.isArray(fetchedChats)) {
+                    setChats(fetchedChats);
+                } else {
+                    setChats([]);  // Если не массив, установим пустой массив
+                }
+            } catch (error) {
+                console.error('Error loading chats:', error);
+                setError('Failed to load chats.');
+                setChats([]);  // Установим пустой массив при ошибке
+            } finally {
+                setLoading(false); // Загрузка завершена
+            }
+        };
+
+        loadChats();
+    }, [currentUser.id]);
+
+    const selectedChat = Array.isArray(chats) && chats.length > 0
+        ? chats.find((chat) => chat.id === id) || chats[0]
+        : null;
 
     const setSelectedChat = (chat: ChatProps) => {
         navigate(`/chat?id=${chat.id}`);
@@ -47,10 +73,6 @@ export default function MyProfile() {
             window.removeEventListener('keypress', handleActivity);
         };
     }, []);
-
-    if (!selectedChat) {
-        return <div>Loading...</div>;
-    }
 
     return (
         <Sheet
@@ -79,22 +101,35 @@ export default function MyProfile() {
                     top: 52,
                 }}
             >
-                {selectedChat ? (
-                    <ChatsPane
-                        chats={chats}
-                        selectedChatId={selectedChat.id}
-                        setSelectedChat={setSelectedChat}
-                        currentUser={currentUser}
-                    />
+                <ChatsPane
+                    chats={chats}
+                    selectedChatId={selectedChat ? selectedChat.id : ''}
+                    setSelectedChat={setSelectedChat}
+                    currentUser={currentUser}
+                />
+            </Sheet>
+            <Sheet
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'background.level1',
+                    padding: 2,
+                }}
+            >
+                {error ? (
+                    <Typography sx={{ textAlign: 'center', color: 'red' }}>
+                        {error}
+                    </Typography>
+                ) : loading ? (
+                    <Typography>Loading chats...</Typography>
+                ) : selectedChat ? (
+                    <MessagesPane chat={selectedChat} />
                 ) : (
-                    <div>Loading chats...</div>
+                    <MessagesPane chat={null} />  // Отображаем MessagesPane даже если чатов нет
                 )}
             </Sheet>
-            {selectedChat ? (
-                <MessagesPane chat={selectedChat} />
-            ) : (
-                <div>Loading messages...</div>
-            )}
         </Sheet>
     );
 }

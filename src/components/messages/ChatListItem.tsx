@@ -8,7 +8,7 @@ import Typography from '@mui/joy/Typography';
 import CircleIcon from '@mui/icons-material/Circle';
 import AvatarWithStatus from './AvatarWithStatus';
 import { ChatProps, MessageProps, UserProps } from '../core/types';
-import { toggleMessagesPane } from '../../utils/utils';
+import { createPrivateChat } from '../../api/api';
 
 type ChatListItemProps = ListItemButtonProps & {
     id: string;
@@ -17,16 +17,40 @@ type ChatListItemProps = ListItemButtonProps & {
     messages: MessageProps[];
     selectedChatId?: string;
     setSelectedChat: (chat: ChatProps) => void;
+    currentUserId: number;
+    chats: ChatProps[]; // Убедитесь, что `chats` передается как массив
 };
 
 export default function ChatListItem(props: ChatListItemProps) {
-    const { id, sender, messages, selectedChatId, setSelectedChat } = props;
+    const { id, sender, messages, selectedChatId, setSelectedChat, currentUserId, chats } = props;
     const selected = selectedChatId === id;
-    const hasMessages = messages.length > 0;
+    const hasMessages = Array.isArray(messages) && messages.length > 0;
 
-    const handleClick = () => {
-        toggleMessagesPane();
-        setSelectedChat({ id, sender, messages });
+    const existingChat = Array.isArray(chats)
+        ? chats.find((chat: ChatProps) =>
+            chat.users.some((user: UserProps) => user.id === sender.id)
+        )
+        : null;
+
+    const handleClick = async () => {
+        if (existingChat) {
+            console.log('Chat already exists:', existingChat);
+            setSelectedChat(existingChat); // Переключаемся на существующий чат
+        } else {
+            console.log('Creating chat for users:', currentUserId, 'and', sender.id);
+            const token = localStorage.getItem('token');
+            if (token) {
+                const newChat = await createPrivateChat(currentUserId, sender.id, token);
+                if (newChat) {
+                    console.log('New chat created:', newChat);
+                    setSelectedChat(newChat); // Переключаемся на новый чат
+                } else {
+                    console.error('Failed to create a new chat.');
+                }
+            } else {
+                console.error('Token is missing');
+            }
+        }
     };
 
     return (
@@ -45,9 +69,9 @@ export default function ChatListItem(props: ChatListItemProps) {
                     <Stack direction="row" spacing={1.5}>
                         <AvatarWithStatus online={sender.online} src={sender.avatar} size="md" />
                         <Box sx={{ flex: 1 }}>
-                            <Typography level="body-md">{sender.realname}</Typography>
+                            <Typography level="body-md">{sender.realname || 'No Name'}</Typography>
                             <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-                                {sender.username}
+                                {sender.username || 'No Username'}
                             </Typography>
                         </Box>
                         {hasMessages && (
@@ -65,7 +89,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     display={{ xs: 'none', md: 'block' }}
                                     noWrap
                                 >
-                                    5 mins ago
+                                    {messages[0].timestamp || 'No Timestamp'}
                                 </Typography>
                             </Box>
                         )}
@@ -81,7 +105,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 textOverflow: 'ellipsis',
                             }}
                         >
-                            {messages[0].content}
+                            {messages[0].content || 'No Messages'}
                         </Typography>
                     )}
                 </ListItemButton>

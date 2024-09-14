@@ -94,9 +94,8 @@ export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
                     color="neutral"
                     variant="outlined"
                     size="sm"
-                    sx={{
-                        display: { xs: 'none', md: 'inline-flex' },
-                    }}
+                    sx={{ display: { xs: 'none', md: 'inline-flex' } }}
+                    onClick={() => window.location.href = `/account?username=${sender.username}`}
                 >
                     View profile
                 </Button>
