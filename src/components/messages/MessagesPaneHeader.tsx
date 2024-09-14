@@ -9,15 +9,20 @@ import CircleIcon from '@mui/icons-material/Circle';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
-import {UserProps} from '../core/types';
-import {toggleMessagesPane} from '../../utils/utils';
+import { UserProps } from '../core/types';
+import { toggleMessagesPane } from '../../utils/utils';
 
 type MessagesPaneHeaderProps = {
-    sender: UserProps;
+    sender?: UserProps;
 };
 
 export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
-    const {sender} = props;
+    const { sender } = props;
+
+    if (!sender) {
+        return null;
+    }
+
     return (
         <Stack
             direction="row"
@@ -27,22 +32,22 @@ export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
                 borderColor: 'divider',
                 backgroundColor: 'background.body',
             }}
-            py={{xs: 2, md: 2}}
-            px={{xs: 1, md: 2}}
+            py={{ xs: 2, md: 2 }}
+            px={{ xs: 1, md: 2 }}
         >
-            <Stack direction="row" spacing={{xs: 1, md: 2}} alignItems="center">
+            <Stack direction="row" spacing={{ xs: 1, md: 2 }} alignItems="center">
                 <IconButton
                     variant="plain"
                     color="neutral"
                     size="sm"
                     sx={{
-                        display: {xs: 'inline-flex', sm: 'none'},
+                        display: { xs: 'inline-flex', sm: 'none' },
                     }}
                     onClick={() => toggleMessagesPane()}
                 >
-                    <ArrowBackIosNewRoundedIcon/>
+                    <ArrowBackIosNewRoundedIcon />
                 </IconButton>
-                <Avatar size="lg" src={sender.avatar}/>
+                <Avatar size="lg" src={sender.avatar} />
                 <div>
                     <Typography
                         fontWeight="lg"
@@ -59,28 +64,28 @@ export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
                                         borderRadius: 'sm',
                                     }}
                                     startDecorator={
-                                        <CircleIcon sx={{fontSize: 8}} color="success"/>
+                                        <CircleIcon sx={{ fontSize: 8 }} color="success" />
                                     }
-                                    slotProps={{root: {component: 'span'}}}
+                                    slotProps={{ root: { component: 'span' } }}
                                 >
                                     Online
                                 </Chip>
                             ) : undefined
                         }
                     >
-                        {sender.name}
+                        {sender.realname}
                     </Typography>
                     <Typography level="body-sm">{sender.username}</Typography>
                 </div>
             </Stack>
             <Stack spacing={1} direction="row" alignItems="center">
                 <Button
-                    startDecorator={<PhoneInTalkRoundedIcon/>}
+                    startDecorator={<PhoneInTalkRoundedIcon />}
                     color="neutral"
                     variant="outlined"
                     size="sm"
                     sx={{
-                        display: {xs: 'none', md: 'inline-flex'},
+                        display: { xs: 'none', md: 'inline-flex' },
                     }}
                 >
                     Call
@@ -90,13 +95,13 @@ export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
                     variant="outlined"
                     size="sm"
                     sx={{
-                        display: {xs: 'none', md: 'inline-flex'},
+                        display: { xs: 'none', md: 'inline-flex' },
                     }}
                 >
                     View profile
                 </Button>
                 <IconButton size="sm" variant="plain" color="neutral">
-                    <MoreVertRoundedIcon/>
+                    <MoreVertRoundedIcon />
                 </IconButton>
             </Stack>
         </Stack>

@@ -388,7 +388,6 @@ export default function AccountPage() {
                     </Card>
                     <ConnectButtons />
 
-                    {/* Modal for Report */}
                     <ReportModal
                         open={showReportModal}
                         onClose={() => setShowReportModal(false)}
@@ -397,7 +396,6 @@ export default function AccountPage() {
                         username={username}
                     />
 
-                    {/* Modal for Upload Avatar */}
                     <AvatarUploadModal
                         open={showAvatarModal}
                         onClose={() => setShowAvatarModal(false)}

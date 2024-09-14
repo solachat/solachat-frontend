@@ -29,7 +29,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 sx={{mb: 0.25}}
             >
                 <Typography level="body-xs">
-                    {sender === 'You' ? sender : sender.name}
+                    {sender === 'You' ? sender : sender.realname}
                 </Typography>
                 <Typography level="body-xs">{timestamp}</Typography>
             </Stack>

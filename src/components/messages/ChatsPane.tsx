@@ -7,7 +7,7 @@ import { Box, Chip, Input, List } from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChatListItem from './ChatListItem';
 import { ChatProps, UserProps } from '../core/types';
-import { searchUsers, createPrivateChat } from '../../api/api';
+import { searchUsers, createPrivateChat, fetchChatsFromServer } from '../../api/api';
 import LanguageSwitcher from '../core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
 import { CssVarsProvider } from '@mui/joy/styles';
@@ -20,30 +20,59 @@ type ChatsPaneProps = {
 };
 
 export default function ChatsPane(props: ChatsPaneProps) {
-    const { chats, setSelectedChat, selectedChatId, currentUser } = props;
+    const { setSelectedChat, selectedChatId, currentUser } = props;
     const { t } = useTranslation();
+    const [chats, setChats] = React.useState<ChatProps[]>([]);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
+    const [loadingChats, setLoadingChats] = React.useState(true);
 
-    // Обработка изменений в поисковой строке
+    React.useEffect(() => {
+        const loadChats = async () => {
+            try {
+                const chatsFromServer = await fetchChatsFromServer(currentUser.id.toString());
+                setChats(chatsFromServer);
+                setLoadingChats(false);
+            } catch (error) {
+                console.error("Error fetching chats:", error);
+                setLoadingChats(false);
+            }
+        };
+
+        loadChats();
+    }, [currentUser.id]);
+
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
         if (e.target.value.trim()) {
-            const results = await searchUsers(e.target.value); // выполняем поиск пользователей
+            const results = await searchUsers(e.target.value);
+            console.log("Search results from API:", results);
+            if (results.length === 0) {
+                console.log("No users found matching the search term.");
+            }
             setSearchResults(results);
         } else {
+            console.log("Search term is empty, resetting search results.");
             setSearchResults([]);
         }
     };
 
-    // Обработка клика по пользователю для начала чата
     const handleUserSelect = async (user: UserProps) => {
         try {
-            // Создаем новый чат с текущим пользователем и выбранным пользователем
+            console.log("Creating chat with user:", user);
             const newChat = await createPrivateChat(currentUser.id, user.id);
-            setSelectedChat(newChat); // Устанавливаем новый чат как выбранный
+            console.log("Chat created successfully:", newChat);
+
+            if (newChat && newChat.id) {
+                setChats(prevChats => [...prevChats, newChat]);
+                setSelectedChat(newChat);
+            } else {
+                console.error('Ошибка при создании чата: данные чата отсутствуют');
+                alert('Error creating chat: chat data is missing.');
+            }
         } catch (error) {
             console.error('Ошибка при создании чата:', error);
+            alert('Error creating chat. Please try again.');
         }
     };
 
@@ -115,34 +144,49 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                 id={user.id.toString()}
                                 sender={{
                                     id: user.id,
-                                    name: user.name,
+                                    realname: user.realname,
                                     username: user.username,
                                     avatar: user.avatar,
                                     online: user.online,
                                 }}
                                 messages={[]}
                                 setSelectedChat={setSelectedChat}
-                                onClick={() => handleUserSelect(user)}
+                                onClick={() => {
+                                    console.log("User clicked:", user);
+                                    handleUserSelect(user);
+                                }}
                             />
                         ))}
                     </List>
                 ) : (
-                    <List
-                        sx={{
-                            py: 0,
-                            '--ListItem-paddingY': '0.75rem',
-                            '--ListItem-paddingX': '1rem',
-                        }}
-                    >
-                        {chats.map((chat) => (
-                            <ChatListItem
-                                key={chat.id.toString()}
-                                {...chat}
-                                setSelectedChat={setSelectedChat}
-                                selectedChatId={selectedChatId}
-                            />
-                        ))}
-                    </List>
+                    <>
+                        {loadingChats ? (
+                            <Typography>Loading chats...</Typography>
+                        ) : (
+                            chats.length > 0 ? (
+                                <List
+                                    sx={{
+                                        py: 0,
+                                        '--ListItem-paddingY': '0.75rem',
+                                        '--ListItem-paddingX': '1rem',
+                                    }}
+                                >
+                                    {chats.map((chat) => (
+                                        <ChatListItem
+                                            key={chat.id.toString()}
+                                            {...chat}
+                                            setSelectedChat={setSelectedChat}
+                                            selectedChatId={selectedChatId}
+                                        />
+                                    ))}
+                                </List>
+                            ) : (
+                                <Typography sx={{ textAlign: 'center', mt: 3 }}>
+                                    Start to communicate!
+                                </Typography>
+                            )
+                        )}
+                    </>
                 )}
             </Sheet>
         </CssVarsProvider>

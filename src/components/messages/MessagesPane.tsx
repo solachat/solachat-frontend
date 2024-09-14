@@ -2,35 +2,58 @@ import * as React from 'react';
 import Box from '@mui/joy/Box';
 import Sheet from '@mui/joy/Sheet';
 import Stack from '@mui/joy/Stack';
+import Typography from '@mui/joy/Typography';
 import AvatarWithStatus from './AvatarWithStatus';
 import ChatBubble from './ChatBubble';
 import MessageInput from './MessageInput';
 import MessagesPaneHeader from './MessagesPaneHeader';
-import {ChatProps, MessageProps} from '../core/types';
+import { ChatProps, MessageProps } from '../core/types';
+import { useState, useEffect } from 'react';
 
 type MessagesPaneProps = {
-    chat: ChatProps;
+    chat: ChatProps | null;
 };
 
 export default function MessagesPane(props: MessagesPaneProps) {
-    const {chat} = props;
-    const [chatMessages, setChatMessages] = React.useState(chat.messages);
-    const [textAreaValue, setTextAreaValue] = React.useState('');
+    const { chat } = props;
 
-    React.useEffect(() => {
-        setChatMessages(chat.messages);
-    }, [chat.messages]);
+    const [chatMessages, setChatMessages] = useState<MessageProps[]>(chat ? chat.messages : []);
+    const [textAreaValue, setTextAreaValue] = useState('');
+
+    useEffect(() => {
+        if (chat) {
+            setChatMessages(chat.messages);
+        }
+    }, [chat]);
+
+    if (!chat) {
+        return (
+            <Sheet
+                sx={{
+                    height: { xs: 'calc(100dvh - var(--Header-height))', lg: '100dvh' },
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'background.level1',
+                }}
+            >
+                <Typography sx={{ textAlign: 'center' }}>
+                    Start to communicate!
+                </Typography>
+            </Sheet>
+        );
+    }
 
     return (
         <Sheet
             sx={{
-                height: {xs: 'calc(100dvh - var(--Header-height))', lg: '100dvh'},
+                height: { xs: 'calc(100dvh - var(--Header-height))', lg: '100dvh' },
                 display: 'flex',
                 flexDirection: 'column',
                 backgroundColor: 'background.level1',
             }}
         >
-            <MessagesPaneHeader sender={chat.sender}/>
+            <MessagesPaneHeader sender={chat.sender} />
             <Box
                 sx={{
                     display: 'flex',
@@ -43,25 +66,31 @@ export default function MessagesPane(props: MessagesPaneProps) {
                 }}
             >
                 <Stack spacing={2} justifyContent="flex-end">
-                    {chatMessages.map((message: MessageProps, index: number) => {
-                        const isYou = message.sender === 'You';
-                        return (
-                            <Stack
-                                key={index}
-                                direction="row"
-                                spacing={2}
-                                flexDirection={isYou ? 'row-reverse' : 'row'}
-                            >
-                                {message.sender !== 'You' && (
-                                    <AvatarWithStatus
-                                        online={message.sender.online}
-                                        src={message.sender.avatar}
-                                    />
-                                )}
-                                <ChatBubble variant={isYou ? 'sent' : 'received'} {...message} />
-                            </Stack>
-                        );
-                    })}
+                    {chatMessages.length > 0 ? (
+                        chatMessages.map((message: MessageProps, index: number) => {
+                            const isYou = message.sender === 'You';
+                            return (
+                                <Stack
+                                    key={index}
+                                    direction="row"
+                                    spacing={2}
+                                    flexDirection={isYou ? 'row-reverse' : 'row'}
+                                >
+                                    {message.sender !== 'You' && (
+                                        <AvatarWithStatus
+                                            online={message.sender.online}
+                                            src={message.sender.avatar}
+                                        />
+                                    )}
+                                    <ChatBubble variant={isYou ? 'sent' : 'received'} {...message} />
+                                </Stack>
+                            );
+                        })
+                    ) : (
+                        <Typography sx={{ textAlign: 'center', mt: 2 }}>
+                            No messages yet.
+                        </Typography>
+                    )}
                 </Stack>
             </Box>
             <MessageInput
@@ -79,6 +108,7 @@ export default function MessagesPane(props: MessagesPaneProps) {
                             timestamp: 'Just now',
                         },
                     ]);
+                    setTextAreaValue('');
                 }}
             />
         </Sheet>
