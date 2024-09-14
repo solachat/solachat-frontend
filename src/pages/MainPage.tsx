@@ -3,7 +3,6 @@ import { Box, Button, Typography, Stack, IconButton } from '@mui/joy';
 import { motion, Variants } from 'framer-motion';
 import PhantomIcon from '../components/core/PhantomIconPurple';
 
-// Настройка анимации частиц
 const particleAnimation: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -18,7 +17,6 @@ const particleAnimation: Variants = {
     },
 };
 
-// Анимация для боковых элементов
 const sideAnimation: Variants = {
     hidden: { opacity: 0, x: -100 },
     visible: {

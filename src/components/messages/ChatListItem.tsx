@@ -2,13 +2,13 @@ import * as React from 'react';
 import Box from '@mui/joy/Box';
 import ListDivider from '@mui/joy/ListDivider';
 import ListItem from '@mui/joy/ListItem';
-import ListItemButton, {ListItemButtonProps} from '@mui/joy/ListItemButton';
+import ListItemButton, { ListItemButtonProps } from '@mui/joy/ListItemButton';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
 import CircleIcon from '@mui/icons-material/Circle';
 import AvatarWithStatus from './AvatarWithStatus';
-import {ChatProps, MessageProps, UserProps} from '../core/types';
-import {toggleMessagesPane} from '../../utils/utils';
+import { ChatProps, MessageProps, UserProps } from '../core/types';
+import { toggleMessagesPane } from '../../utils/utils';
 
 type ChatListItemProps = ListItemButtonProps & {
     id: string;
@@ -20,14 +20,13 @@ type ChatListItemProps = ListItemButtonProps & {
 };
 
 export default function ChatListItem(props: ChatListItemProps) {
-    const {id, sender, messages, selectedChatId, setSelectedChat} = props;
+    const { id, sender, messages, selectedChatId, setSelectedChat } = props;
     const selected = selectedChatId === id;
     const hasMessages = messages.length > 0;
 
     const handleClick = () => {
-        console.log("Chat clicked:", id);
         toggleMessagesPane();
-        setSelectedChat({id, sender, messages});
+        setSelectedChat({ id, sender, messages });
     };
 
     return (
@@ -44,10 +43,15 @@ export default function ChatListItem(props: ChatListItemProps) {
                     }}
                 >
                     <Stack direction="row" spacing={1.5}>
-                        <AvatarWithStatus online={sender.online} src={sender.avatar}/>
-                        <Box sx={{flex: 1}}>
-                            <Typography level="title-sm">{sender.name}</Typography>
-                            <Typography level="body-sm">{sender.username}</Typography>
+                        <AvatarWithStatus online={sender.online} src={sender.avatar} />
+                        <Box sx={{ flex: 1 }}>
+                            <Typography level="title-sm">{sender.name}</Typography> {/* Отображение имени */}
+                            <Typography
+                                level="body-sm"
+                                sx={{ color: 'text.secondary' }}
+                            >
+                                @{sender.username}
+                            </Typography> {/* Отображение username */}
                         </Box>
                         {hasMessages && (
                             <Box
@@ -57,11 +61,11 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 }}
                             >
                                 {messages[0].unread && (
-                                    <CircleIcon sx={{fontSize: 12}} color="primary"/>
+                                    <CircleIcon sx={{ fontSize: 12 }} color="primary" />
                                 )}
                                 <Typography
                                     level="body-xs"
-                                    display={{xs: 'none', md: 'block'}}
+                                    display={{ xs: 'none', md: 'block' }}
                                     noWrap
                                 >
                                     5 mins ago
@@ -85,7 +89,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                     )}
                 </ListItemButton>
             </ListItem>
-            <ListDivider sx={{margin: 0}}/>
+            <ListDivider sx={{ margin: 0 }} />
         </React.Fragment>
     );
 }

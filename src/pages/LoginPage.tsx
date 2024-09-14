@@ -50,7 +50,6 @@ const Login = () => {
             lastlogin: new Date().toISOString(),
         };
 
-        console.log('Sending login data:', data);
 
         try {
             const response = await axios.post(`${API_URL}/api/users/login`, {
@@ -59,7 +58,6 @@ const Login = () => {
                 lastlogin: data.lastlogin,
             });
 
-            console.log('Received response:', response.data);
 
             if (response.data.token && response.data.user) {
                 const userData = response.data.user;

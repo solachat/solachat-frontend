@@ -2,42 +2,49 @@ import {ChatProps, UserProps} from '../components/core/types';
 
 export const users: UserProps[] = [
     {
+        id: 1,
         name: 'Steve E.',
         username: '@steveEberger',
         avatar: '/static/images/avatar/2.jpg',
         online: true,
     },
     {
+        id: 2,
         name: 'Katherine Moss',
         username: '@kathy',
         avatar: '/static/images/avatar/3.jpg',
         online: false,
     },
     {
+        id: 3,
         name: 'Phoenix Baker',
         username: '@phoenix',
         avatar: '/static/images/avatar/1.jpg',
         online: true,
     },
     {
+        id: 4,
         name: 'Eleanor Pena',
         username: '@eleanor',
         avatar: '/static/images/avatar/4.jpg',
         online: false,
     },
     {
+        id: 5,
         name: 'Kenny Peterson',
         username: '@kenny',
         avatar: '/static/images/avatar/5.jpg',
         online: true,
     },
     {
+        id: 6,
         name: 'Al Sanders',
         username: '@al',
         avatar: '/static/images/avatar/6.jpg',
         online: true,
     },
     {
+        id: 7,
         name: 'Melissa Van Der Berg',
         username: '@melissa',
         avatar: '/static/images/avatar/7.jpg',

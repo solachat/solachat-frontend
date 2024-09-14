@@ -1,29 +1,51 @@
 import * as React from 'react';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
-import {Box, Chip, IconButton, Input} from '@mui/joy';
-import List from '@mui/joy/List';
-import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import { Box, Chip, Input, List } from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ChatListItem from './ChatListItem';
-import {ChatProps} from '../core/types';
-import {toggleMessagesPane} from '../../utils/utils';
+import { ChatProps, UserProps } from '../core/types';
+import { searchUsers, createPrivateChat } from '../../api/api';
 import LanguageSwitcher from '../core/LanguageSwitcher';
-import {ColorSchemeToggle} from '../core/ColorSchemeToggle';
-import {CssVarsProvider} from '@mui/joy/styles';
+import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
+import { CssVarsProvider } from '@mui/joy/styles';
 
 type ChatsPaneProps = {
     chats: ChatProps[];
     setSelectedChat: (chat: ChatProps) => void;
     selectedChatId: string;
+    currentUser: { id: number };
 };
 
 export default function ChatsPane(props: ChatsPaneProps) {
-    const {chats, setSelectedChat, selectedChatId} = props;
-    const {t} = useTranslation();
+    const { chats, setSelectedChat, selectedChatId, currentUser } = props;
+    const { t } = useTranslation();
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
+
+    // Обработка изменений в поисковой строке
+    const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+        if (e.target.value.trim()) {
+            const results = await searchUsers(e.target.value); // выполняем поиск пользователей
+            setSearchResults(results);
+        } else {
+            setSearchResults([]);
+        }
+    };
+
+    // Обработка клика по пользователю для начала чата
+    const handleUserSelect = async (user: UserProps) => {
+        try {
+            // Создаем новый чат с текущим пользователем и выбранным пользователем
+            const newChat = await createPrivateChat(currentUser.id, user.id);
+            setSelectedChat(newChat); // Устанавливаем новый чат как выбранный
+        } catch (error) {
+            console.error('Ошибка при создании чата:', error);
+        }
+    };
 
     return (
         <CssVarsProvider>
@@ -44,7 +66,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                     pb={1.5}
                 >
                     <Typography
-                        fontSize={{xs: 'md', md: 'lg'}}
+                        fontSize={{ xs: 'md', md: 'lg' }}
                         component="h1"
                         fontWeight="lg"
                         endDecorator={
@@ -52,65 +74,76 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                 variant="soft"
                                 color="primary"
                                 size="md"
-                                slotProps={{root: {component: 'span'}}}
+                                slotProps={{ root: { component: 'span' } }}
                             >
-                                4
+                                {chats.length}
                             </Chip>
                         }
-                        sx={{mr: 'auto'}}
+                        sx={{ mr: 'auto' }}
                     >
                         {t('Messages')}
                     </Typography>
-                    <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
-                        <LanguageSwitcher/>
-                        <ColorSchemeToggle/>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <LanguageSwitcher />
+                        <ColorSchemeToggle />
                     </div>
-                    <IconButton
-                        variant="plain"
-                        aria-label="edit"
-                        color="neutral"
-                        size="sm"
-                        sx={{display: {xs: 'none', sm: 'unset'}}}
-                    >
-                        <EditNoteRoundedIcon/>
-                    </IconButton>
-                    <IconButton
-                        variant="plain"
-                        aria-label="close"
-                        color="neutral"
-                        size="sm"
-                        onClick={() => {
-                            toggleMessagesPane();
-                        }}
-                        sx={{display: {sm: 'none'}}}
-                    >
-                        <CloseRoundedIcon/>
-                    </IconButton>
                 </Stack>
-                <Box sx={{px: 2, pb: 1.5}}>
+
+                <Box sx={{ px: 2, pb: 1.5 }}>
                     <Input
                         size="sm"
-                        startDecorator={<SearchRoundedIcon/>}
+                        startDecorator={<SearchRoundedIcon />}
                         placeholder={t('Search')}
+                        value={searchTerm}
+                        onChange={handleSearchChange}
                         aria-label="Search"
                     />
                 </Box>
-                <List
-                    sx={{
-                        py: 0,
-                        '--ListItem-paddingY': '0.75rem',
-                        '--ListItem-paddingX': '1rem',
-                    }}
-                >
-                    {chats.map((chat) => (
-                        <ChatListItem
-                            key={chat.id}
-                            {...chat}
-                            setSelectedChat={setSelectedChat}
-                            selectedChatId={selectedChatId}
-                        />
-                    ))}
-                </List>
+
+                {/* Отображаем результаты поиска */}
+                {searchResults.length > 0 ? (
+                    <List
+                        sx={{
+                            py: 0,
+                            '--ListItem-paddingY': '0.75rem',
+                            '--ListItem-paddingX': '1rem',
+                        }}
+                    >
+                        {searchResults.map((user) => (
+                            <ChatListItem
+                                key={user.id.toString()}
+                                id={user.id.toString()}
+                                sender={{
+                                    id: user.id,
+                                    name: user.name,
+                                    username: user.username,
+                                    avatar: user.avatar,
+                                    online: user.online,
+                                }}
+                                messages={[]}
+                                setSelectedChat={setSelectedChat}
+                                onClick={() => handleUserSelect(user)}
+                            />
+                        ))}
+                    </List>
+                ) : (
+                    <List
+                        sx={{
+                            py: 0,
+                            '--ListItem-paddingY': '0.75rem',
+                            '--ListItem-paddingX': '1rem',
+                        }}
+                    >
+                        {chats.map((chat) => (
+                            <ChatListItem
+                                key={chat.id.toString()}
+                                {...chat}
+                                setSelectedChat={setSelectedChat}
+                                selectedChatId={selectedChatId}
+                            />
+                        ))}
+                    </List>
+                )}
             </Sheet>
         </CssVarsProvider>
     );

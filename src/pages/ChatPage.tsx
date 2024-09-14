@@ -10,6 +10,8 @@ import LanguageSwitcher from '../components/core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
 
 export default function MyProfile() {
+    const currentUser = { id: 1, username: 'current_user' };
+
     const [chats, setChats] = React.useState<ChatProps[]>(loadChatsFromStorage());
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -54,16 +56,23 @@ export default function MyProfile() {
 
     return (
         <div>
-            <header style={{ display: 'flex', justifyContent: 'space-between', padding: '10px' }}>
-                <LanguageSwitcher />
-                <ColorSchemeToggle />
+            <header style={{
+                display: 'flex',
+                justifyContent: 'center', /* Центрируем */
+                alignItems: 'center',
+                padding: '10px'
+            }}>
+                <div style={{display: 'flex', gap: '20px'}}>
+                    <LanguageSwitcher/>
+                    <ColorSchemeToggle/>
+                </div>
             </header>
             <Sheet
                 sx={{
                     flex: 1,
                     width: '100%',
                     mx: 'auto',
-                    pt: { xs: 'var(--Header-height)', sm: 0 },
+                    pt: {xs: 'var(--Header-height)', sm: 0},
                     display: 'grid',
                     gridTemplateColumns: {
                         xs: '1fr',
@@ -73,7 +82,7 @@ export default function MyProfile() {
             >
                 <Sheet
                     sx={{
-                        position: { xs: 'fixed', sm: 'sticky' },
+                        position: {xs: 'fixed', sm: 'sticky'},
                         transform: {
                             xs: 'translateX(calc(100% * (var(--MessagesPane-slideIn, 0) - 1)))',
                             sm: 'none',
@@ -89,13 +98,14 @@ export default function MyProfile() {
                             chats={chats}
                             selectedChatId={selectedChat.id}
                             setSelectedChat={setSelectedChat}
+                            currentUser={currentUser}
                         />
                     ) : (
                         <div>Loading chats...</div>
                     )}
                 </Sheet>
                 {selectedChat ? (
-                    <MessagesPane chat={selectedChat} />
+                    <MessagesPane chat={selectedChat}/>
                 ) : (
                     <div>Loading messages...</div>
                 )}

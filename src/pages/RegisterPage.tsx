@@ -84,8 +84,6 @@ const RegisterPage: React.FC = () => {
             return;
         }
 
-        console.log('User data:', userData);
-
         try {
             const response = await axios.post(`${API_URL}/api/users/register`, userData);
             const token = response.data.token;

@@ -2,15 +2,17 @@ import * as React from 'react';
 import Sheet from '@mui/joy/Sheet';
 import MessagesPane from './MessagesPane';
 import ChatsPane from './ChatsPane';
-import {ChatProps} from '../core/types';
-import {useParams, useNavigate} from 'react-router-dom';
-import {chats as initialChats} from '../../utils/data';
-import {loadChatsFromStorage, saveChatsToStorage} from '../../utils/utils';
+import { ChatProps } from '../core/types';
+import { useParams, useNavigate } from 'react-router-dom';
+import { chats as initialChats } from '../../utils/data';
+import { loadChatsFromStorage, saveChatsToStorage } from '../../utils/utils';
 
 export default function MyProfile() {
     const [chats, setChats] = React.useState<ChatProps[]>(loadChatsFromStorage());
-    const {id} = useParams<{ id: string }>();
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+
+    const currentUser = { id: 1 };
 
     React.useEffect(() => {
         if (!chats.length) {
@@ -19,7 +21,7 @@ export default function MyProfile() {
         }
     }, [chats]);
 
-    const selectedChat = chats.find(chat => chat.id === id) || chats[0];
+    const selectedChat = chats.find((chat) => chat.id === id) || chats[0];
 
     const setSelectedChat = (chat: ChatProps) => {
         navigate(`/chat?id=${chat.id}`);
@@ -27,11 +29,11 @@ export default function MyProfile() {
 
     React.useEffect(() => {
         const handleActivity = () => {
-            console.log("User is active");
+            console.log('User is active');
         };
 
         const handleInactivity = () => {
-            console.log("User is inactive");
+            console.log('User is inactive');
         };
 
         const timeout = setTimeout(handleInactivity, 2 * 60 * 1000);
@@ -56,7 +58,7 @@ export default function MyProfile() {
                 flex: 1,
                 width: '100%',
                 mx: 'auto',
-                pt: {xs: 'var(--Header-height)', sm: 0},
+                pt: { xs: 'var(--Header-height)', sm: 0 },
                 display: 'grid',
                 gridTemplateColumns: {
                     xs: '1fr',
@@ -66,7 +68,7 @@ export default function MyProfile() {
         >
             <Sheet
                 sx={{
-                    position: {xs: 'fixed', sm: 'sticky'},
+                    position: { xs: 'fixed', sm: 'sticky' },
                     transform: {
                         xs: 'translateX(calc(100% * (var(--MessagesPane-slideIn, 0) - 1)))',
                         sm: 'none',
@@ -82,13 +84,14 @@ export default function MyProfile() {
                         chats={chats}
                         selectedChatId={selectedChat.id}
                         setSelectedChat={setSelectedChat}
+                        currentUser={currentUser}
                     />
                 ) : (
                     <div>Loading chats...</div>
                 )}
             </Sheet>
             {selectedChat ? (
-                <MessagesPane chat={selectedChat}/>
+                <MessagesPane chat={selectedChat} />
             ) : (
                 <div>Loading messages...</div>
             )}
