@@ -2,16 +2,16 @@ import * as React from 'react';
 import Sheet from '@mui/joy/Sheet';
 import MessagesPane from './MessagesPane';
 import ChatsPane from './ChatsPane';
-import { ChatProps } from '../core/types';
+import { ChatProps, UserProps } from '../core/types';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchChatsFromServer } from '../../api/api';
-import {Typography} from "@mui/joy";
+import { Typography } from "@mui/joy";
 
 export default function MyProfile() {
     const [chats, setChats] = React.useState<ChatProps[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
-    const { id } = useParams<{ id: string }>();
+    const { id } = useParams<{ id: string }>(); // Получаем параметр id из URL
     const navigate = useNavigate();
 
     const currentUser = { id: 1 };
@@ -27,7 +27,6 @@ export default function MyProfile() {
 
                 const fetchedChats = await fetchChatsFromServer(currentUser.id, token);
 
-                // Убедимся, что fetchedChats — массив
                 if (Array.isArray(fetchedChats)) {
                     setChats(fetchedChats);
                 } else {
@@ -45,34 +44,22 @@ export default function MyProfile() {
         loadChats();
     }, [currentUser.id]);
 
-    const selectedChat = Array.isArray(chats) && chats.length > 0
-        ? chats.find((chat) => chat.id === id) || chats[0]
-        : null;
+    // Сравниваем id из URL с id чатов, приводя id к числу
+    const selectedChat = chats.find((chat) => chat.id.toString() === id) || chats[0];
 
     const setSelectedChat = (chat: ChatProps) => {
         navigate(`/chat?id=${chat.id}`);
     };
 
     React.useEffect(() => {
-        const handleActivity = () => {
-            console.log('User is active');
-        };
-
-        const handleInactivity = () => {
-            console.log('User is inactive');
-        };
-
-        const timeout = setTimeout(handleInactivity, 2 * 60 * 1000);
-
-        window.addEventListener('mousemove', handleActivity);
-        window.addEventListener('keypress', handleActivity);
-
-        return () => {
-            clearTimeout(timeout);
-            window.removeEventListener('mousemove', handleActivity);
-            window.removeEventListener('keypress', handleActivity);
-        };
-    }, []);
+        // Следим за изменением id и обновляем выбранный чат
+        if (id) {
+            const selectedChat = chats.find((chat) => chat.id.toString() === id);
+            if (selectedChat) {
+                setSelectedChat(selectedChat);
+            }
+        }
+    }, [id, chats]); // Добавили зависимость от id и списка чатов
 
     return (
         <Sheet
@@ -99,7 +86,7 @@ export default function MyProfile() {
             >
                 <ChatsPane
                     chats={chats}
-                    selectedChatId={selectedChat ? selectedChat.id : ''}
+                    selectedChatId={selectedChat ? selectedChat.id.toString() : ''}
                     setSelectedChat={setSelectedChat}
                     currentUser={currentUser}
                 />
@@ -119,9 +106,9 @@ export default function MyProfile() {
                 ) : loading ? (
                     <Typography>Loading chats...</Typography>
                 ) : selectedChat ? (
-                    <MessagesPane chat={selectedChat} />
+                    <MessagesPane chat={selectedChat} currentUserId={currentUser.id} currentUser={currentUser} />
                 ) : (
-                    <MessagesPane chat={null} />  // Отображаем MessagesPane даже если чатов нет
+                    <MessagesPane chat={null} currentUserId={currentUser.id} currentUser={currentUser} />
                 )}
             </Sheet>
         </Sheet>

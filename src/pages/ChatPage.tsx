@@ -49,7 +49,7 @@ export default function MyProfile() {
 
     // Проверяем, что chats является массивом перед использованием .find
     const selectedChat = Array.isArray(chats) && chats.length > 0
-        ? chats.find(chat => chat.id === id) || chats[0]
+        ? chats.find((chat) => chat.id === id) || chats[0]
         : null;
 
     const setSelectedChat = (chat: ChatProps) => {
@@ -144,7 +144,7 @@ export default function MyProfile() {
                     ) : loading ? (
                         <Typography>Loading chats...</Typography>
                     ) : selectedChat ? (
-                        <MessagesPane chat={selectedChat} />
+                        <MessagesPane chat={selectedChat} currentUserId={currentUser.id} currentUser={currentUser} />
                     ) : (
                         <Typography>No messages yet.</Typography>
                     )}

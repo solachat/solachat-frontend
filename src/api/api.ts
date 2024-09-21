@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {useEffect} from "react";
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
@@ -82,5 +83,31 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
     }
 };
 
+export const sendMessage = async (chatId: number, content: string, token: string) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/messages/${chatId}`,
+            { content },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error sending message:', error);
+        throw new Error('Could not send message');
+    }
+};
 
+export const fetchUserData = async (userId: number) => {
+    try {
+        const response = await axios.get(`${API_URL}/api/users/users/${userId}`);
+        return response.data;  // Возвращаем данные пользователя
+    } catch (error: any) {
+        console.error('Error fetching user data:', error.response?.data || error.message);
+        throw new Error('Error fetching user data');
+    }
+};
 

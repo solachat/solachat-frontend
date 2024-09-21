@@ -7,10 +7,11 @@ import { Box, Chip, Input, List } from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChatListItem from './ChatListItem';
 import { ChatProps, UserProps } from '../core/types';
-import {searchUsers, createPrivateChat, fetchChatsFromServer, fetchChatWithMessages} from '../../api/api';
+import { searchUsers, createPrivateChat, fetchChatsFromServer } from '../../api/api';
 import LanguageSwitcher from '../core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
 import { CssVarsProvider } from '@mui/joy/styles';
+import { useParams } from 'react-router-dom';
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -21,6 +22,7 @@ type ChatsPaneProps = {
 
 export default function ChatsPane(props: ChatsPaneProps) {
     const { setSelectedChat, selectedChatId, currentUser } = props;
+    const { id } = useParams<{ id: string }>(); // Получаем ID чата из URL
     const { t } = useTranslation();
     const [chats, setChats] = React.useState<ChatProps[]>([]);
     const [searchTerm, setSearchTerm] = React.useState('');
@@ -33,16 +35,22 @@ export default function ChatsPane(props: ChatsPaneProps) {
             try {
                 const token = localStorage.getItem('token');
                 if (!token) {
-                    console.error('Authorization token is missing');
                     setError('Authorization token is missing');
                     return;
                 }
 
-                const chatsFromServer = await fetchChatsFromServer(currentUser.id, token);
-                setChats(chatsFromServer || []);
-                setLoadingChats(false);
+                const fetchedChats = await fetchChatsFromServer(currentUser.id, token);
+
+                if (Array.isArray(fetchedChats)) {
+                    setChats(fetchedChats);
+                } else {
+                    setChats([]);
+                }
             } catch (error) {
-                console.error('Error fetching chats:', error);
+                console.error('Error loading chats:', error);
+                setError('Failed to load chats.');
+                setChats([]);
+            } finally {
                 setLoadingChats(false);
             }
         };
@@ -50,11 +58,20 @@ export default function ChatsPane(props: ChatsPaneProps) {
         loadChats();
     }, [currentUser.id]);
 
+    React.useEffect(() => {
+        if (id) {
+            const selectedChat = chats.find((chat) => chat.id.toString() === id);
+            if (selectedChat) {
+                setSelectedChat(selectedChat);
+            }
+        }
+    }, [id, chats]);
+
+
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
         if (e.target.value.trim()) {
             const results = await searchUsers(e.target.value);
-            console.log('Search results from API:', results);
             setSearchResults(results || []);
         } else {
             setSearchResults([]);
@@ -62,27 +79,19 @@ export default function ChatsPane(props: ChatsPaneProps) {
     };
 
     const handleUserSelect = async (user: UserProps) => {
-        console.log('User selected (before creating chat):', user);
         const token = localStorage.getItem('token'); // Получаем токен
         if (token) {
             try {
                 const newChat = await createPrivateChat(currentUser.id, user.id, token);
-                console.log('Chat created successfully:', newChat);
 
                 // После создания чата, обновляем список чатов и выбираем этот чат
                 if (newChat && newChat.id) {
-                    const updatedChat = await fetchChatWithMessages(newChat.id, token);
-                    setChats((prevChats) => [...prevChats, updatedChat]); // Добавляем чат в список
-                    setSelectedChat(updatedChat); // Выбираем новый чат
-                } else {
-                    console.error('Error creating chat: chat data is missing.');
+                    setChats((prevChats) => [...prevChats, newChat]); // Добавляем чат в список
+                    setSelectedChat(newChat); // Выбираем новый чат
                 }
             } catch (error) {
                 console.error('Error creating chat:', error);
-                alert('Error creating chat. Please try again.');
             }
-        } else {
-            console.error('Token is missing');
         }
     };
 
@@ -139,7 +148,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
                     />
                 </Box>
 
-                {/* Show search results */}
                 {searchResults.length > 0 ? (
                     <List
                         sx={{
@@ -155,43 +163,41 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                 sender={user}
                                 messages={[]}
                                 setSelectedChat={setSelectedChat}
-                                currentUserId={currentUser.id} // Передаем currentUserId
-                                chats={chats} // Передаем все чаты
+                                currentUserId={currentUser.id}
+                                chats={chats}
                             />
                         ))}
                     </List>
                 ) : (
-                    <>
-                        {loadingChats ? (
-                            <Typography>Loading chats...</Typography>
+                    loadingChats ? (
+                        <Typography>Loading chats...</Typography>
+                    ) : (
+                        chats.length > 0 ? (
+                            <List
+                                sx={{
+                                    py: 0,
+                                    '--ListItem-paddingY': '0.75rem',
+                                    '--ListItem-paddingX': '1rem',
+                                }}
+                            >
+                                {chats.map((chat) => (
+                                    <ChatListItem
+                                        key={chat.id.toString()}
+                                        id={chat.id.toString()}
+                                        sender={chat.users.find(u => u.id !== currentUser.id) || chat.users[0]}
+                                        messages={chat.messages}
+                                        setSelectedChat={setSelectedChat}
+                                        currentUserId={currentUser.id}
+                                        chats={chats}
+                                    />
+                                ))}
+                            </List>
                         ) : (
-                            chats.length > 0 ? (
-                                <List
-                                    sx={{
-                                        py: 0,
-                                        '--ListItem-paddingY': '0.75rem',
-                                        '--ListItem-paddingX': '1rem',
-                                    }}
-                                >
-                                    {chats.map((chat) => (
-                                        <ChatListItem
-                                            key={chat.id.toString()}
-                                            id={chat.id.toString()}
-                                            sender={chat.users[0]}
-                                            messages={chat.messages}
-                                            setSelectedChat={setSelectedChat}
-                                            currentUserId={currentUser.id}
-                                            chats={chats}
-                                        />
-                                    ))}
-                                </List>
-                            ) : (
-                                <Typography sx={{ textAlign: 'center', mt: 3 }}>
-                                    Start to communicate!
-                                </Typography>
-                            )
-                        )}
-                    </>
+                            <Typography sx={{ textAlign: 'center', mt: 3 }}>
+                                Start to communicate!
+                            </Typography>
+                        )
+                    )
                 )}
             </Sheet>
         </CssVarsProvider>

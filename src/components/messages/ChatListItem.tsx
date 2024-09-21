@@ -18,7 +18,7 @@ type ChatListItemProps = ListItemButtonProps & {
     selectedChatId?: string;
     setSelectedChat: (chat: ChatProps) => void;
     currentUserId: number;
-    chats: ChatProps[]; // Убедитесь, что `chats` передается как массив
+    chats: ChatProps[];
 };
 
 export default function ChatListItem(props: ChatListItemProps) {
@@ -26,6 +26,7 @@ export default function ChatListItem(props: ChatListItemProps) {
     const selected = selectedChatId === id;
     const hasMessages = Array.isArray(messages) && messages.length > 0;
 
+    // Поиск существующего чата
     const existingChat = Array.isArray(chats)
         ? chats.find((chat: ChatProps) =>
             chat.users.some((user: UserProps) => user.id === sender.id)
@@ -33,9 +34,11 @@ export default function ChatListItem(props: ChatListItemProps) {
         : null;
 
     const handleClick = async () => {
+        let chatId;
         if (existingChat) {
             console.log('Chat already exists:', existingChat);
-            setSelectedChat(existingChat); // Переключаемся на существующий чат
+            setSelectedChat(existingChat); // Устанавливаем существующий чат
+            chatId = existingChat.id;
         } else {
             console.log('Creating chat for users:', currentUserId, 'and', sender.id);
             const token = localStorage.getItem('token');
@@ -43,21 +46,28 @@ export default function ChatListItem(props: ChatListItemProps) {
                 const newChat = await createPrivateChat(currentUserId, sender.id, token);
                 if (newChat) {
                     console.log('New chat created:', newChat);
-                    setSelectedChat(newChat); // Переключаемся на новый чат
+                    setSelectedChat(newChat); // Устанавливаем новый созданный чат
+                    chatId = newChat.id;
                 } else {
                     console.error('Failed to create a new chat.');
+                    return; // Прерываем, если создание чата не удалось
                 }
             } else {
                 console.error('Token is missing');
+                return; // Прерываем, если токен отсутствует
             }
         }
+
+        // Программная навигация для перехода на выбранный чат
+        window.history.pushState({}, '', `/chat?id=${chatId}`);
     };
+
 
     return (
         <React.Fragment>
             <ListItem>
                 <ListItemButton
-                    onClick={handleClick}
+                    onClick={handleClick} // Обработчик клика для выбора чата
                     selected={selected}
                     color="neutral"
                     sx={{
