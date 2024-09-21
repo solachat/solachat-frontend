@@ -7,7 +7,7 @@ import AvatarWithStatus from './AvatarWithStatus';
 import ChatBubble from './ChatBubble';
 import MessageInput from './MessageInput';
 import MessagesPaneHeader from './MessagesPaneHeader';
-import { ChatProps, MessageProps } from '../core/types';
+import { ChatProps, MessageProps, UserProps } from '../core/types';
 import { useState, useEffect } from 'react';
 
 type MessagesPaneProps = {
@@ -26,7 +26,8 @@ export default function MessagesPane(props: MessagesPaneProps) {
         }
     }, [chat]);
 
-    if (!chat) {
+    // Проверка на наличие пользователей в чате
+    if (!chat || !chat.users || chat.users.length === 0) {
         return (
             <Sheet
                 sx={{
@@ -44,31 +45,38 @@ export default function MessagesPane(props: MessagesPaneProps) {
         );
     }
 
+    // Берем первого пользователя как отправителя (если это приватный чат)
+    const sender: UserProps | undefined = chat.users.length > 0 ? chat.users[0] : undefined;
+
     return (
         <Sheet
             sx={{
-                height: { xs: 'calc(100dvh - var(--Header-height))', lg: '100dvh' },
+                height: { xs: 'calc(100dvh - var(--Header-height))', md: '100dvh' },
                 display: 'flex',
                 flexDirection: 'column',
                 backgroundColor: 'background.level1',
             }}
         >
-            <MessagesPaneHeader sender={chat.sender} />
+            <MessagesPaneHeader sender={sender} />
             <Box
                 sx={{
+                    flex: 1, // Этот элемент займет все доступное пространство
                     display: 'flex',
-                    flex: 1,
-                    minHeight: 0,
+                    flexDirection: 'column-reverse', // Сообщения будут прокручиваться снизу вверх
                     px: 2,
                     py: 3,
-                    overflowY: 'scroll',
-                    flexDirection: 'column-reverse',
+                    overflowY: 'auto', // Скроллинг, если сообщений слишком много
+                    minHeight: 0, // Убираем ограничения по минимальной высоте
                 }}
             >
                 <Stack spacing={2} justifyContent="flex-end">
                     {chatMessages.length > 0 ? (
                         chatMessages.map((message: MessageProps, index: number) => {
                             const isYou = message.sender === 'You';
+
+                            // Если сообщение отправлено "You", avatar и online не нужны
+                            const messageSender = !isYou ? message.sender as UserProps : null;
+
                             return (
                                 <Stack
                                     key={index}
@@ -76,10 +84,10 @@ export default function MessagesPane(props: MessagesPaneProps) {
                                     spacing={2}
                                     flexDirection={isYou ? 'row-reverse' : 'row'}
                                 >
-                                    {message.sender !== 'You' && (
+                                    {!isYou && messageSender && (
                                         <AvatarWithStatus
-                                            online={message.sender.online}
-                                            src={message.sender.avatar}
+                                            online={messageSender.online}
+                                            src={messageSender.avatar}
                                         />
                                     )}
                                     <ChatBubble variant={isYou ? 'sent' : 'received'} {...message} />

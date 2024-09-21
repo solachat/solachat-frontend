@@ -26,16 +26,20 @@ export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
     return (
         <Stack
             direction="row"
-            justifyContent="space-between"
             sx={{
+                justifyContent: 'space-between',
+                py: { xs: 2, md: 2 },
+                px: { xs: 1, md: 2 },
                 borderBottom: '1px solid',
                 borderColor: 'divider',
                 backgroundColor: 'background.body',
             }}
-            py={{ xs: 2, md: 2 }}
-            px={{ xs: 1, md: 2 }}
         >
-            <Stack direction="row" spacing={{ xs: 1, md: 2 }} alignItems="center">
+            <Stack
+                direction="row"
+                spacing={{ xs: 1, md: 2 }}
+                sx={{ alignItems: 'center' }}
+            >
                 <IconButton
                     variant="plain"
                     color="neutral"
@@ -72,6 +76,7 @@ export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
                                 </Chip>
                             ) : undefined
                         }
+                        sx={{ fontWeight: 'lg', fontSize: 'lg' }}
                     >
                         {sender.realname}
                     </Typography>

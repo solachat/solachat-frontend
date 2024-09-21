@@ -65,14 +65,15 @@ export const fetchChatWithMessages = async (chatId: number, token: string) => {
 
 export const fetchChatsFromServer = async (userId: number, token: string) => {
     try {
-        const response = await axios.get(`${API_URL}/api/chats/chats`, {
-            params: {
-                userId
-            },
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await axios.post(
+            `${API_URL}/api/chats/chats`,
+            { userId },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
         console.log('Chats fetched successfully:', response.data);
         return response.data;
     } catch (error: any) {
@@ -80,5 +81,6 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
         return [];
     }
 };
+
 
 

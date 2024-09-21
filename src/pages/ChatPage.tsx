@@ -106,7 +106,6 @@ export default function MyProfile() {
             >
                 <Sheet
                     sx={{
-                        position: { xs: 'fixed', sm: 'sticky' },
                         transform: {
                             xs: 'translateX(calc(100% * (var(--MessagesPane-slideIn, 0) - 1)))',
                             sm: 'none',
@@ -136,7 +135,6 @@ export default function MyProfile() {
                         justifyContent: 'center',
                         alignItems: 'center',
                         backgroundColor: 'background.level1',
-                        padding: 2,
                     }}
                 >
                     {error ? (
