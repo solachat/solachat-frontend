@@ -118,7 +118,7 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                     <Stack spacing={2} sx={{ width: '100%' }}>
                         {chatMessages.map((message: MessageProps, index: number) => {
                             const isCurrentUser = message.userId === currentUserId;
-                            const avatarSrc = message.user?.avatar || "default_avatar_path"; // Если аватар не найден, подставь аватар по умолчанию
+                            const avatarSrc = message.user?.avatar || "default_avatar_path";
 
                             console.log(`Сообщение #${index + 1}: Отправитель: ${message.user?.username} | Аватар: ${avatarSrc}`);
 
@@ -129,9 +129,6 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                                     spacing={2}
                                     flexDirection={isCurrentUser ? 'row-reverse' : 'row'}
                                 >
-                                    {!isCurrentUser && message.user && (
-                                        <AvatarWithStatus online={message.user.online} src={avatarSrc} />
-                                    )}
                                     <ChatBubble
                                         id={message.id}
                                         userId={message.userId}
@@ -144,7 +141,6 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                                 </Stack>
                             );
                         })}
-                        {/* Добавляем реф для прокрутки вниз */}
                         <div ref={messagesEndRef} />
                     </Stack>
                 ) : (

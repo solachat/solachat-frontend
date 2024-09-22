@@ -1,13 +1,8 @@
 import * as React from 'react';
-import Avatar from '@mui/joy/Avatar';
 import Box from '@mui/joy/Box';
-import IconButton from '@mui/joy/IconButton';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
-import CelebrationOutlinedIcon from '@mui/icons-material/CelebrationOutlined';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
 import { MessageProps } from '../core/types';
 
 type ChatBubbleProps = MessageProps & {
@@ -15,121 +10,80 @@ type ChatBubbleProps = MessageProps & {
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
-    const { content, variant, createdAt, attachment = undefined, user } = props;
+    const { content, variant, createdAt } = props;
     const isSent = variant === 'sent';
-    const [isHovered, setIsHovered] = React.useState<boolean>(false);
-    const [isLiked, setIsLiked] = React.useState<boolean>(false);
-    const [isCelebrated, setIsCelebrated] = React.useState<boolean>(false);
-
     const formattedTime = new Date(createdAt).toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit',
     });
 
     return (
-        <Box sx={{ maxWidth: '60%', minWidth: 'auto' }}>
-            <Stack
-                direction="row"
-                justifyContent="space-between"
-                spacing={2}
-                sx={{ mb: 0.25 }}
+        <Box
+            sx={{
+                display: 'flex',
+                justifyContent: isSent ? 'flex-end' : 'flex-start',
+                mb: 1,
+            }}
+        >
+            <Sheet
+                color={isSent ? 'primary' : 'neutral'}
+                variant={isSent ? 'solid' : 'soft'}
+                sx={{
+                    position: 'relative',
+                    maxWidth: '95%',
+                    minWidth: 'auto',
+                    padding: '8px 20px',
+                    borderRadius: '16px',
+                    borderTopRightRadius: isSent ? 0 : '16px',
+                    borderTopLeftRadius: isSent ? '16px' : 0,
+                    backgroundColor: isSent
+                        ? 'var(--joy-palette-primary-solidBg)'
+                        : 'background.body',
+                    color: isSent
+                        ? 'var(--joy-palette-common-white)'
+                        : 'var(--joy-palette-text-primary)',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    flexGrow: 0,
+                    display: 'inline-block',
+                }}
             >
-                <Typography level="body-xs">
-                    {user?.realname || user?.username || 'Unknown'}
-                </Typography>
-                <Typography level="body-xs">{formattedTime}</Typography>
-            </Stack>
-            {attachment ? (
-                <Sheet
-                    variant="outlined"
+                {/* Контент сообщения */}
+                <Typography
                     sx={{
-                        px: 1.75,
-                        py: 1.25,
-                        borderRadius: 'lg',
-                        borderTopRightRadius: isSent ? 0 : 'lg',
-                        borderTopLeftRadius: isSent ? 'lg' : 0,
+                        color: isSent
+                            ? 'var(--joy-palette-common-white)'
+                            : 'var(--joy-palette-text-primary)',
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'pre-wrap',
+                        marginBottom: '8px', // Отступ снизу для контента
                     }}
                 >
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Avatar color="primary" size="lg">
-                            <InsertDriveFileRoundedIcon />
-                        </Avatar>
-                        <div>
-                            <Typography fontSize="sm">{attachment.fileName}</Typography>
-                            <Typography level="body-sm">{attachment.size}</Typography>
-                        </div>
-                    </Stack>
-                </Sheet>
-            ) : (
-                <Box
-                    sx={{ position: 'relative' }}
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
+                    {content}
+                </Typography>
+
+                {/* Время сообщения */}
+                <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="flex-end"
+                    spacing={0.5}
+                    sx={{ position: 'absolute', bottom: 2, right: 10 }} // Отступы справа и снизу
                 >
-                    <Sheet
-                        color={isSent ? 'primary' : 'neutral'}
-                        variant={isSent ? 'solid' : 'soft'}
+                    <Typography
                         sx={{
-                            p: 1.25,
-                            borderRadius: 'lg',
-                            borderTopRightRadius: isSent ? 0 : 'lg',
-                            borderTopLeftRadius: isSent ? 'lg' : 0,
-                            backgroundColor: isSent
-                                ? 'var(--joy-palette-primary-solidBg)'
-                                : 'background.body',
+                            fontSize: '12px',
+                            color: isSent
+                                ? 'var(--joy-palette-common-white)'
+                                : 'var(--joy-palette-text-secondary)',
                         }}
                     >
-                        <Typography
-                            level="body-sm"
-                            sx={{
-                                color: isSent
-                                    ? 'var(--joy-palette-common-white)'
-                                    : 'var(--joy-palette-text-primary)',
-                            }}
-                        >
-                            {content}
-                        </Typography>
-                    </Sheet>
-                    {(isHovered || isLiked || isCelebrated) && (
-                        <Stack
-                            direction="row"
-                            justifyContent={isSent ? 'flex-end' : 'flex-start'}
-                            spacing={0.5}
-                            sx={{
-                                position: 'absolute',
-                                top: '50%',
-                                p: 1.5,
-                                ...(isSent
-                                    ? {
-                                        left: 0,
-                                        transform: 'translate(-100%, -50%)',
-                                    }
-                                    : {
-                                        right: 0,
-                                        transform: 'translate(100%, -50%)',
-                                    }),
-                            }}
-                        >
-                            <IconButton
-                                variant={isLiked ? 'soft' : 'plain'}
-                                color={isLiked ? 'danger' : 'neutral'}
-                                size="sm"
-                                onClick={() => setIsLiked((prevState) => !prevState)}
-                            >
-                                {isLiked ? '❤️' : <FavoriteBorderIcon />}
-                            </IconButton>
-                            <IconButton
-                                variant={isCelebrated ? 'soft' : 'plain'}
-                                color={isCelebrated ? 'warning' : 'neutral'}
-                                size="sm"
-                                onClick={() => setIsCelebrated((prevState) => !prevState)}
-                            >
-                                {isCelebrated ? '🎉' : <CelebrationOutlinedIcon />}
-                            </IconButton>
-                        </Stack>
-                    )}
-                </Box>
-            )}
+                        {formattedTime}
+                    </Typography>
+                </Stack>
+            </Sheet>
         </Box>
     );
 }

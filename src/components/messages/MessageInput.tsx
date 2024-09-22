@@ -1,28 +1,31 @@
 import * as React from 'react';
-import {Editor, EditorState, RichUtils} from 'draft-js';
+import { Editor, EditorState, RichUtils, getDefaultKeyBinding, KeyBindingUtil } from 'draft-js';
 import 'draft-js/dist/Draft.css';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import FormControl from '@mui/joy/FormControl';
-import {IconButton, Stack} from '@mui/joy';
+import { IconButton, Stack } from '@mui/joy';
 import FormatBoldRoundedIcon from '@mui/icons-material/FormatBoldRounded';
 import FormatItalicRoundedIcon from '@mui/icons-material/FormatItalicRounded';
 import StrikethroughSRoundedIcon from '@mui/icons-material/StrikethroughSRounded';
 import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded';
+import FormatUnderlinedRoundedIcon from '@mui/icons-material/FormatUnderlinedRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
-import {sendMessage} from '../../api/api';
+import { sendMessage } from '../../api/api';
+
+const { hasCommandModifier } = KeyBindingUtil;
 
 export type MessageInputProps = {
-    chatId: number;  // ID чата для отправки сообщения
+    chatId: number;
     textAreaValue: string;
     setTextAreaValue: (value: string) => void;
-    onSubmit: (newMessage: any) => void;  // функция для обновления сообщений
+    onSubmit: (newMessage: any) => void;
 };
 
 export default function MessageInput(props: MessageInputProps) {
-    const {t} = useTranslation();
-    const {setTextAreaValue, onSubmit, chatId} = props;
+    const { t } = useTranslation();
+    const { setTextAreaValue, onSubmit, chatId } = props;
     const [editorState, setEditorState] = React.useState(() =>
         EditorState.createEmpty()
     );
@@ -35,6 +38,10 @@ export default function MessageInput(props: MessageInputProps) {
     };
 
     const handleKeyCommand = (command: string, editorState: EditorState) => {
+        if (command === 'submit-message') {
+            handleClick();
+            return 'handled';
+        }
         const newState = RichUtils.handleKeyCommand(editorState, command);
         if (newState) {
             setEditorState(newState);
@@ -43,12 +50,23 @@ export default function MessageInput(props: MessageInputProps) {
         return 'not-handled';
     };
 
+    const keyBindingFn = (e: React.KeyboardEvent): string | null => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            return 'submit-message';
+        }
+        return getDefaultKeyBinding(e);
+    };
+
     const onBoldClick = () => {
         setEditorState(RichUtils.toggleInlineStyle(editorState, 'BOLD'));
     };
 
     const onItalicClick = () => {
         setEditorState(RichUtils.toggleInlineStyle(editorState, 'ITALIC'));
+    };
+
+    const onUnderlineClick = () => {
+        setEditorState(RichUtils.toggleInlineStyle(editorState, 'UNDERLINE'));
     };
 
     const onStrikethroughClick = () => {
@@ -70,10 +88,6 @@ export default function MessageInput(props: MessageInputProps) {
             try {
                 const newMessage = await sendMessage(chatId, props.textAreaValue, token as string);
 
-                // Закомментируем временно или уберем локальную вставку сообщения
-                // onSubmit(newMessage);
-
-                // Обновляем только текстовое поле и editor state
                 setTextAreaValue('');
                 setEditorState(EditorState.createEmpty());
             } catch (error) {
@@ -82,10 +96,8 @@ export default function MessageInput(props: MessageInputProps) {
         }
     };
 
-
-
     return (
-        <Box sx={{px: 2, pb: 3}}>
+        <Box sx={{ px: 2, pb: 3 }}>
             <FormControl>
                 <Box
                     sx={{
@@ -94,7 +106,8 @@ export default function MessageInput(props: MessageInputProps) {
                         borderRadius: '4px',
                         padding: '8px',
                         minHeight: '100px',
-                        cursor: 'text'
+                        cursor: 'text',
+                        textAlign: 'left', // Или "right", если хочешь выравнивание вправо
                     }}
                     onClick={() => {
                         editorRef.current?.focus();
@@ -103,6 +116,7 @@ export default function MessageInput(props: MessageInputProps) {
                     <Editor
                         editorState={editorState}
                         handleKeyCommand={handleKeyCommand}
+                        keyBindingFn={keyBindingFn}
                         onChange={handleEditorChange}
                         placeholder={t('Type something here…')}
                         ref={editorRef}
@@ -122,23 +136,26 @@ export default function MessageInput(props: MessageInputProps) {
                 >
                     <div>
                         <IconButton size="sm" variant="plain" color="neutral" onClick={onBoldClick}>
-                            <FormatBoldRoundedIcon/>
+                            <FormatBoldRoundedIcon />
                         </IconButton>
                         <IconButton size="sm" variant="plain" color="neutral" onClick={onItalicClick}>
-                            <FormatItalicRoundedIcon/>
+                            <FormatItalicRoundedIcon />
+                        </IconButton>
+                        <IconButton size="sm" variant="plain" color="neutral" onClick={onUnderlineClick}>
+                            <FormatUnderlinedRoundedIcon />
                         </IconButton>
                         <IconButton size="sm" variant="plain" color="neutral" onClick={onStrikethroughClick}>
-                            <StrikethroughSRoundedIcon/>
+                            <StrikethroughSRoundedIcon />
                         </IconButton>
                         <IconButton size="sm" variant="plain" color="neutral" onClick={onBulletListClick}>
-                            <FormatListBulletedRoundedIcon/>
+                            <FormatListBulletedRoundedIcon />
                         </IconButton>
                     </div>
                     <Button
                         size="sm"
                         color="primary"
-                        sx={{alignSelf: 'center', borderRadius: 'sm'}}
-                        endDecorator={<SendRoundedIcon/>}
+                        sx={{ alignSelf: 'center', borderRadius: 'sm' }}
+                        endDecorator={<SendRoundedIcon />}
                         onClick={handleClick}
                     >
                         {t('Send')}

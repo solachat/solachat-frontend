@@ -9,7 +9,12 @@ import CircleIcon from '@mui/icons-material/Circle';
 import AvatarWithStatus from './AvatarWithStatus';
 import { ChatProps, MessageProps, UserProps } from '../core/types';
 import { createPrivateChat } from '../../api/api';
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
+
+const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+};
 
 type ChatListItemProps = ListItemButtonProps & {
     id: string;
@@ -98,7 +103,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     display={{ xs: 'none', md: 'block' }}
                                     noWrap
                                 >
-                                    {messages[0].createdAt || 'No Timestamp'}
+                                    {formatDate(messages[0].createdAt) || 'No Timestamp'}
                                 </Typography>
                             </Box>
                         )}
@@ -112,6 +117,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 WebkitBoxOrient: 'vertical',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
+                                paddingLeft: 6,
                             }}
                         >
                             {messages[0].content}
