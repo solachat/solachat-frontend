@@ -32,6 +32,8 @@ export default function ChatListItem(props: ChatListItemProps) {
     const selected = selectedChatId === id;
     const hasMessages = Array.isArray(messages) && messages.length > 0;
 
+    const lastMessage = hasMessages ? messages[messages.length - 1] : null;
+
     const existingChat = Array.isArray(chats)
         ? chats.find((chat: ChatProps) =>
             chat.users.some((user: UserProps) => user.id === sender?.id)
@@ -62,7 +64,6 @@ export default function ChatListItem(props: ChatListItemProps) {
         }
     };
 
-
     if (!sender) {
         return null;
     }
@@ -88,14 +89,14 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 {sender.username || 'No Username'}
                             </Typography>
                         </Box>
-                        {hasMessages && (
+                        {hasMessages && lastMessage && (
                             <Box
                                 sx={{
                                     lineHeight: 1.5,
                                     textAlign: 'right',
                                 }}
                             >
-                                {messages[0].unread && (
+                                {lastMessage.unread && (
                                     <CircleIcon sx={{ fontSize: 12 }} color="primary" />
                                 )}
                                 <Typography
@@ -103,12 +104,12 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     display={{ xs: 'none', md: 'block' }}
                                     noWrap
                                 >
-                                    {formatDate(messages[0].createdAt) || 'No Timestamp'}
+                                    {formatDate(lastMessage.createdAt) || 'No Timestamp'}
                                 </Typography>
                             </Box>
                         )}
                     </Stack>
-                    {hasMessages && (
+                    {hasMessages && lastMessage && (
                         <Typography
                             level="body-sm"
                             sx={{
@@ -120,7 +121,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 paddingLeft: 6,
                             }}
                         >
-                            {messages[0].content}
+                            {lastMessage.content}
                         </Typography>
                     )}
                 </ListItemButton>
