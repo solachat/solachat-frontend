@@ -102,3 +102,28 @@ export const sendMessage = async (chatId: number, content: string, token: string
     }
 };
 
+export const updateUserStatus = async (userId: number, isOnline: boolean, token: string) => {
+    if (!token) {
+        throw new Error('Authorization token is missing');
+    }
+
+    try {
+        await axios.post(
+            `${API_URL}/api/users/update-status`,
+            {
+                userId,
+                isOnline,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        console.log(`User status updated to ${isOnline ? 'online' : 'offline'}`);
+    } catch (error) {
+        console.error('Failed to update user status:', error);
+        toast.error('Failed to update user status');
+        throw error;
+    }
+};
