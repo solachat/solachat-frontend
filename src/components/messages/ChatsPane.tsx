@@ -98,9 +98,12 @@ export default function ChatsPane(props: ChatsPaneProps) {
                     justifyContent="space-between"
                     p={2}
                     pb={1.5}
+                    sx={{
+                        flexDirection: { xs: 'column', sm: 'row' },
+                    }}
                 >
                     <Typography
-                        fontSize={{ xs: 'md', md: 'lg' }}
+                        fontSize={{ xs: 'md', sm: 'lg' }}
                         component="h1"
                         fontWeight="lg"
                         endDecorator={

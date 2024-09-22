@@ -97,20 +97,10 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                     display: 'flex',
                     flexDirection: 'column',
                     px: 2,
-                    py: 3,
+                    py: { xs: 1, sm: 3 }, // Меньше отступы сверху и снизу на мобилках
                     overflowY: 'auto',
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
-                    gap: 2,
                     '&::-webkit-scrollbar': {
-                        width: '8px',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: 'var(--joy-palette-primary-500)',
-                        borderRadius: '4px',
-                    },
-                    '&::-webkit-scrollbar-track': {
-                        backgroundColor: 'var(--joy-palette-background-level1)',
+                        width: { xs: '6px', sm: '8px' }, // Меньше скролл на мобилках
                     },
                 }}
             >

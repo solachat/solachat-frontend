@@ -82,10 +82,19 @@ export default function ChatListItem(props: ChatListItemProps) {
                     }}
                 >
                     <Stack direction="row" spacing={1.5}>
-                        <AvatarWithStatus online={sender.online} src={sender.avatar} size="md" />
+                        <AvatarWithStatus
+                            online={sender.online}
+                            src={sender.avatar}
+                            sx={{
+                                width: { xs: 32, sm: 48 }, // Измените на нужные значения пикселей для мобилок и десктопа
+                                height: { xs: 32, sm: 48 },
+                            }}
+                        />
                         <Box sx={{ flex: 1 }}>
-                            <Typography level="body-md">{sender.realname || 'No Name'}</Typography>
-                            <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+                            <Typography level="body-md" fontSize={{ xs: 'sm', sm: 'md' }}>
+                                {sender.realname || 'No Name'}
+                            </Typography>
+                            <Typography level="body-sm" fontSize={{ xs: 'xs', sm: 'sm' }} sx={{ color: 'text.secondary' }}>
                                 {sender.username || 'No Username'}
                             </Typography>
                         </Box>
@@ -118,7 +127,6 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 WebkitBoxOrient: 'vertical',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                paddingLeft: 6,
                             }}
                         >
                             {lastMessage.content}

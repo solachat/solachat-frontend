@@ -22,7 +22,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
             sx={{
                 display: 'flex',
                 justifyContent: isSent ? 'flex-end' : 'flex-start',
-                mb: 1,
+                mb: { xs: 1, sm: 1.5 },
+                px: 1.5,
             }}
         >
             <Sheet
@@ -30,35 +31,30 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 variant={isSent ? 'solid' : 'soft'}
                 sx={{
                     position: 'relative',
-                    maxWidth: '95%',
-                    minWidth: 'auto',
-                    padding: '8px 20px',
-                    borderRadius: '16px',
-                    borderTopRightRadius: isSent ? 0 : '16px',
-                    borderTopLeftRadius: isSent ? '16px' : 0,
+                    maxWidth: { xs: '85%', sm: '100%' },
+                    padding: { xs: '6px 10px', sm: '10px 16px' },
+                    borderRadius: '12px',
+                    borderTopRightRadius: isSent ? 0 : '12px',
+                    borderTopLeftRadius: isSent ? '12px' : 0,
                     backgroundColor: isSent
                         ? 'var(--joy-palette-primary-solidBg)'
                         : 'background.body',
-                    color: isSent
-                        ? 'var(--joy-palette-common-white)'
-                        : 'var(--joy-palette-text-primary)',
                     wordWrap: 'break-word',
                     overflowWrap: 'break-word',
                     whiteSpace: 'pre-wrap',
-                    flexGrow: 0,
-                    display: 'inline-block',
                 }}
             >
                 {/* Контент сообщения */}
                 <Typography
                     sx={{
+                        fontSize: { xs: '12px', sm: '14px' },
                         color: isSent
                             ? 'var(--joy-palette-common-white)'
                             : 'var(--joy-palette-text-primary)',
                         wordWrap: 'break-word',
                         overflowWrap: 'break-word',
                         whiteSpace: 'pre-wrap',
-                        marginBottom: '8px', // Отступ снизу для контента
+                        marginBottom: '4px',
                     }}
                 >
                     {content}
@@ -66,15 +62,13 @@ export default function ChatBubble(props: ChatBubbleProps) {
 
                 {/* Время сообщения */}
                 <Stack
-                    direction="row"
-                    alignItems="center"
-                    justifyContent="flex-end"
-                    spacing={0.5}
-                    sx={{ position: 'absolute', bottom: 2, right: 10 }} // Отступы справа и снизу
+                    direction={isSent ? 'row-reverse' : 'row'}
+                    spacing={1.5}
+                    sx={{ position: 'absolute', bottom: 1, right: 8 }}
                 >
                     <Typography
                         sx={{
-                            fontSize: '12px',
+                            fontSize: { xs: '10px', sm: '12px' },
                             color: isSent
                                 ? 'var(--joy-palette-common-white)'
                                 : 'var(--joy-palette-text-secondary)',
