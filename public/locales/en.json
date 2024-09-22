@@ -141,5 +141,10 @@
   "avatarUpload": "Upload Avatar",
   "upload": "Upload",
   "uploadAvatar": "Upload avatar",
-  "uploadFailed": "Upload failed!"
+  "uploadFailed": "Upload failed!",
+  "loadingUserInformation": "Loading user information...",
+  "startcommunicate": "Start to communicate!",
+  "nomessages": "No messages yet. Start the conversation!",
+  "viewprofile": "View Profile",
+  "call": "Call"
 }

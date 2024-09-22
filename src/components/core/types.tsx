@@ -9,9 +9,10 @@ export type UserProps = {
 export type MessageProps = {
     id: string;
     content: string;
-    timestamp: string;
+    createdAt: string;
     unread?: boolean;
-    sender: UserProps;
+    user: UserProps;
+    userId: number;
     attachment?: {
         fileName: string;
         type: string;
@@ -21,7 +22,12 @@ export type MessageProps = {
 
 export type ChatProps = {
     id: string;
-    sender: UserProps;
+    user: UserProps;
     users: UserProps[];
     messages: MessageProps[];
+};
+
+export type JwtPayload = {
+    id: number;
+    username: string;
 };

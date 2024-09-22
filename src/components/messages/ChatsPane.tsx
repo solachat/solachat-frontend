@@ -159,7 +159,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                         <ChatListItem
                                             key={chat.id.toString()}
                                             id={chat.id.toString()}
-                                            sender={chat.users[0]}
+                                            sender={chat.users.find(user => user.id !== currentUser.id)}
                                             messages={chat.messages}
                                             setSelectedChat={setSelectedChat}
                                             currentUserId={currentUser.id}
@@ -169,7 +169,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                 </List>
                             ) : (
                                 <Typography sx={{ textAlign: 'center', mt: 3 }}>
-                                    Start to communicate!
+                                    {t('startcommunicate')}
                                 </Typography>
                             )
                         )}

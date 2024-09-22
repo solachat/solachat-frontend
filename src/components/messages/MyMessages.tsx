@@ -6,11 +6,8 @@ import ChatsPane from './ChatsPane';
 import { ChatProps, UserProps } from '../core/types';
 import { fetchChatsFromServer } from '../../api/api';
 import { Typography } from '@mui/joy';
-
-type JwtPayload = {
-    id: number;
-    username: string;
-};
+import {useTranslation} from "react-i18next";
+import {JwtPayload} from "jsonwebtoken";
 
 export default function MyProfile() {
     const [chats, setChats] = React.useState<ChatProps[]>([]);
@@ -18,6 +15,7 @@ export default function MyProfile() {
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
     const [currentUser, setCurrentUser] = React.useState<UserProps | null>(null);
+    const { t } = useTranslation();
 
     const getCurrentUserFromToken = (): UserProps | null => {
         const token = localStorage.getItem('token');
@@ -123,7 +121,7 @@ export default function MyProfile() {
                     </Sheet>
                 </>
             ) : (
-                <Typography>Loading user information...</Typography>
+                <Typography>{t('loadingUserInformation')}</Typography>
             )}
         </Sheet>
     );

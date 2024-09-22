@@ -8,6 +8,8 @@ import { fetchChatsFromServer } from '../api/api';
 import LanguageSwitcher from '../components/core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
 import { Typography } from "@mui/joy";
+import {Helmet} from "react-helmet-async";
+import {useTranslation} from "react-i18next";
 
 export default function MyProfile() {
     const currentUser = { id: 1, username: 'current_user' };
@@ -18,6 +20,7 @@ export default function MyProfile() {
     const [error, setError] = React.useState<string | null>(null);
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const {t} = useTranslation();
 
     React.useEffect(() => {
         const loadChats = async () => {
@@ -75,6 +78,10 @@ export default function MyProfile() {
     }, []);
 
     return (
+        <>
+            <Helmet>
+                <title>Messenger</title>
+            </Helmet>
         <div>
             <header style={{
                 display: 'flex',
@@ -147,5 +154,6 @@ export default function MyProfile() {
                 </Sheet>
             </Sheet>
         </div>
+        </>
     );
 }

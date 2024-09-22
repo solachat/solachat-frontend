@@ -168,5 +168,10 @@
   "avatarUpload": "Загрузка аватарки",
   "upload": "Загрузить",
   "uploadAvatar": "Аватар",
-  "uploadFailed": "Загрузка преврана!"
+  "uploadFailed": "Загрузка преврана!",
+  "loadingUserInformation": "Загружаю информацию о пользователе...",
+  "startcommunicate": "Начните общаться!",
+  "nomessages": "Сообщений нет. Начните разговор!",
+  "viewprofile": "Профиль",
+  "call": "Звонок"
 }

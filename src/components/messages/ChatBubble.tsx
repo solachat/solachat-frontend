@@ -15,11 +15,16 @@ type ChatBubbleProps = MessageProps & {
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
-    const { content, variant, timestamp, attachment = undefined, sender } = props;
+    const { content, variant, createdAt, attachment = undefined, user } = props;
     const isSent = variant === 'sent';
     const [isHovered, setIsHovered] = React.useState<boolean>(false);
     const [isLiked, setIsLiked] = React.useState<boolean>(false);
     const [isCelebrated, setIsCelebrated] = React.useState<boolean>(false);
+
+    const formattedTime = new Date(createdAt).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
 
     return (
         <Box sx={{ maxWidth: '60%', minWidth: 'auto' }}>
@@ -30,9 +35,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 sx={{ mb: 0.25 }}
             >
                 <Typography level="body-xs">
-                    {sender?.realname ?? 'Unknown'}
+                    {user?.realname || user?.username || 'Unknown'}
                 </Typography>
-                <Typography level="body-xs">{timestamp}</Typography>
+                <Typography level="body-xs">{formattedTime}</Typography>
             </Stack>
             {attachment ? (
                 <Sheet

@@ -29,8 +29,16 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
             console.log('Received WebSocket message:', message);
+
+            if (!message.message.sender) {
+                console.error('Sender information is missing:', message);
+            } else {
+                console.log('Sender information:', message.message.sender);
+            }
+
             onMessage(message);
         };
+
 
         ws.onerror = (error) => {
             console.error('WebSocket error:', error);

@@ -94,7 +94,6 @@ export const sendMessage = async (chatId: number, content: string, token: string
                 },
             }
         );
-        toast.success('Message sent successfully!');
         return response.data;
     } catch (error) {
         toast.error('Failed to send message');

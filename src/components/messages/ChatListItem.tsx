@@ -45,7 +45,8 @@ export default function ChatListItem(props: ChatListItemProps) {
                 const newChat = await createPrivateChat(currentUserId, sender.id, token);
                 if (newChat) {
                     toast.success('Chat created successfully!');
-                    setSelectedChat(newChat);
+                    setSelectedChat({ ...newChat, users: [sender, { id: currentUserId }] });
+
                     console.log('New chat created and selected:', newChat);
                 } else {
                     toast.error('Failed to create chat.');
@@ -55,6 +56,7 @@ export default function ChatListItem(props: ChatListItemProps) {
             }
         }
     };
+
 
     if (!sender) {
         return null;
@@ -96,7 +98,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     display={{ xs: 'none', md: 'block' }}
                                     noWrap
                                 >
-                                    {messages[0].timestamp || 'No Timestamp'}
+                                    {messages[0].createdAt || 'No Timestamp'}
                                 </Typography>
                             </Box>
                         )}

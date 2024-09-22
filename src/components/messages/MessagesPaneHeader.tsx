@@ -11,6 +11,7 @@ import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import { UserProps } from '../core/types';
 import { toggleMessagesPane } from '../../utils/utils';
+import {useTranslation} from "react-i18next";
 
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
@@ -18,6 +19,7 @@ type MessagesPaneHeaderProps = {
 
 export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
     const { sender } = props;
+    const { t } = useTranslation();
 
     if (!sender) {
         return null;
@@ -93,7 +95,7 @@ export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
                         display: { xs: 'none', md: 'inline-flex' },
                     }}
                 >
-                    Call
+                    {t('call')}
                 </Button>
                 <Button
                     color="neutral"
@@ -102,7 +104,7 @@ export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
                     sx={{ display: { xs: 'none', md: 'inline-flex' } }}
                     onClick={() => window.location.href = `/account?username=${sender.username}`}
                 >
-                    View profile
+                    {t('viewprofile')}
                 </Button>
                 <IconButton size="sm" variant="plain" color="neutral">
                     <MoreVertRoundedIcon />
