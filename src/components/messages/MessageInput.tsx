@@ -11,20 +11,28 @@ import FormatItalicRoundedIcon from '@mui/icons-material/FormatItalicRounded';
 import StrikethroughSRoundedIcon from '@mui/icons-material/StrikethroughSRounded';
 import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
+import { sendMessage } from '../../api/api';
 
 export type MessageInputProps = {
+  chatId: number;  // ID чата для отправки сообщения
   textAreaValue: string;
   setTextAreaValue: (value: string) => void;
-  onSubmit: () => void;
+  onSubmit: (newMessage: any) => void;  // функция для обновления сообщений
 };
 
 export default function MessageInput(props: MessageInputProps) {
   const { t } = useTranslation();
-  const { textAreaValue, setTextAreaValue, onSubmit } = props;
+  const { setTextAreaValue, onSubmit, chatId } = props;
   const [editorState, setEditorState] = React.useState(() =>
-    EditorState.createEmpty()
+      EditorState.createEmpty()
   );
   const editorRef = React.useRef<Editor | null>(null);
+
+  const handleEditorChange = (newState: EditorState) => {
+    setEditorState(newState);
+    const currentContent = newState.getCurrentContent().getPlainText();
+    setTextAreaValue(currentContent);
+  };
 
   const handleKeyCommand = (command: string, editorState: EditorState) => {
     const newState = RichUtils.handleKeyCommand(editorState, command);
@@ -51,74 +59,93 @@ export default function MessageInput(props: MessageInputProps) {
     setEditorState(RichUtils.toggleBlockType(editorState, 'unordered-list-item'));
   };
 
-  const handleClick = () => {
-    if (textAreaValue.trim() !== '') {
-      onSubmit();
-      setTextAreaValue('');
+  const handleClick = async () => {
+    if (!chatId || isNaN(chatId)) { // Проверка на корректность chatId
+      console.error('Invalid chatId:', chatId);
+      return;
+    }
+
+    if (props.textAreaValue.trim() !== '') {
+      const token = localStorage.getItem('token');
+      try {
+        console.log('Chat ID перед отправкой:', chatId);
+        const newMessage = await sendMessage(chatId, props.textAreaValue, token as string);
+
+        // После успешной отправки вызов onSubmit для обновления сообщений
+        onSubmit(newMessage);
+
+        // Очищаем текстовое поле и сбрасываем редактор
+        setTextAreaValue('');
+        setEditorState(EditorState.createEmpty());
+      } catch (error) {
+        console.error('Ошибка при отправке сообщения:', error);
+      }
+    } else {
+      console.log('Пустое сообщение не отправляется');
     }
   };
 
   return (
-    <Box sx={{ px: 2, pb: 3 }}>
-      <FormControl>
-        <Box
-          sx={{
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: '4px',
-            padding: '8px',
-            minHeight: '100px',
-            cursor: 'text'
-          }}
-          onClick={() => {
-            editorRef.current?.focus();
-          }}
-        >
-          <Editor
-            editorState={editorState}
-            handleKeyCommand={handleKeyCommand}
-            onChange={setEditorState}
-            placeholder={t('Type something here…')}
-            ref={editorRef}
-          />
-        </Box>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          flexGrow={1}
-          sx={{
-            py: 1,
-            pr: 1,
-            borderTop: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <div>
-            <IconButton size="sm" variant="plain" color="neutral" onClick={onBoldClick}>
-              <FormatBoldRoundedIcon />
-            </IconButton>
-            <IconButton size="sm" variant="plain" color="neutral" onClick={onItalicClick}>
-              <FormatItalicRoundedIcon />
-            </IconButton>
-            <IconButton size="sm" variant="plain" color="neutral" onClick={onStrikethroughClick}>
-              <StrikethroughSRoundedIcon />
-            </IconButton>
-            <IconButton size="sm" variant="plain" color="neutral" onClick={onBulletListClick}>
-              <FormatListBulletedRoundedIcon />
-            </IconButton>
-          </div>
-          <Button
-            size="sm"
-            color="primary"
-            sx={{ alignSelf: 'center', borderRadius: 'sm' }}
-            endDecorator={<SendRoundedIcon />}
-            onClick={handleClick}
+      <Box sx={{ px: 2, pb: 3 }}>
+        <FormControl>
+          <Box
+              sx={{
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: '4px',
+                padding: '8px',
+                minHeight: '100px',
+                cursor: 'text'
+              }}
+              onClick={() => {
+                editorRef.current?.focus();
+              }}
           >
-            {t('Send')}
-          </Button>
-        </Stack>
-      </FormControl>
-    </Box>
+            <Editor
+                editorState={editorState}
+                handleKeyCommand={handleKeyCommand}
+                onChange={handleEditorChange}
+                placeholder={t('Type something here…')}
+                ref={editorRef}
+            />
+          </Box>
+          <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              flexGrow={1}
+              sx={{
+                py: 1,
+                pr: 1,
+                borderTop: '1px solid',
+                borderColor: 'divider',
+              }}
+          >
+            <div>
+              <IconButton size="sm" variant="plain" color="neutral" onClick={onBoldClick}>
+                <FormatBoldRoundedIcon />
+              </IconButton>
+              <IconButton size="sm" variant="plain" color="neutral" onClick={onItalicClick}>
+                <FormatItalicRoundedIcon />
+              </IconButton>
+              <IconButton size="sm" variant="plain" color="neutral" onClick={onStrikethroughClick}>
+                <StrikethroughSRoundedIcon />
+              </IconButton>
+              <IconButton size="sm" variant="plain" color="neutral" onClick={onBulletListClick}>
+                <FormatListBulletedRoundedIcon />
+              </IconButton>
+            </div>
+            <Button
+                size="sm"
+                color="primary"
+                sx={{ alignSelf: 'center', borderRadius: 'sm' }}
+                endDecorator={<SendRoundedIcon />}
+                onClick={handleClick}
+            >
+              {t('Send')}
+            </Button>
+          </Stack>
+        </FormControl>
+      </Box>
   );
 }

@@ -1,6 +1,6 @@
 export type UserProps = {
     id: number;
-    name: string;
+    realname: string;
     username: string;
     avatar: string;
     online: boolean;
@@ -11,7 +11,7 @@ export type MessageProps = {
     content: string;
     timestamp: string;
     unread?: boolean;
-    sender: UserProps | 'You';
+    sender: UserProps;
     attachment?: {
         fileName: string;
         type: string;
@@ -22,5 +22,6 @@ export type MessageProps = {
 export type ChatProps = {
     id: string;
     sender: UserProps;
+    users: UserProps[];
     messages: MessageProps[];
 };

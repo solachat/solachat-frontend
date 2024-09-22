@@ -22,7 +22,6 @@ import {OrderTable} from '../components/operation/OrderTable';
 import {Filters} from '../components/operation/Filters';
 import {Pagination} from '../components/operation/Pagination';
 import {rows as initialRows} from '../utils/OperationsRowType';
-import LanguageSwitcher from '../components/core/LanguageSwitcher';
 import {Helmet} from "react-helmet-async";
 
 type Order = 'asc' | 'desc';

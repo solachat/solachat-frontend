@@ -8,28 +8,29 @@ import Typography from '@mui/joy/Typography';
 import CelebrationOutlinedIcon from '@mui/icons-material/CelebrationOutlined';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
-import {MessageProps} from '../core/types';
+import { MessageProps } from '../core/types';
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
-    const {content, variant, timestamp, attachment = undefined, sender} = props;
+    const { content, variant, timestamp, attachment = undefined, sender } = props;
     const isSent = variant === 'sent';
     const [isHovered, setIsHovered] = React.useState<boolean>(false);
     const [isLiked, setIsLiked] = React.useState<boolean>(false);
     const [isCelebrated, setIsCelebrated] = React.useState<boolean>(false);
+
     return (
-        <Box sx={{maxWidth: '60%', minWidth: 'auto'}}>
+        <Box sx={{ maxWidth: '60%', minWidth: 'auto' }}>
             <Stack
                 direction="row"
                 justifyContent="space-between"
                 spacing={2}
-                sx={{mb: 0.25}}
+                sx={{ mb: 0.25 }}
             >
                 <Typography level="body-xs">
-                    {sender === 'You' ? sender : sender.name}
+                    {sender?.realname ?? 'Unknown'}
                 </Typography>
                 <Typography level="body-xs">{timestamp}</Typography>
             </Stack>
@@ -46,7 +47,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 >
                     <Stack direction="row" spacing={1.5} alignItems="center">
                         <Avatar color="primary" size="lg">
-                            <InsertDriveFileRoundedIcon/>
+                            <InsertDriveFileRoundedIcon />
                         </Avatar>
                         <div>
                             <Typography fontSize="sm">{attachment.fileName}</Typography>
@@ -56,7 +57,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 </Sheet>
             ) : (
                 <Box
-                    sx={{position: 'relative'}}
+                    sx={{ position: 'relative' }}
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                 >
@@ -110,7 +111,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 size="sm"
                                 onClick={() => setIsLiked((prevState) => !prevState)}
                             >
-                                {isLiked ? '❤️' : <FavoriteBorderIcon/>}
+                                {isLiked ? '❤️' : <FavoriteBorderIcon />}
                             </IconButton>
                             <IconButton
                                 variant={isCelebrated ? 'soft' : 'plain'}
@@ -118,7 +119,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 size="sm"
                                 onClick={() => setIsCelebrated((prevState) => !prevState)}
                             >
-                                {isCelebrated ? '🎉' : <CelebrationOutlinedIcon/>}
+                                {isCelebrated ? '🎉' : <CelebrationOutlinedIcon />}
                             </IconButton>
                         </Stack>
                     )}

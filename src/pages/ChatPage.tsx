@@ -4,30 +4,54 @@ import Sheet from '@mui/joy/Sheet';
 import MessagesPane from '../components/messages/MessagesPane';
 import ChatsPane from '../components/messages/ChatsPane';
 import { ChatProps } from '../components/core/types';
-import { chats as initialChats } from '../utils/data';
-import { loadChatsFromStorage, saveChatsToStorage } from '../utils/utils';
+import { fetchChatsFromServer } from '../api/api';
 import LanguageSwitcher from '../components/core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
+import { Typography } from "@mui/joy";
 
 export default function MyProfile() {
     const currentUser = { id: 1, username: 'current_user' };
 
-    const [chats, setChats] = React.useState<ChatProps[]>(loadChatsFromStorage());
+    const [chats, setChats] = React.useState<ChatProps[]>([]);
+    const [selectedChat, setSelectedChat] = React.useState<ChatProps | null>(null); // Изменение здесь
+    const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
     React.useEffect(() => {
-        if (!chats.length) {
-            setChats(initialChats);
-            saveChatsToStorage(initialChats);
+        const loadChats = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Authorization token is missing');
+                }
+
+                const fetchedChats = await fetchChatsFromServer(currentUser.id, token);
+
+                if (Array.isArray(fetchedChats)) {
+                    setChats(fetchedChats);
+                } else {
+                    setError('No chats available.');
+                    setChats([]);
+                }
+            } catch (error) {
+                console.error('Error loading chats:', error);
+                setError('Failed to load chats.');
+                setChats([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadChats();
+    }, [currentUser.id]);
+
+    React.useEffect(() => {
+        if (chats.length > 0) {
+            setSelectedChat(chats[0]);
         }
     }, [chats]);
-
-    const selectedChat = chats.find(chat => chat.id === id) || chats[0];
-
-    const setSelectedChat = (chat: ChatProps) => {
-        navigate(`/chat?id=${chat.id}`);
-    };
 
     React.useEffect(() => {
         const handleActivity = () => {
@@ -50,21 +74,17 @@ export default function MyProfile() {
         };
     }, []);
 
-    if (!selectedChat) {
-        return <div>Loading...</div>;
-    }
-
     return (
         <div>
             <header style={{
                 display: 'flex',
-                justifyContent: 'center', /* Центрируем */
+                justifyContent: 'center',
                 alignItems: 'center',
                 padding: '10px'
             }}>
-                <div style={{display: 'flex', gap: '20px'}}>
-                    <LanguageSwitcher/>
-                    <ColorSchemeToggle/>
+                <div style={{ display: 'flex', gap: '20px' }}>
+                    <LanguageSwitcher />
+                    <ColorSchemeToggle />
                 </div>
             </header>
             <Sheet
@@ -72,7 +92,7 @@ export default function MyProfile() {
                     flex: 1,
                     width: '100%',
                     mx: 'auto',
-                    pt: {xs: 'var(--Header-height)', sm: 0},
+                    pt: { xs: 'var(--Header-height)', sm: 0 },
                     display: 'grid',
                     gridTemplateColumns: {
                         xs: '1fr',
@@ -82,7 +102,6 @@ export default function MyProfile() {
             >
                 <Sheet
                     sx={{
-                        position: {xs: 'fixed', sm: 'sticky'},
                         transform: {
                             xs: 'translateX(calc(100% * (var(--MessagesPane-slideIn, 0) - 1)))',
                             sm: 'none',
@@ -93,22 +112,39 @@ export default function MyProfile() {
                         top: 52,
                     }}
                 >
-                    {selectedChat ? (
+                    {Array.isArray(chats) && chats.length > 0 ? (
                         <ChatsPane
                             chats={chats}
-                            selectedChatId={selectedChat.id}
+                            selectedChatId={selectedChat ? selectedChat.id : ''}
                             setSelectedChat={setSelectedChat}
                             currentUser={currentUser}
                         />
                     ) : (
-                        <div>Loading chats...</div>
+                        <div>No chats available. Start communicating!</div>
                     )}
                 </Sheet>
-                {selectedChat ? (
-                    <MessagesPane chat={selectedChat}/>
-                ) : (
-                    <div>Loading messages...</div>
-                )}
+
+                <Sheet
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        backgroundColor: 'background.level1',
+                    }}
+                >
+                    {error ? (
+                        <Typography sx={{ textAlign: 'center', color: 'red' }}>
+                            {error}
+                        </Typography>
+                    ) : loading ? (
+                        <Typography>Loading chats...</Typography>
+                    ) : selectedChat ? (
+                        <MessagesPane chat={selectedChat} />
+                    ) : (
+                        <Typography>No messages yet.</Typography>
+                    )}
+                </Sheet>
             </Sheet>
         </div>
     );

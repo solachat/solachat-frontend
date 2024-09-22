@@ -12,7 +12,10 @@ import ContactsPage from './pages/ContactsPage';
 import MyMessages from './components/messages/MyMessages';
 import NotFoundPage from './pages/NotFoundPage';
 import UnderConstruction from './pages/UnderConstruction';
-import MainPage from "./pages/MainPage";
+import PrivateRoute from './api/PrivateRoute'; // Импортируем PrivateRoute
+import MainPage from './pages/MainPage';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const underDevelopmentRoutes = [
     '/connect/telegram',
@@ -32,7 +35,7 @@ const App: React.FC = () => {
                         <Route path="/operations" element={<OperationsPage />} />
                         <Route path="/" element={<HomePage />} />
                         <Route path="/contacts" element={<ContactsPage />} />
-                        <Route path="/chat" element={<MyMessages />} />
+                        <Route path="/chat" element={<PrivateRoute element={<MyMessages />} />} />
                         {underDevelopmentRoutes.map((route) => (
                             <Route path={route} element={<Navigate to="/new-feature" />} key={route} />
                         ))}
@@ -41,6 +44,7 @@ const App: React.FC = () => {
                         <Route path="/main" element={<MainPage />} />
                     </Routes>
                 </Router>
+                <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} />
             </ThemeProvider>
         </HelmetProvider>
     );

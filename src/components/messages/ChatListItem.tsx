@@ -8,26 +8,57 @@ import Typography from '@mui/joy/Typography';
 import CircleIcon from '@mui/icons-material/Circle';
 import AvatarWithStatus from './AvatarWithStatus';
 import { ChatProps, MessageProps, UserProps } from '../core/types';
-import { toggleMessagesPane } from '../../utils/utils';
+import { createPrivateChat } from '../../api/api';
+import {toast} from "react-toastify";
 
 type ChatListItemProps = ListItemButtonProps & {
     id: string;
     unread?: boolean;
-    sender: UserProps;
+    sender?: UserProps;
     messages: MessageProps[];
     selectedChatId?: string;
     setSelectedChat: (chat: ChatProps) => void;
+    currentUserId: number;
+    chats: ChatProps[];
 };
 
 export default function ChatListItem(props: ChatListItemProps) {
-    const { id, sender, messages, selectedChatId, setSelectedChat } = props;
+    const { id, sender, messages, selectedChatId, setSelectedChat, currentUserId, chats } = props;
     const selected = selectedChatId === id;
-    const hasMessages = messages.length > 0;
+    const hasMessages = Array.isArray(messages) && messages.length > 0;
 
-    const handleClick = () => {
-        toggleMessagesPane();
-        setSelectedChat({ id, sender, messages });
+    const existingChat = Array.isArray(chats)
+        ? chats.find((chat: ChatProps) =>
+            chat.users.some((user: UserProps) => user.id === sender?.id)
+        )
+        : null;
+
+    const handleClick = async () => {
+        if (existingChat) {
+            console.log('Chat already exists:', existingChat);
+            setSelectedChat(existingChat);
+            console.log('Selected chat after click:', existingChat);
+        } else {
+            console.log('Creating chat for users:', currentUserId, 'and', sender?.id);
+            const token = localStorage.getItem('token');
+            if (token && sender) {
+                const newChat = await createPrivateChat(currentUserId, sender.id, token);
+                if (newChat) {
+                    toast.success('Chat created successfully!');
+                    setSelectedChat(newChat);
+                    console.log('New chat created and selected:', newChat);
+                } else {
+                    toast.error('Failed to create chat.');
+                }
+            } else {
+                console.error('Token is missing or sender is undefined');
+            }
+        }
     };
+
+    if (!sender) {
+        return null;
+    }
 
     return (
         <React.Fragment>
@@ -43,15 +74,12 @@ export default function ChatListItem(props: ChatListItemProps) {
                     }}
                 >
                     <Stack direction="row" spacing={1.5}>
-                        <AvatarWithStatus online={sender.online} src={sender.avatar} />
+                        <AvatarWithStatus online={sender.online} src={sender.avatar} size="md" />
                         <Box sx={{ flex: 1 }}>
-                            <Typography level="title-sm">{sender.name}</Typography> {/* Отображение имени */}
-                            <Typography
-                                level="body-sm"
-                                sx={{ color: 'text.secondary' }}
-                            >
-                                @{sender.username}
-                            </Typography> {/* Отображение username */}
+                            <Typography level="body-md">{sender.realname || 'No Name'}</Typography>
+                            <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+                                {sender.username || 'No Username'}
+                            </Typography>
                         </Box>
                         {hasMessages && (
                             <Box
@@ -68,7 +96,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     display={{ xs: 'none', md: 'block' }}
                                     noWrap
                                 >
-                                    5 mins ago
+                                    {messages[0].timestamp || 'No Timestamp'}
                                 </Typography>
                             </Box>
                         )}
