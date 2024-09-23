@@ -83,17 +83,25 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
     }
 };
 
-export const sendMessage = async (chatId: number, content: string, token: string) => {
+export const sendMessage = async (chatId: number, content: string, token: string, filePath?: string) => {
     try {
+        const requestData = {
+            content,
+            filePath,
+        };
+
+        console.log('Sending filePath to server:', filePath);
+
         const response = await axios.post(
             `${API_URL}/api/messages/${chatId}`,
-            { content },
+            requestData,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             }
         );
+
         return response.data;
     } catch (error) {
         toast.error('Failed to send message');
@@ -127,3 +135,30 @@ export const updateUserStatus = async (userId: number, isOnline: boolean, token:
         throw error;
     }
 };
+
+export const uploadFileToChat = async (chatId: number, formData: FormData, token: string) => {
+    try {
+        // Добавляем chatId в FormData
+        formData.append('chatId', chatId.toString());
+
+        console.log('ChatId:', chatId);
+        const response = await axios.post(
+            `${API_URL}/api/messages/${chatId}/upload`,
+            formData,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+            }
+        );
+        toast.success('File uploaded successfully!');
+        return response.data;
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        toast.error('Failed to upload file');
+        throw error;
+    }
+};
+
+

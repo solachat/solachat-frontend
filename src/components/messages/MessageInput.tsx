@@ -1,20 +1,21 @@
 import * as React from 'react';
-import { Editor, EditorState, RichUtils, getDefaultKeyBinding, KeyBindingUtil } from 'draft-js';
+import { useState } from 'react';
+import { Editor, EditorState, getDefaultKeyBinding } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import { useTranslation } from 'react-i18next';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import FormControl from '@mui/joy/FormControl';
-import { IconButton, Stack } from '@mui/joy';
-import FormatBoldRoundedIcon from '@mui/icons-material/FormatBoldRounded';
-import FormatItalicRoundedIcon from '@mui/icons-material/FormatItalicRounded';
-import StrikethroughSRoundedIcon from '@mui/icons-material/StrikethroughSRounded';
-import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded';
-import FormatUnderlinedRoundedIcon from '@mui/icons-material/FormatUnderlinedRounded';
+import { IconButton, Stack, Typography } from '@mui/joy';
+import UploadIcon from '@mui/icons-material/Upload';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
+import FileUploadModal from './FileUploadModal';
+import CloseIcon from '@mui/icons-material/Close';
 import { sendMessage } from '../../api/api';
 
-const { hasCommandModifier } = KeyBindingUtil;
+export type UploadedFileData = {
+    filePath: string;  // Теперь это единственное свойство
+};
 
 export type MessageInputProps = {
     chatId: number;
@@ -25,11 +26,12 @@ export type MessageInputProps = {
 
 export default function MessageInput(props: MessageInputProps) {
     const { t } = useTranslation();
-    const { setTextAreaValue, onSubmit, chatId } = props;
-    const [editorState, setEditorState] = React.useState(() =>
-        EditorState.createEmpty()
-    );
+    const { setTextAreaValue, chatId } = props;
+    const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
     const editorRef = React.useRef<Editor | null>(null);
+    const [isFileUploadOpen, setFileUploadOpen] = useState(false);
+    const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);  // Список загруженных файлов
+    const [messageFromModal, setMessageFromModal] = useState<string>('');
 
     const handleEditorChange = (newState: EditorState) => {
         setEditorState(newState);
@@ -37,44 +39,12 @@ export default function MessageInput(props: MessageInputProps) {
         setTextAreaValue(currentContent);
     };
 
-    const handleKeyCommand = (command: string, editorState: EditorState) => {
-        if (command === 'submit-message') {
-            handleClick();
-            return 'handled';
-        }
-        const newState = RichUtils.handleKeyCommand(editorState, command);
-        if (newState) {
-            setEditorState(newState);
-            return 'handled';
-        }
-        return 'not-handled';
-    };
-
     const keyBindingFn = (e: React.KeyboardEvent): string | null => {
         if (e.key === 'Enter' && !e.shiftKey) {
+            handleClick();
             return 'submit-message';
         }
         return getDefaultKeyBinding(e);
-    };
-
-    const onBoldClick = () => {
-        setEditorState(RichUtils.toggleInlineStyle(editorState, 'BOLD'));
-    };
-
-    const onItalicClick = () => {
-        setEditorState(RichUtils.toggleInlineStyle(editorState, 'ITALIC'));
-    };
-
-    const onUnderlineClick = () => {
-        setEditorState(RichUtils.toggleInlineStyle(editorState, 'UNDERLINE'));
-    };
-
-    const onStrikethroughClick = () => {
-        setEditorState(RichUtils.toggleInlineStyle(editorState, 'STRIKETHROUGH'));
-    };
-
-    const onBulletListClick = () => {
-        setEditorState(RichUtils.toggleBlockType(editorState, 'unordered-list-item'));
     };
 
     const handleClick = async () => {
@@ -83,17 +53,33 @@ export default function MessageInput(props: MessageInputProps) {
             return;
         }
 
-        if (props.textAreaValue.trim() !== '') {
+        if (props.textAreaValue.trim() !== '' || uploadedFiles.length > 0) {
             const token = localStorage.getItem('token');
             try {
-                const newMessage = await sendMessage(chatId, props.textAreaValue, token as string);
-
+                const filePaths = uploadedFiles.map((fileData) => fileData.filePath); // Получаем все пути к файлам
+                const newMessage = await sendMessage(
+                    chatId,
+                    messageFromModal || props.textAreaValue,
+                    token as string,
+                    filePaths.length > 0 ? filePaths[0] : undefined // Отправляем путь к первому файлу
+                );
                 setTextAreaValue('');
                 setEditorState(EditorState.createEmpty());
+                setUploadedFiles([]);  // Очищаем загруженные файлы
+                setMessageFromModal('');
             } catch (error) {
                 console.error('Ошибка при отправке сообщения:', error);
             }
         }
+    };
+
+    const handleFileUploadSuccess = (filePath: string) => {
+        console.log('File uploaded successfully, filePath:', filePath);
+        setUploadedFiles((prevFiles) => [...prevFiles, { filePath }]);
+    };
+
+    const removeUploadedFile = (index: number) => {
+        setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     };
 
     return (
@@ -107,21 +93,63 @@ export default function MessageInput(props: MessageInputProps) {
                         padding: '8px',
                         minHeight: '100px',
                         cursor: 'text',
-                        textAlign: 'left', // Или "right", если хочешь выравнивание вправо
+                        textAlign: 'left',
                     }}
-                    onClick={() => {
-                        editorRef.current?.focus();
-                    }}
+                    onClick={() => editorRef.current?.focus()}
                 >
                     <Editor
                         editorState={editorState}
-                        handleKeyCommand={handleKeyCommand}
                         keyBindingFn={keyBindingFn}
                         onChange={handleEditorChange}
                         placeholder={t('Type something here…')}
                         ref={editorRef}
                     />
                 </Box>
+
+                {uploadedFiles.length > 0 && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            mt: 2,
+                            gap: 1,
+                        }}
+                    >
+                        {uploadedFiles.map((fileData, index) => (
+                            <Box
+                                key={index}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    backgroundColor: 'background.level2',
+                                    padding: '8px',
+                                    borderRadius: '4px',
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    minWidth: '120px',
+                                    maxWidth: '150px',
+                                }}
+                            >
+                                <Typography
+                                    sx={{
+                                        fontSize: '0.875rem',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        maxWidth: '100px',
+                                    }}
+                                >
+                                    {fileData.filePath.split('/').pop()}
+                                </Typography>
+                                <IconButton size="sm" color="danger" onClick={() => removeUploadedFile(index)}>
+                                    <CloseIcon />
+                                </IconButton>
+                            </Box>
+                        ))}
+                    </Box>
+                )}
+
                 <Stack
                     direction="row"
                     justifyContent="space-between"
@@ -134,23 +162,14 @@ export default function MessageInput(props: MessageInputProps) {
                         borderColor: 'divider',
                     }}
                 >
-                    <div>
-                        <IconButton size="sm" variant="plain" color="neutral" onClick={onBoldClick}>
-                            <FormatBoldRoundedIcon />
-                        </IconButton>
-                        <IconButton size="sm" variant="plain" color="neutral" onClick={onItalicClick}>
-                            <FormatItalicRoundedIcon />
-                        </IconButton>
-                        <IconButton size="sm" variant="plain" color="neutral" onClick={onUnderlineClick}>
-                            <FormatUnderlinedRoundedIcon />
-                        </IconButton>
-                        <IconButton size="sm" variant="plain" color="neutral" onClick={onStrikethroughClick}>
-                            <StrikethroughSRoundedIcon />
-                        </IconButton>
-                        <IconButton size="sm" variant="plain" color="neutral" onClick={onBulletListClick}>
-                            <FormatListBulletedRoundedIcon />
-                        </IconButton>
-                    </div>
+                    <IconButton
+                        size="sm"
+                        variant="plain"
+                        color="neutral"
+                        onClick={() => setFileUploadOpen(true)}
+                    >
+                        <UploadIcon />
+                    </IconButton>
                     <Button
                         size="sm"
                         color="primary"
@@ -162,6 +181,13 @@ export default function MessageInput(props: MessageInputProps) {
                     </Button>
                 </Stack>
             </FormControl>
+
+            <FileUploadModal
+                chatId={chatId}
+                open={isFileUploadOpen}
+                handleClose={() => setFileUploadOpen(false)}
+                onFileUploadSuccess={handleFileUploadSuccess}
+            />
         </Box>
     );
 }

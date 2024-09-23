@@ -3,7 +3,6 @@ import Box from '@mui/joy/Box';
 import Sheet from '@mui/joy/Sheet';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
-import AvatarWithStatus from './AvatarWithStatus';
 import ChatBubble from './ChatBubble';
 import MessageInput from './MessageInput';
 import MessagesPaneHeader from './MessagesPaneHeader';
@@ -34,13 +33,11 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
         if (token) {
             const decodedToken: { id: number } = jwtDecode(token);
             setCurrentUserId(decodedToken.id);
-            console.log('Текущий пользователь (ID):', decodedToken.id);
         }
     }, []);
 
     useEffect(() => {
         if (chat) {
-            console.log('Обновлен чат:', chat);
             setChatMessages(chat.messages || []);
             scrollToBottom();
         } else {
@@ -53,12 +50,6 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
     }, [chatMessages]);
 
     const handleNewMessage = (newMessage: MessageProps) => {
-        if (!newMessage.userId) {
-            console.error('Новое сообщение без userId', newMessage);
-        } else {
-            console.log('Новое сообщение от userId:', newMessage.userId, 'Содержимое:', newMessage.content);
-        }
-
         setChatMessages((prevMessages) => {
             const exists = prevMessages.some(message => message.id === newMessage.id);
             if (!exists) {
@@ -75,7 +66,6 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
     });
 
     const interlocutor = chat?.users?.find(user => user.id !== currentUserId);
-    console.log('Собеседник:', interlocutor);
 
     return (
         <Sheet
@@ -97,10 +87,10 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                     display: 'flex',
                     flexDirection: 'column',
                     px: 2,
-                    py: { xs: 1, sm: 3 }, // Меньше отступы сверху и снизу на мобилках
+                    py: { xs: 1, sm: 3 },
                     overflowY: 'auto',
                     '&::-webkit-scrollbar': {
-                        width: { xs: '6px', sm: '8px' }, // Меньше скролл на мобилках
+                        width: { xs: '6px', sm: '8px' },
                     },
                 }}
             >
@@ -108,9 +98,6 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                     <Stack spacing={2} sx={{ width: '100%' }}>
                         {chatMessages.map((message: MessageProps, index: number) => {
                             const isCurrentUser = message.userId === currentUserId;
-                            const avatarSrc = message.user?.avatar || "default_avatar_path";
-
-                            console.log(`Сообщение #${index + 1}: Отправитель: ${message.user?.username} | Аватар: ${avatarSrc}`);
 
                             return (
                                 <Stack
@@ -156,9 +143,8 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                     textAreaValue={textAreaValue}
                     setTextAreaValue={setTextAreaValue}
                     onSubmit={() => {
-                        const newId = (chatMessages.length + 1).toString();
                         const newMessage: MessageProps = {
-                            id: newId,
+                            id: (chatMessages.length + 1).toString(),
                             user: chat?.users?.find(user => user.id === currentUserId)!,
                             userId: currentUserId!,
                             content: textAreaValue,

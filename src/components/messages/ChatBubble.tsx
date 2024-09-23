@@ -3,14 +3,17 @@ import Box from '@mui/joy/Box';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
+import AttachmentIcon from '@mui/icons-material/AttachFile';  // Иконка для файла
+import DownloadIcon from '@mui/icons-material/Download';  // Иконка для скачивания
 import { MessageProps } from '../core/types';
+import {IconButton} from "@mui/joy";
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
-    const { content, variant, createdAt } = props;
+    const { content, attachment, variant, createdAt } = props;
     const isSent = variant === 'sent';
     const formattedTime = new Date(createdAt).toLocaleTimeString([], {
         hour: '2-digit',
@@ -59,6 +62,48 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 >
                     {content}
                 </Typography>
+
+                {/* Если есть файл, отображаем его как ссылку с иконкой */}
+                {attachment && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            mt: 1,
+                            backgroundColor: isSent ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                            borderRadius: '8px',
+                            padding: '6px',
+                            maxWidth: 'fit-content',
+                        }}
+                    >
+                        <AttachmentIcon sx={{ fontSize: '1.2rem', mr: 1, color: isSent ? 'white' : 'black' }} />
+                        <Typography
+                            component="a"
+                            href={`${process.env.REACT_APP_API_URL}/uploads/${attachment.fileName}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                                display: 'block',
+                                color: isSent ? 'white' : 'blue',
+                                fontSize: { xs: '12px', sm: '14px' },
+                                wordBreak: 'break-word',
+                            }}
+                        >
+                            {attachment.fileName}
+                        </Typography>
+                        <IconButton
+                            component="a"
+                            href={`${process.env.REACT_APP_API_URL}/uploads/${attachment.fileName}`}
+                            download={attachment.fileName}
+                            sx={{
+                                ml: 1,
+                                color: isSent ? 'white' : 'blue',
+                            }}
+                        >
+                            <DownloadIcon />
+                        </IconButton>
+                    </Box>
+                )}
 
                 {/* Время сообщения */}
                 <Stack
