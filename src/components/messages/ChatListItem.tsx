@@ -86,7 +86,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                             online={sender.online}
                             src={sender.avatar}
                             sx={{
-                                width: { xs: 32, sm: 48 }, // Измените на нужные значения пикселей для мобилок и десктопа
+                                width: { xs: 32, sm: 48 },
                                 height: { xs: 32, sm: 48 },
                             }}
                         />

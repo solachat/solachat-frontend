@@ -3,10 +3,15 @@ import Box from '@mui/joy/Box';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
-import AttachmentIcon from '@mui/icons-material/AttachFile';  // Иконка для файла
+import Avatar from '@mui/joy/Avatar';
+import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';  // Иконка для файлов
 import DownloadIcon from '@mui/icons-material/Download';  // Иконка для скачивания
+import CloseIcon from '@mui/icons-material/Close';  // Иконка для закрытия модального окна
 import { MessageProps } from '../core/types';
-import {IconButton} from "@mui/joy";
+import { IconButton } from "@mui/joy";
+import Modal from '@mui/joy/Modal';
+import ModalDialog from '@mui/joy/ModalDialog';
+import { useState } from 'react';
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
@@ -19,6 +24,24 @@ export default function ChatBubble(props: ChatBubbleProps) {
         hour: '2-digit',
         minute: '2-digit',
     });
+
+    // Модальное окно для просмотра изображения
+    const [isImageOpen, setIsImageOpen] = useState(false);
+
+    const handleImageClick = () => {
+        setIsImageOpen(true);
+    };
+
+    const handleClose = () => {
+        setIsImageOpen(false);
+    };
+
+    const getAttachmentUrl = () => {
+        if (!attachment) return '';
+
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+        return `${baseUrl}/download/${attachment.fileName}`;
+    };
 
     return (
         <Box
@@ -35,11 +58,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 sx={{
                     position: 'relative',
                     maxWidth: { xs: '85%', sm: '100%' },
-                    padding: { xs: '6px 10px', sm: '10px 16px' },
-                    borderRadius: '12px',
+                    padding: attachment?.type === 'jpg' || attachment?.type === 'png' ? 0 : { xs: '6px 10px', sm: '10px 25px' },
+                    borderRadius: '10px',
                     borderTopRightRadius: isSent ? 0 : '12px',
                     borderTopLeftRadius: isSent ? '12px' : 0,
-                    backgroundColor: isSent
+                    backgroundColor: attachment?.type === 'jpg' || attachment?.type === 'png' ? 'transparent' : isSent
                         ? 'var(--joy-palette-primary-solidBg)'
                         : 'background.body',
                     wordWrap: 'break-word',
@@ -47,62 +70,67 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     whiteSpace: 'pre-wrap',
                 }}
             >
-                {/* Контент сообщения */}
-                <Typography
-                    sx={{
-                        fontSize: { xs: '12px', sm: '14px' },
-                        color: isSent
-                            ? 'var(--joy-palette-common-white)'
-                            : 'var(--joy-palette-text-primary)',
-                        wordWrap: 'break-word',
-                        overflowWrap: 'break-word',
-                        whiteSpace: 'pre-wrap',
-                        marginBottom: '4px',
-                    }}
-                >
-                    {content}
-                </Typography>
+                {/* Контент сообщения если это не изображение */}
+                {(!attachment || (attachment?.type !== 'jpg' && attachment?.type !== 'png')) && (
+                    <Typography
+                        sx={{
+                            fontSize: { xs: '12px', sm: '14px' },
+                            color: isSent
+                                ? 'var(--joy-palette-common-white)'
+                                : 'var(--joy-palette-text-primary)',
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'pre-wrap',
+                            marginBottom: '4px',
+                            textAlign: 'left',
+                        }}
+                    >
+                        {content}
+                    </Typography>
+                )}
 
-                {/* Если есть файл, отображаем его как ссылку с иконкой */}
-                {attachment && (
+                {/* Если файл - это изображение */}
+                {attachment?.type === 'jpg' || attachment?.type === 'png' ? (
                     <Box
                         sx={{
                             display: 'flex',
+                            flexDirection: 'column',
                             alignItems: 'center',
                             mt: 1,
-                            backgroundColor: isSent ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                            borderRadius: '8px',
-                            padding: '6px',
-                            maxWidth: 'fit-content',
+                            maxWidth: '100%',
+                            cursor: 'pointer',
                         }}
+                        onClick={handleImageClick}
                     >
-                        <AttachmentIcon sx={{ fontSize: '1.2rem', mr: 1, color: isSent ? 'white' : 'black' }} />
-                        <Typography
-                            component="a"
-                            href={`${process.env.REACT_APP_API_URL}/uploads/${attachment.fileName}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={{
-                                display: 'block',
-                                color: isSent ? 'white' : 'blue',
-                                fontSize: { xs: '12px', sm: '14px' },
-                                wordBreak: 'break-word',
-                            }}
-                        >
-                            {attachment.fileName}
-                        </Typography>
-                        <IconButton
-                            component="a"
-                            href={`${process.env.REACT_APP_API_URL}/uploads/${attachment.fileName}`}
-                            download={attachment.fileName}
-                            sx={{
-                                ml: 1,
-                                color: isSent ? 'white' : 'blue',
-                            }}
-                        >
-                            <DownloadIcon />
-                        </IconButton>
+                        <img
+                            src={getAttachmentUrl()}
+                            alt="attachment"
+                            style={{ width: '100%', borderRadius: '8px' }}
+                        />
                     </Box>
+                ) : (
+                    attachment && (
+                        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                            <Avatar color="primary" size="lg">
+                                <InsertDriveFileRoundedIcon />
+                            </Avatar>
+                            <div>
+                                <Typography sx={{ fontSize: 'sm' }}>{attachment.fileName}</Typography>
+                                <Typography level="body-sm">{attachment.size}</Typography>
+                            </div>
+                            <IconButton
+                                component="a"
+                                href={getAttachmentUrl()}
+                                download={attachment?.fileName}
+                                sx={{
+                                    ml: 1,
+                                    color: isSent ? 'white' : '#0B6BCB',
+                                }}
+                            >
+                                <DownloadIcon />
+                            </IconButton>
+                        </Stack>
+                    )
                 )}
 
                 {/* Время сообщения */}
@@ -122,6 +150,40 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         {formattedTime}
                     </Typography>
                 </Stack>
+
+                {/* Модальное окно для просмотра изображения */}
+                {attachment?.type === 'jpg' || attachment?.type === 'png' ? (
+                    <Modal open={isImageOpen} onClose={handleClose}>
+                        <ModalDialog
+                            aria-labelledby="image-preview-dialog"
+                            sx={{
+                                maxWidth: '80%',
+                                maxHeight: '80%',
+                                overflow: 'auto',
+                                position: 'relative',
+                                backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                            }}
+                        >
+                            <IconButton
+                                onClick={handleClose}
+                                sx={{
+                                    position: 'absolute',
+                                    top: 8,
+                                    right: 8,
+                                    color: 'white',
+                                }}
+                            >
+                                <CloseIcon />
+                            </IconButton>
+
+                            <img
+                                src={getAttachmentUrl()}
+                                alt="attachment-preview"
+                                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                            />
+                        </ModalDialog>
+                    </Modal>
+                ) : null}
             </Sheet>
         </Box>
     );
