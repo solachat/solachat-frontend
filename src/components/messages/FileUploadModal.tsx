@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { Button, Modal, ModalDialog, Typography, IconButton } from '@mui/joy';
+import { Button, Modal, ModalDialog, Typography, IconButton, Box } from '@mui/joy';
 import UploadIcon from '@mui/icons-material/Upload';
 import CloseIcon from '@mui/icons-material/Close';
 import { toast } from 'react-toastify';
@@ -8,17 +8,27 @@ import { uploadFileToChat } from '../../api/api';
 
 interface FileUploadModalProps {
     chatId: number;
-    onFileUploadSuccess: (filePath: string) => void;  // Оставляем только filePath
+    onFileUploadSuccess: (filePath: string) => void; // Оставляем только filePath
     open: boolean;
     handleClose: () => void;
 }
 
 const FileUploadModal: React.FC<FileUploadModalProps> = ({ chatId, onFileUploadSuccess, open, handleClose }) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [preview, setPreview] = useState<string | null>(null); // Для хранения превью изображения
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files && event.target.files[0]) {
-            setSelectedFile(event.target.files[0]);
+        const file = event.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+
+            // Если файл является изображением, создаем его превью
+            if (file.type.startsWith('image/')) {
+                const imageUrl = URL.createObjectURL(file);
+                setPreview(imageUrl); // Сохраняем URL для отображения
+            } else {
+                setPreview(null); // Удаляем превью, если файл не является изображением
+            }
         }
     };
 
@@ -34,12 +44,11 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ chatId, onFileUploadS
             formData.append('file', selectedFile);
 
             try {
-                // Загрузка файла
                 const response = await uploadFileToChat(chatId, formData, token);
 
-                // После успешной загрузки файла
-                onFileUploadSuccess(response.filePath);  // Передаем только путь к файлу
+                onFileUploadSuccess(response.filePath);
                 setSelectedFile(null);
+                setPreview(null); // Убираем превью после успешной загрузки
                 handleClose();
             } catch (error) {
                 console.error('Failed to upload file:', error);
@@ -61,6 +70,25 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ chatId, onFileUploadS
                 <Typography component="h2" sx={{ mb: 2 }}>
                     {selectedFile ? selectedFile.name : 'Upload a file'}
                 </Typography>
+
+                {/* Превью изображения, если файл является изображением */}
+                {preview && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            mb: 2,
+                        }}
+                    >
+                        <img
+                            src={preview}
+                            alt="preview"
+                            style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px' }}
+                        />
+                    </Box>
+                )}
+
                 <input
                     type="file"
                     onChange={handleFileChange}

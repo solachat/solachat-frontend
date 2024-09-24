@@ -116,7 +116,7 @@
     "continueToDiscord": "Discord"
   },
   "wallet": "Кошелек",
-  "Type something here…": "Напишите что-нибудь…",
+  "writeMessage": "Напишите сообщение…",
   "Send": "Отправить",
   "Messages": "Сообщения",
   "Loading...": "Загрузка...",
@@ -173,5 +173,9 @@
   "startcommunicate": "Начните общаться!",
   "nomessages": "Сообщений нет. Начните разговор!",
   "viewprofile": "Профиль",
-  "call": "Звонок"
+  "call": "Звонок",
+  "ratinguser": "Рейтинг",
+  "english": "Английский",
+  "russian": "Русский",
+  "chinese": "Китайский"
 }

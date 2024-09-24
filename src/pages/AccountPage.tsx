@@ -282,7 +282,7 @@ export default function AccountPage() {
                                         <StarIcon fontSize="large" sx={{ color: 'warning.300', ml: 1 }} />
                                     </Typography>
                                     <Typography sx={{ color: 'text.secondary', mt: 0 }}>
-                                        Rating user
+                                        {t('ratinguser')}
                                     </Typography>
                                     <Typography sx={{ color: 'text.secondary', mt: 1 }}>
                                         {t('lastLogin')}: {new Date(profileData.lastLogin).toLocaleString()}

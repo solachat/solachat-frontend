@@ -138,7 +138,6 @@ export const updateUserStatus = async (userId: number, isOnline: boolean, token:
 
 export const uploadFileToChat = async (chatId: number, formData: FormData, token: string) => {
     try {
-        // Добавляем chatId в FormData
         formData.append('chatId', chatId.toString());
 
         console.log('ChatId:', chatId);

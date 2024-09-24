@@ -60,10 +60,15 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
     };
 
     useWebSocket((message) => {
-        if (message.type === 'newMessage' && message.message.chatId === chat?.id) {
-            handleNewMessage(message.message);
+        if (message.type === 'newMessage') {
+            if (message.message.chatId === chat?.id) {
+                handleNewMessage(message.message);
+            } else {
+                console.log(`Received message for chat ID ${message.message.chatId}, but current chat ID is ${chat?.id}. Ignoring.`);
+            }
         }
     });
+
 
     const interlocutor = chat?.users?.find(user => user.id !== currentUserId);
 

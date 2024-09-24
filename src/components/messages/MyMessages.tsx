@@ -1,13 +1,15 @@
 import * as React from 'react';
-import {jwtDecode} from 'jwt-decode'; // Правильный импорт
+import {useSearchParams} from 'react-router-dom'; // Добавляем для работы с параметрами URL
 import Sheet from '@mui/joy/Sheet';
 import MessagesPane from './MessagesPane';
 import ChatsPane from './ChatsPane';
-import { ChatProps, UserProps } from '../core/types';
-import { fetchChatsFromServer } from '../../api/api';
-import { Typography } from '@mui/joy';
+import {ChatProps, UserProps} from '../core/types';
+import {fetchChatsFromServer} from '../../api/api';
+import {Typography} from '@mui/joy';
 import {useTranslation} from "react-i18next";
 import {JwtPayload} from "jsonwebtoken";
+import {jwtDecode} from 'jwt-decode';
+import {Helmet} from "react-helmet-async"; // Правильный импорт
 
 export default function MyProfile() {
     const [chats, setChats] = React.useState<ChatProps[]>([]);
@@ -15,7 +17,8 @@ export default function MyProfile() {
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
     const [currentUser, setCurrentUser] = React.useState<UserProps | null>(null);
-    const { t } = useTranslation();
+    const {t} = useTranslation();
+    const [searchParams] = useSearchParams();
 
     const getCurrentUserFromToken = (): UserProps | null => {
         const token = localStorage.getItem('token');
@@ -61,7 +64,14 @@ export default function MyProfile() {
                 const fetchedChats = await fetchChatsFromServer(currentUser.id, token);
                 if (Array.isArray(fetchedChats) && fetchedChats.length > 0) {
                     setChats(fetchedChats);
-                    setSelectedChat(fetchedChats[0]);
+
+                    const chatIdFromUrl = searchParams.get('id');
+                    if (chatIdFromUrl) {
+                        const chatFromUrl = fetchedChats.find(chat => chat.id === Number(chatIdFromUrl));
+                        setSelectedChat(chatFromUrl || fetchedChats[0]);
+                    } else {
+                        setSelectedChat(fetchedChats[0]);
+                    }
                 } else {
                     setChats([]);
                 }
@@ -74,55 +84,61 @@ export default function MyProfile() {
         };
 
         loadChats();
-    }, [currentUser]);
+    }, [currentUser, searchParams]);
 
     return (
-        <Sheet
-            sx={{
-                flex: 1,
-                width: '100%',
-                mx: 'auto',
-                pt: { xs: 'var(--Header-height)', sm: 0 },
-                display: 'grid',
-                gridTemplateColumns: {
-                    xs: '1fr',
-                    sm: 'minmax(min-content, min(30%, 400px)) 1fr',
-                },
-            }}
-        >
-            {currentUser ? (
-                <>
-                    <ChatsPane
-                        chats={chats}
-                        selectedChatId={selectedChat ? selectedChat.id : ''}
-                        setSelectedChat={(chat: ChatProps) => {
-                            console.log('Selected chat set in MyProfile:', chat);
-                            setSelectedChat(chat);
-                        }}
-                        currentUser={currentUser}
-                    />
-                    <Sheet
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'center',
-                            backgroundColor: 'background.level1',
-                        }}
-                    >
-                        {error ? (
-                            <Typography sx={{ textAlign: 'center', color: 'red' }}>{error}</Typography>
-                        ) : loading ? (
-                            <Typography>Loading chats...</Typography>
-                        ) : selectedChat ? (
-                            <MessagesPane chat={selectedChat} />
-                        ) : (
-                            <MessagesPane chat={null} />
-                        )}
-                    </Sheet>
-                </>
-            ) : (
-                <Typography>{t('loadingUserInformation')}</Typography>
-            )}
-        </Sheet>
+        <>
+            <Helmet>
+                <title>Messenger</title>
+            </Helmet>
+            <Sheet
+                sx={{
+                    flex: 1,
+                    width: '100%',
+                    mx: 'auto',
+                    pt: {xs: 'var(--Header-height)', sm: 0},
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'minmax(min-content, min(30%, 400px)) 1fr',
+                    },
+                }}
+            >
+                {currentUser ? (
+                    <>
+                        <ChatsPane
+                            chats={chats}
+                            selectedChatId={selectedChat ? String(selectedChat.id) : ''}
+                            setSelectedChat={(chat: ChatProps) => {
+                                setSelectedChat(chat);
+                            }}
+                            currentUser={currentUser}
+                        />
+
+
+                        <Sheet
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                backgroundColor: 'background.level1',
+                            }}
+                        >
+                            {error ? (
+                                <Typography sx={{textAlign: 'center', color: 'red'}}>{error}</Typography>
+                            ) : loading ? (
+                                <Typography>Loading chats...</Typography>
+                            ) : selectedChat ? (
+                                <MessagesPane chat={selectedChat}/>
+                            ) : (
+                                <MessagesPane chat={null}/>
+                            )}
+                        </Sheet>
+                    </>
+                ) : (
+                    <Typography>{t('loadingUserInformation')}</Typography>
+                )}
+            </Sheet>
+        </>
     );
 }

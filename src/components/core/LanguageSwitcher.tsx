@@ -5,6 +5,7 @@ import MenuItem from '@mui/joy/MenuItem';
 import IconButton from '@mui/joy/IconButton';
 import LanguageIcon from '@mui/icons-material/Language';
 import Box from '@mui/joy/Box';
+import {t} from "i18next";
 
 export const LanguageSwitcher = () => {
     const {i18n} = useTranslation();
@@ -43,6 +44,7 @@ export const LanguageSwitcher = () => {
             >
                 <MenuItem onClick={() => handleLanguageChange('en')}>English</MenuItem>
                 <MenuItem onClick={() => handleLanguageChange('ru')}>Русский</MenuItem>
+                <MenuItem onClick={() => handleLanguageChange('ch')}>中国人</MenuItem>
             </Menu>
         </Box>
     );

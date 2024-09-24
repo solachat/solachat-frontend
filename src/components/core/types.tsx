@@ -15,13 +15,14 @@ export type MessageProps = {
     userId: number;
     attachment?: {
         fileName: string;
+        filePath: string;
         type: string;
         size: string;
     };
 };
 
 export type ChatProps = {
-    id: string;
+    id: number;
     user: UserProps;
     users: UserProps[];
     messages: MessageProps[];

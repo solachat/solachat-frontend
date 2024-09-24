@@ -10,6 +10,7 @@ import AvatarWithStatus from './AvatarWithStatus';
 import { ChatProps, MessageProps, UserProps } from '../core/types';
 import { createPrivateChat } from '../../api/api';
 import { toast } from "react-toastify";
+import { useNavigate } from 'react-router-dom';
 
 const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -31,8 +32,8 @@ export default function ChatListItem(props: ChatListItemProps) {
     const { id, sender, messages, selectedChatId, setSelectedChat, currentUserId, chats } = props;
     const selected = selectedChatId === id;
     const hasMessages = Array.isArray(messages) && messages.length > 0;
-
     const lastMessage = hasMessages ? messages[messages.length - 1] : null;
+    const navigate = useNavigate();
 
     const existingChat = Array.isArray(chats)
         ? chats.find((chat: ChatProps) =>
@@ -42,19 +43,16 @@ export default function ChatListItem(props: ChatListItemProps) {
 
     const handleClick = async () => {
         if (existingChat) {
-            console.log('Chat already exists:', existingChat);
             setSelectedChat(existingChat);
-            console.log('Selected chat after click:', existingChat);
+            navigate(`/chat/#${existingChat.id}`);
         } else {
-            console.log('Creating chat for users:', currentUserId, 'and', sender?.id);
             const token = localStorage.getItem('token');
             if (token && sender) {
                 const newChat = await createPrivateChat(currentUserId, sender.id, token);
                 if (newChat) {
                     toast.success('Chat created successfully!');
                     setSelectedChat({ ...newChat, users: [sender, { id: currentUserId }] });
-
-                    console.log('New chat created and selected:', newChat);
+                    navigate(`/chat/#${newChat.id}`);
                 } else {
                     toast.error('Failed to create chat.');
                 }
@@ -127,9 +125,15 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 WebkitBoxOrient: 'vertical',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
+                                color: 'text.secondary',
+                                marginTop: '8px',
                             }}
                         >
-                            {lastMessage.content}
+                            {lastMessage.attachment ? (
+                                <i>{lastMessage.attachment.fileName}</i>
+                            ) : (
+                                lastMessage.content
+                            )}
                         </Typography>
                     )}
                 </ListItemButton>

@@ -91,7 +91,7 @@
   },
   "home": "Home",
   "wallet": "Wallet",
-  "Type something here…": "Type something here…",
+  "writeMessage": "Write a message...",
   "Send": "Send",
   "Messages": "Messages",
   "Search": "Search",
@@ -146,5 +146,9 @@
   "startcommunicate": "Start to communicate!",
   "nomessages": "No messages yet. Start the conversation!",
   "viewprofile": "View Profile",
-  "call": "Call"
+  "call": "Call",
+  "ratinguser": "Rating User",
+  "english": "English",
+  "russian": "Russian",
+  "chinese": "Chinese"
 }
