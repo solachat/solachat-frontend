@@ -8,18 +8,24 @@ import Typography from '@mui/joy/Typography';
 import CircleIcon from '@mui/icons-material/Circle';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
-import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import { UserProps } from '../core/types';
 import { toggleMessagesPane } from '../../utils/utils';
-import {useTranslation} from "react-i18next";
+import { useTranslation } from "react-i18next";
+import MessagesMenu from './MessagesMenu';
 
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
+    chatId: number;  // Добавляем chatId как пропс
 };
 
-export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
-    const { sender } = props;
+export default function MessagesPaneHeader({ sender, chatId }: MessagesPaneHeaderProps) {
     const { t } = useTranslation();
+
+    const handleDeleteChat = () => {
+        console.log("Chat deleted");
+    };
+
+    const userToken = localStorage.getItem('token');
 
     if (!sender) {
         return null;
@@ -106,9 +112,11 @@ export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
                 >
                     {t('viewprofile')}
                 </Button>
-                <IconButton size="sm" variant="plain" color="neutral">
-                    <MoreVertRoundedIcon />
-                </IconButton>
+                <MessagesMenu
+                    chatId={chatId}
+                    token={userToken || ''}
+                    onDeleteChat={handleDeleteChat}
+                />
             </Stack>
         </Stack>
     );

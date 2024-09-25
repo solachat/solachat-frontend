@@ -1,17 +1,19 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
 import { Editor, EditorState, getDefaultKeyBinding } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import { useTranslation } from 'react-i18next';
 import Box from '@mui/joy/Box';
 import FormControl from '@mui/joy/FormControl';
 import { IconButton, Stack, Typography, Avatar } from '@mui/joy';
-import AttachFileIcon from '@mui/icons-material/AttachFile'; // Скрепка для вложений
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'; // Иконка для файла
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import FileUploadModal from './FileUploadModal';
 import { sendMessage } from '../../api/api';
+import {useRef, useState} from "react";
+import CloseIcon from "@mui/icons-material/Close";
+import EditIcon from "@mui/icons-material/Edit";
 
 export type UploadedFileData = {
     filePath: string;
@@ -22,76 +24,68 @@ export type MessageInputProps = {
     textAreaValue: string;
     setTextAreaValue: (value: string) => void;
     onSubmit: (newMessage: any) => void;
+    editingMessage: string | null; // Добавлено для хранения редактируемого сообщения
+    setEditingMessage: (message: string | null) => void; // Функция для установки редактируемого сообщения
 };
 
 export default function MessageInput(props: MessageInputProps) {
     const { t } = useTranslation();
-    const { setTextAreaValue, chatId } = props;
+    const { setTextAreaValue, chatId, textAreaValue, editingMessage, setEditingMessage } = props;
+
     const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
-    const editorRef = React.useRef<Editor | null>(null);
+    const editorRef = useRef<Editor | null>(null);
     const [isFileUploadOpen, setFileUploadOpen] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
-    const [messageFromModal, setMessageFromModal] = useState<string>('');
-    const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
-    // Для отслеживания открытия клавиатуры на мобильных устройствах
-    useEffect(() => {
-        const handleFocus = () => setIsKeyboardOpen(true);
-        const handleBlur = () => setIsKeyboardOpen(false);
-
-        window.addEventListener('focusin', handleFocus);
-        window.addEventListener('focusout', handleBlur);
-
-        return () => {
-            window.removeEventListener('focusin', handleFocus);
-            window.removeEventListener('focusout', handleBlur);
-        };
-    }, []);
-
+    // Обработчик изменений в редакторе текста
     const handleEditorChange = (newState: EditorState) => {
         setEditorState(newState);
         const currentContent = newState.getCurrentContent().getPlainText();
         setTextAreaValue(currentContent);
     };
 
+    // Обработка нажатий клавиш, включая отправку по Enter
     const keyBindingFn = (e: React.KeyboardEvent): string | null => {
         if (e.key === 'Enter' && !e.shiftKey) {
-            handleClick();
+            handleClick(); // Отправляем сообщение при нажатии Enter
             return 'submit-message';
         }
         return getDefaultKeyBinding(e);
     };
 
+    // Обработчик отправки сообщения
     const handleClick = async () => {
         if (!chatId || isNaN(chatId)) {
             console.error('Invalid chatId:', chatId);
             return;
         }
 
-        if (props.textAreaValue.trim() !== '' || uploadedFiles.length > 0) {
+        if (textAreaValue.trim() !== '' || uploadedFiles.length > 0) {
             const token = localStorage.getItem('token');
             try {
                 const filePaths = uploadedFiles.map((fileData) => fileData.filePath);
                 const newMessage = await sendMessage(
                     chatId,
-                    messageFromModal || props.textAreaValue,
+                    textAreaValue,
                     token as string,
                     filePaths.length > 0 ? filePaths[0] : undefined
                 );
-                setTextAreaValue('');
-                setEditorState(EditorState.createEmpty());
-                setUploadedFiles([]);
-                setMessageFromModal('');
+                setTextAreaValue(''); // Очищаем текстовое поле
+                setEditorState(EditorState.createEmpty()); // Очищаем Draft.js редактор
+                setUploadedFiles([]); // Очищаем файлы после отправки
+                setEditingMessage(null); // Убираем редактируемое сообщение
             } catch (error) {
                 console.error('Ошибка при отправке сообщения:', error);
             }
         }
     };
 
+    // Обработчик успешной загрузки файла
     const handleFileUploadSuccess = (filePath: string) => {
         setUploadedFiles((prevFiles) => [...prevFiles, { filePath }]);
     };
 
+    // Удаление файла из списка загруженных
     const removeUploadedFile = (index: number) => {
         setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     };
@@ -100,7 +94,7 @@ export default function MessageInput(props: MessageInputProps) {
         <Box sx={{ position: 'relative', px: 3, pb: 1 }}>
             <FormControl sx={{ position: 'sticky', zIndex: 10 }}>
                 <Stack
-                    direction="row"
+                    direction="column"
                     alignItems="center"
                     justifyContent="space-between"
                     sx={{
@@ -108,69 +102,115 @@ export default function MessageInput(props: MessageInputProps) {
                         borderColor: 'divider',
                         borderRadius: '4px',
                         padding: '6px',
-                        minHeight: '40px',
                         backgroundColor: 'background.level1',
                     }}
                 >
-                    {/* Иконка загрузки (скрепка) */}
-                    <IconButton
-                        size="sm"
-                        variant="plain"
-                        color="neutral"
-                        onClick={() => setFileUploadOpen(true)}
-                        sx={{ mr: 1 }}
-                    >
-                        <AttachFileIcon />
-                    </IconButton>
-
-                    {/* Текстовое поле */}
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            flexGrow: 1,
-                            minHeight: 'auto',
-                            cursor: 'text',
-                            paddingLeft: '10px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            width: '100%',
-                        }}
-                        onClick={() => editorRef.current?.focus()}
-                    >
-                        <Box
+                    {/* Если редактируемое сообщение есть, отображаем его над полем ввода */}
+                    {editingMessage && (
+                        <Stack
+                            direction="row"
+                            alignItems="center"
+                            justifyContent="space-between"
                             sx={{
                                 width: '100%',
-                                maxWidth: '800px',
-                                minWidth: '300px',
+                                height: '40px', // Установите фиксированную высоту
+                                padding: '8px',
+                                borderRadius: '4px',
+                                marginBottom: '8px',
+                                mr: '1px',
+                                overflow: 'hidden', // Скрыть переполнение
                             }}
                         >
-                            <Editor
-                                editorState={editorState}
-                                keyBindingFn={keyBindingFn}
-                                onChange={handleEditorChange}
-                                placeholder={t('writeMessage')}
-                                ref={editorRef}
-                                spellCheck={true}
-                                stripPastedStyles={true}
-                            />
-                        </Box>
-                    </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <EditIcon
+                                    sx={{
+                                        marginRight: '20px',
+                                        marginLeft: '5px',
+                                        color: 'neutral.main',
+                                        fontSize: '1.50rem',
+                                    }}
+                                />
+                                <Typography>
+                                    Редактирование <br /> {editingMessage}
+                                </Typography>
+                            </Box>
+                            <IconButton
+                                size="sm"
+                                onClick={() => setEditingMessage(null)}
+                            >
+                                <CloseIcon />
+                            </IconButton>
+                        </Stack>
+                    )}
 
-                    {/* Плавное появление иконки отправки */}
-                    <IconButton
-                        size="sm"
-                        color="primary"
-                        onClick={handleClick}
-                        sx={{
-                            ml: 1,
-                            opacity: props.textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 1 : 0,
-                            transition: 'opacity 0.1s ease',
-                        }}
+
+                    {/* Основное поле ввода */}
+                    <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        sx={{ width: '100%' }}
                     >
-                        <SendRoundedIcon />
-                    </IconButton>
+                        {/* Иконка загрузки (скрепка) */}
+                        <IconButton
+                            size="sm"
+                            variant="plain"
+                            color="neutral"
+                            onClick={() => setFileUploadOpen(true)}
+                            sx={{ mr: 1 }}
+                        >
+                            <AttachFileIcon />
+                        </IconButton>
+
+                        {/* Текстовое поле */}
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                flexGrow: 1,
+                                minHeight: 'auto',
+                                cursor: 'text',
+                                paddingLeft: '10px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                width: '100%',
+                            }}
+                            onClick={() => editorRef.current?.focus()}
+                        >
+                            <Box
+                                sx={{
+                                    width: '100%',
+                                    maxWidth: '800px',
+                                    minWidth: '300px',
+                                }}
+                            >
+                                <Editor
+                                    editorState={editorState}
+                                    keyBindingFn={keyBindingFn}
+                                    onChange={handleEditorChange}
+                                    placeholder={t('writeMessage')}
+                                    ref={editorRef}
+                                    spellCheck={true}
+                                    stripPastedStyles={true}
+                                />
+                            </Box>
+                        </Box>
+
+                        {/* Плавное появление иконки отправки */}
+                        <IconButton
+                            size="sm"
+                            color="primary"
+                            onClick={handleClick}
+                            sx={{
+                                ml: 1,
+                                opacity: textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 1 : 0,
+                                transition: 'opacity 0.1s ease',
+                            }}
+                        >
+                            <SendRoundedIcon />
+                        </IconButton>
+                    </Stack>
                 </Stack>
             </FormControl>
 
@@ -216,6 +256,7 @@ export default function MessageInput(props: MessageInputProps) {
                 </Box>
             )}
 
+            {/* Модальное окно для загрузки файла */}
             <FileUploadModal
                 chatId={chatId}
                 open={isFileUploadOpen}

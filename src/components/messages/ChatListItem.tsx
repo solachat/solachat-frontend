@@ -90,11 +90,28 @@ export default function ChatListItem(props: ChatListItemProps) {
                         />
                         <Box sx={{ flex: 1 }}>
                             <Typography level="body-md" fontSize={{ xs: 'sm', sm: 'md' }}>
-                                {sender.realname || 'No Name'}
+                                {sender.realname || 'No Name'} ({sender.username || 'No Username'})
                             </Typography>
-                            <Typography level="body-sm" fontSize={{ xs: 'xs', sm: 'sm' }} sx={{ color: 'text.secondary' }}>
-                                {sender.username || 'No Username'}
-                            </Typography>
+                            {hasMessages && lastMessage && (
+                                <Typography
+                                    level="body-sm"
+                                    sx={{
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: '2',
+                                        WebkitBoxOrient: 'vertical',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        color: 'text.secondary',
+                                        marginTop: '3px',
+                                    }}
+                                >
+                                    {lastMessage.attachment ? (
+                                        <i>{lastMessage.attachment.fileName}</i>
+                                    ) : (
+                                        lastMessage.content
+                                    )}
+                                </Typography>
+                            )}
                         </Box>
                         {hasMessages && lastMessage && (
                             <Box
@@ -116,26 +133,27 @@ export default function ChatListItem(props: ChatListItemProps) {
                             </Box>
                         )}
                     </Stack>
-                    {hasMessages && lastMessage && (
-                        <Typography
-                            level="body-sm"
-                            sx={{
-                                display: '-webkit-box',
-                                WebkitLineClamp: '2',
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                color: 'text.secondary',
-                                marginTop: '8px',
-                            }}
-                        >
-                            {lastMessage.attachment ? (
-                                <i>{lastMessage.attachment.fileName}</i>
-                            ) : (
-                                lastMessage.content
-                            )}
-                        </Typography>
-                    )}
+                    {/*{hasMessages && lastMessage && (*/}
+                    {/*    <Typography*/}
+                    {/*        level="body-sm"*/}
+                    {/*        sx={{*/}
+                    {/*            display: '-webkit-box',*/}
+                    {/*            WebkitLineClamp: '2',*/}
+                    {/*            WebkitBoxOrient: 'vertical',*/}
+                    {/*            overflow: 'hidden',*/}
+                    {/*            textOverflow: 'ellipsis',*/}
+                    {/*            color: 'text.secondary',*/}
+                    {/*            marginTop: '3px',*/}
+                    {/*            marginLeft: '65px'*/}
+                    {/*        }}*/}
+                    {/*    >*/}
+                    {/*        {lastMessage.attachment ? (*/}
+                    {/*            <i>{lastMessage.attachment.fileName}</i>*/}
+                    {/*        ) : (*/}
+                    {/*            lastMessage.content*/}
+                    {/*        )}*/}
+                    {/*    </Typography>*/}
+                    {/*)}*/}
                 </ListItemButton>
             </ListItem>
             <ListDivider sx={{ margin: 0 }} />

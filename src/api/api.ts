@@ -5,13 +5,14 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
 export const searchUsers = async (searchTerm: string) => {
     try {
-        const response = await axios.get(`${API_URL}/api/users/search?username=${searchTerm}`);
+        const response = await axios.get(`${API_URL}/api/users/search?searchTerm=${searchTerm}`);
         return response.data;
     } catch (error) {
         console.error('Error searching users:', error);
         return [];
     }
 };
+
 
 export const createPrivateChat = async (currentUserId: number, userId: number, token: string) => {
     try {
@@ -160,4 +161,23 @@ export const uploadFileToChat = async (chatId: number, formData: FormData, token
     }
 };
 
+export const deleteChat = async (chatId: number, token: string) => {
+    try {
+        const response = await axios.delete(`${API_URL}/api/chats/${chatId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        toast.success('Chat deleted successfully');
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            console.error('Error deleting chat:', error.response?.data || error.message);
+        } else {
+            console.error('Unexpected error deleting chat:', error);
+        }
+        toast.error('Failed to delete chat');
+        throw new Error('Could not delete chat');
+    }
+};
 

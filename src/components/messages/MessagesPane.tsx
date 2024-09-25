@@ -21,6 +21,7 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
     const [chatMessages, setChatMessages] = useState<MessageProps[]>(chat?.messages || []);
     const [textAreaValue, setTextAreaValue] = useState<string>('');
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -69,6 +70,11 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
         }
     });
 
+    const handleEditMessage = (messageId: number, content: string) => {
+        setEditingMessageId(messageId);
+        setTextAreaValue(content);
+    };
+
 
     const interlocutor = chat?.users?.find(user => user.id !== currentUserId);
 
@@ -84,7 +90,9 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                 overflow: 'hidden',
             }}
         >
-            {interlocutor && <MessagesPaneHeader sender={interlocutor} />}
+            {interlocutor && chat?.id && (
+                <MessagesPaneHeader sender={interlocutor} chatId={chat.id} />
+                )}
 
             <Box
                 sx={{
@@ -119,6 +127,7 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                                         content={message.content}
                                         createdAt={message.createdAt}
                                         attachment={message.attachment}
+                                        onEditMessage={handleEditMessage}
                                     />
                                 </Stack>
                             );
@@ -157,7 +166,20 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                         };
                         handleNewMessage(newMessage);
                         setTextAreaValue('');
+                        setEditingMessageId(null); // Сброс состояния редактирования
                     }}
+                    editingMessage={editingMessageId !== null ?
+                        chatMessages.find(msg => msg.id.toString() === editingMessageId.toString())?.content ?? '' : ''}
+                    setEditingMessage={(msg) => {
+                        if (msg === null) {
+                            setEditingMessageId(null);
+                        } else {
+                            const messageToEdit = chatMessages.find(msgItem => msgItem.content === msg);
+                            if (messageToEdit) {
+                                setEditingMessageId(Number(messageToEdit.id)); // Убедитесь, что id - это number
+                            }
+                        }
+                    }} // Передаем функцию для изменения ID редактируемого сообщения
                 />
             )}
         </Sheet>
