@@ -181,3 +181,22 @@ export const deleteChat = async (chatId: number, token: string) => {
     }
 };
 
+export const editMessage = async (messageId: number, content: string, token: string) => {
+    try {
+        const response = await axios.put(
+            `${API_URL}/api/messages/${messageId}`,
+            { content },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        console.log('Message edited successfully:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error editing message:', error);
+        throw new Error('Could not edit message');
+    }
+};

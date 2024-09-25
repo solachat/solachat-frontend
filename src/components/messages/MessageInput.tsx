@@ -10,8 +10,8 @@ import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import FileUploadModal from './FileUploadModal';
-import { sendMessage } from '../../api/api';
-import {useRef, useState} from "react";
+import { sendMessage, editMessage } from '../../api/api'; // Добавляем функцию editMessage
+import { useRef, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 
@@ -24,8 +24,8 @@ export type MessageInputProps = {
     textAreaValue: string;
     setTextAreaValue: (value: string) => void;
     onSubmit: (newMessage: any) => void;
-    editingMessage: string | null; // Добавлено для хранения редактируемого сообщения
-    setEditingMessage: (message: string | null) => void; // Функция для установки редактируемого сообщения
+    editingMessage: { id: number | null, content: string | null } | null; // Сохраняем id и содержимое
+    setEditingMessage: (message: { id: number | null, content: string | null } | null) => void; // Функция для установки редактируемого сообщения
 };
 
 export default function MessageInput(props: MessageInputProps) {
@@ -53,29 +53,47 @@ export default function MessageInput(props: MessageInputProps) {
         return getDefaultKeyBinding(e);
     };
 
-    // Обработчик отправки сообщения
+    // Обработчик отправки или редактирования сообщения
     const handleClick = async () => {
         if (!chatId || isNaN(chatId)) {
             console.error('Invalid chatId:', chatId);
             return;
         }
 
-        if (textAreaValue.trim() !== '' || uploadedFiles.length > 0) {
-            const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('Authorization token is missing');
+            return;
+        }
+
+        if (editingMessage && editingMessage.id !== null) {
+            // Если редактируем сообщение
             try {
-                const filePaths = uploadedFiles.map((fileData) => fileData.filePath);
-                const newMessage = await sendMessage(
-                    chatId,
-                    textAreaValue,
-                    token as string,
-                    filePaths.length > 0 ? filePaths[0] : undefined
-                );
+                await editMessage(editingMessage.id, textAreaValue, token);
                 setTextAreaValue(''); // Очищаем текстовое поле
                 setEditorState(EditorState.createEmpty()); // Очищаем Draft.js редактор
                 setUploadedFiles([]); // Очищаем файлы после отправки
-                setEditingMessage(null); // Убираем редактируемое сообщение
+                setEditingMessage(null); // Сбрасываем редактируемое сообщение
             } catch (error) {
-                console.error('Ошибка при отправке сообщения:', error);
+                console.error('Ошибка при редактировании сообщения:', error);
+            }
+        } else {
+            // Отправка нового сообщения
+            if (textAreaValue.trim() !== '' || uploadedFiles.length > 0) {
+                try {
+                    const filePaths = uploadedFiles.map((fileData) => fileData.filePath);
+                    const newMessage = await sendMessage(
+                        chatId,
+                        textAreaValue,
+                        token as string,
+                        filePaths.length > 0 ? filePaths[0] : undefined
+                    );
+                    setTextAreaValue(''); // Очищаем текстовое поле
+                    setEditorState(EditorState.createEmpty()); // Очищаем Draft.js редактор
+                    setUploadedFiles([]); // Очищаем файлы после отправки
+                } catch (error) {
+                    console.error('Ошибка при отправке сообщения:', error);
+                }
             }
         }
     };
@@ -106,7 +124,7 @@ export default function MessageInput(props: MessageInputProps) {
                     }}
                 >
                     {/* Если редактируемое сообщение есть, отображаем его над полем ввода */}
-                    {editingMessage && (
+                    {editingMessage && editingMessage.content && (
                         <Stack
                             direction="row"
                             alignItems="center"
@@ -131,7 +149,7 @@ export default function MessageInput(props: MessageInputProps) {
                                     }}
                                 />
                                 <Typography>
-                                    Редактирование <br /> {editingMessage}
+                                    Редактирование <br /> {editingMessage.content}
                                 </Typography>
                             </Box>
                             <IconButton
@@ -142,7 +160,6 @@ export default function MessageInput(props: MessageInputProps) {
                             </IconButton>
                         </Stack>
                     )}
-
 
                     {/* Основное поле ввода */}
                     <Stack

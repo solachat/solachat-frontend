@@ -17,8 +17,8 @@ export type MessageProps = {
         fileName: string;
         filePath: string;
         type: string;
-        size: string;
     };
+    isEdited?: boolean;
 };
 
 export type ChatProps = {

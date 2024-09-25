@@ -10,7 +10,7 @@ import { ChatProps, MessageProps } from '../core/types';
 import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
 import { jwtDecode } from 'jwt-decode';
-import {useTranslation} from "react-i18next";
+import { useTranslation } from 'react-i18next';
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
@@ -50,9 +50,10 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
         scrollToBottom();
     }, [chatMessages]);
 
+    // Обработчик для добавления нового сообщения
     const handleNewMessage = (newMessage: MessageProps) => {
         setChatMessages((prevMessages) => {
-            const exists = prevMessages.some(message => message.id === newMessage.id);
+            const exists = prevMessages.some((message) => message.id === newMessage.id);
             if (!exists) {
                 return [...prevMessages, newMessage];
             }
@@ -60,6 +61,23 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
         });
     };
 
+    // Обработчик для изменения сообщения без обновления времени
+    const handleEditMessageInList = (updatedMessage: MessageProps) => {
+        setChatMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+                msg.id === updatedMessage.id
+                    ? {
+                        ...msg,
+                        content: updatedMessage.content, // Меняем контент
+                        isEdited: updatedMessage.isEdited, // Добавляем поле isEdited
+                    }
+                    : msg
+            )
+        );
+    };
+
+
+    // Настройка WebSocket для обработки новых и отредактированных сообщений
     useWebSocket((message) => {
         if (message.type === 'newMessage') {
             if (message.message.chatId === chat?.id) {
@@ -67,16 +85,18 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
             } else {
                 console.log(`Received message for chat ID ${message.message.chatId}, but current chat ID is ${chat?.id}. Ignoring.`);
             }
+        } else if (message.type === 'editMessage') {
+            handleEditMessageInList(message.message); // Обработка отредактированного сообщения
         }
     });
 
+    // Обработчик редактирования сообщения
     const handleEditMessage = (messageId: number, content: string) => {
         setEditingMessageId(messageId);
         setTextAreaValue(content);
     };
 
-
-    const interlocutor = chat?.users?.find(user => user.id !== currentUserId);
+    const interlocutor = chat?.users?.find((user) => user.id !== currentUserId);
 
     return (
         <Sheet
@@ -92,7 +112,7 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
         >
             {interlocutor && chat?.id && (
                 <MessagesPaneHeader sender={interlocutor} chatId={chat.id} />
-                )}
+            )}
 
             <Box
                 sx={{
@@ -125,8 +145,9 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                                         variant={isCurrentUser ? 'sent' : 'received'}
                                         user={message.user}
                                         content={message.content}
-                                        createdAt={message.createdAt}
+                                        createdAt={message.createdAt} // Используем оригинальную дату создания
                                         attachment={message.attachment}
+                                        isEdited={message.isEdited}
                                         onEditMessage={handleEditMessage}
                                     />
                                 </Stack>
@@ -159,24 +180,34 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                     onSubmit={() => {
                         const newMessage: MessageProps = {
                             id: (chatMessages.length + 1).toString(),
-                            user: chat?.users?.find(user => user.id === currentUserId)!,
+                            user: chat?.users?.find((user) => user.id === currentUserId)!,
                             userId: currentUserId!,
                             content: textAreaValue,
-                            createdAt: new Date().toISOString(),
+                            createdAt: new Date().toISOString(), // Используем текущее время для нового сообщения
                         };
                         handleNewMessage(newMessage);
                         setTextAreaValue('');
                         setEditingMessageId(null); // Сброс состояния редактирования
                     }}
-                    editingMessage={editingMessageId !== null ?
-                        chatMessages.find(msg => msg.id.toString() === editingMessageId.toString())?.content ?? '' : ''}
+                    editingMessage={
+                        editingMessageId !== null
+                            ? {
+                                id: editingMessageId,
+                                content: chatMessages.find(
+                                    (msg) => msg.id.toString() === editingMessageId.toString()
+                                )?.content ?? null,
+                            }
+                            : { id: null, content: null }
+                    }
                     setEditingMessage={(msg) => {
                         if (msg === null) {
                             setEditingMessageId(null);
                         } else {
-                            const messageToEdit = chatMessages.find(msgItem => msgItem.content === msg);
+                            const messageToEdit = chatMessages.find(
+                                (msgItem) => msgItem.content === msg.content
+                            );
                             if (messageToEdit) {
-                                setEditingMessageId(Number(messageToEdit.id)); // Убедитесь, что id - это number
+                                setEditingMessageId(Number(messageToEdit.id)); // Убедитесь, что id - это число
                             }
                         }
                     }} // Передаем функцию для изменения ID редактируемого сообщения

@@ -1,19 +1,19 @@
 import * as React from 'react';
-import {MouseEvent as ReactMouseEvent, useState} from 'react';
+import { useState } from 'react';
 import Box from '@mui/joy/Box';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
-import Avatar from '@mui/joy/Avatar';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
 import DownloadIcon from '@mui/icons-material/Download';
 import { MessageProps } from '../core/types';
 import { IconButton } from "@mui/joy";
 import ContextMenu from './ContextMenu';
+import { useTranslation } from 'react-i18next';
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
-    onEditMessage: (messageId: number, content: string) => void; // Для редактирования сообщения
+    onEditMessage: (messageId: number, content: string) => void;
 };
 
 const isImageFile = (fileName: string) => {
@@ -23,7 +23,8 @@ const isImageFile = (fileName: string) => {
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
-    const { content, attachment, variant, createdAt, id, onEditMessage } = props;
+    const { t } = useTranslation();
+    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage } = props;
     const isSent = variant === 'sent';
     const formattedTime = new Date(createdAt).toLocaleTimeString([], {
         hour: '2-digit',
@@ -49,7 +50,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
     };
 
     const handleForward = () => {
-        console.log('Forwarding:', content); // Здесь можно реализовать логику пересылки
+        console.log('Forwarding:', content);
     };
 
     const getAttachmentUrl = () => {
@@ -63,11 +64,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
 
     const handleContextMenu = (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
-        setAnchorEl(event.currentTarget as HTMLElement); // Приводим к HTMLElement
+        setAnchorEl(event.currentTarget as HTMLElement);
     };
 
     const handleEdit = () => {
-        onEditMessage(Number(id), content); // Преобразуем id в число
+        onEditMessage(Number(id), content);
         setAnchorEl(null);
     };
 
@@ -77,33 +78,37 @@ export default function ChatBubble(props: ChatBubbleProps) {
             sx={{
                 display: 'flex',
                 justifyContent: isSent ? 'flex-end' : 'flex-start',
-                mb: { xs: 2, sm: 2 },
+                mb: { xs: 1, sm: 1 },
                 px: 1,
-                position: 'relative',
+                width: '45%',
+                '@media (max-width: 600px)': {
+                    flexDirection: 'column',
+                },
             }}
             onContextMenu={handleContextMenu}
         >
-        <Sheet
+            <Sheet
                 color={isSent ? 'primary' : 'neutral'}
                 variant={isSent ? 'solid' : 'soft'}
                 sx={{
                     maxWidth: '70%',
-                    minWidth: !isImage ? '140px' : 'auto',
-                    padding: !isImage ? { xs: '8px 12px', sm: '8px 10px' } : 0,
-                    borderRadius: '16px',
-                    borderBottomLeftRadius: isSent ? '13px' : '0px',
-                    borderBottomRightRadius: isSent ? '0px' : '13px',
-                    borderTopRightRadius: '13px',
-                    borderTopLeftRadius: isSent ? '13px' : '13px',
+                    minWidth: 'fit-content',
+                    padding: !isImage ? { xs: '6px 10px', sm: '8px 14px' } : 0,
+                    borderRadius: '18px',
+                    borderBottomLeftRadius: isSent ? '18px' : '0px',
+                    borderBottomRightRadius: isSent ? '0px' : '18px',
                     background: isImage && !content ? 'transparent' : (isSent ? 'linear-gradient(135deg, #76baff, #4778e2)' : 'var(--joy-palette-background-level2)'),
-                    boxShadow: isImage ? 'none' : '0 4px 14px rgba(0, 0, 0, 0.15)',
+                    boxShadow: isImage ? 'none' : '0 2px 10px rgba(0, 0, 0, 0.15)',
                     wordWrap: 'break-word',
                     overflowWrap: 'break-word',
                     whiteSpace: 'pre-wrap',
-                    transition: 'background 0.3s ease, box-shadow 0.3s ease',
-                    '&:hover': {
-                        boxShadow: !isImage ? '0 6px 20px rgba(0, 0, 0, 0.2)' : 'none',
-                    }
+                    display: 'inline-block',
+                    fontSize: '14px',
+                    lineHeight: '18px',
+                    '@media (max-width: 600px)': {
+                        maxWidth: '90%',
+                    },
+                    position: 'relative',
                 }}
             >
                 {isImage && (
@@ -116,6 +121,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             cursor: 'pointer',
                             overflow: 'hidden',
                             mb: content ? 2 : 0,
+                            position: 'relative',
                         }}
                         onClick={handleImageClick}
                     >
@@ -126,7 +132,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 width: '100%',
                                 maxWidth: '700px',
                                 maxHeight: '500px',
-                                borderRadius: '3px',
+                                borderRadius: '8px',
                                 objectFit: 'contain',
                             }}
                         />
@@ -145,21 +151,48 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             marginBottom: isImage ? '8px' : '4px',
                             textAlign: 'left',
                             transition: 'color 0.3s ease',
+                            maxWidth: '100%',
+                            wordWrap: 'break-word',
+                            whiteSpace: 'pre-wrap',
+                            display: 'inline-block',
+                            paddingRight: '50px', // Отступ справа для времени
                         }}
                     >
                         {content}
                     </Typography>
                 )}
 
+                <Typography
+                    sx={{
+                        fontSize: '12px',
+                        color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
+                        position: 'absolute',
+                        bottom: '4px',
+                        right: '10px', // Время всегда справа
+                        display: 'block', // Всегда в новой строке для длинных сообщений и с отступом
+                    }}
+                >
+                    {formattedTime}
+                </Typography>
+
+                {isEdited && (
+                    <Typography
+                        sx={{
+                            fontSize: '12px',
+                            color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
+                            display: 'block',
+                            marginBottom: '4px',
+                            marginTop: '4px',
+                        }}
+                    >
+                        {t('edited')}
+                    </Typography>
+                )}
+
                 {!isImage && attachment && (
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                        <Avatar color="primary" size="md">
-                            <InsertDriveFileRoundedIcon />
-                        </Avatar>
-                        <div>
-                            <Typography sx={{ fontSize: 'sm' }}>{attachment.fileName}</Typography>
-                            <Typography level="body-sm">{attachment.size}</Typography>
-                        </div>
+                        <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
+                        <Typography sx={{ fontSize: 'sm' }}>{attachment.fileName}</Typography>
                         <IconButton
                             component="a"
                             href={getAttachmentUrl()}
@@ -174,23 +207,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         </IconButton>
                     </Stack>
                 )}
-
-                <Stack
-                    direction={isSent ? 'row-reverse' : 'row'}
-                    spacing={1}
-                    sx={{ position: 'absolute', bottom: 1, right: 8 }}
-                >
-                    <Typography
-                        sx={{
-                            fontSize: { xs: '12px', sm: '13px' },
-                            color: isSent
-                                ? 'var(--joy-palette-common-white)'
-                                : 'var(--joy-palette-text-secondary)',
-                        }}
-                    >
-                        {formattedTime}
-                    </Typography>
-                </Stack>
 
                 {isImageOpen && imageSrc && (
                     <Box
