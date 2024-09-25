@@ -21,7 +21,6 @@ import { useTranslation } from 'react-i18next';
 import { Header } from '../components/core/ColorSchemeToggle';
 import axios from 'axios';
 import PhantomConnectButton from '../components/core/PhantomConnectButton';
-
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
@@ -62,13 +61,7 @@ const RegisterPage: React.FC = () => {
             confirmPassword: formElements.confirmPassword.value,
             persistent: formElements.persistent.checked,
             lastlogin: new Date().toISOString(),
-            role: '',
-            shareEmail: false,
-            country: '',
-            shareCountry: false,
-            timezone: '',
-            shareTimezone: false,
-            rating: 1,
+            rating: '',
             wallet: walletAddress || ''
         };
 
@@ -76,11 +69,6 @@ const RegisterPage: React.FC = () => {
             setErrorMessage(t('passwordsDoNotMatch'));
             setButtonColor('red');
             setTimeout(() => setButtonColor(undefined), 1000);
-            return;
-        }
-
-        if (!userData.wallet) {
-            setErrorMessage(t('phantomWalletRequired'));
             return;
         }
 
@@ -280,12 +268,12 @@ const RegisterPage: React.FC = () => {
                             {t('or')}
                         </Divider>
                         <PhantomConnectButton onConnect={handlePhantomConnect} />
-                        <Stack gap={4} sx={{mb: 2}}>
+                        <Stack gap={4} sx={{ mb: 2 }}>
                             <Button
                                 variant="soft"
                                 color="neutral"
                                 fullWidth
-                                startDecorator={<TelegramIcon/>}
+                                startDecorator={<TelegramIcon />}
                             >
                                 {t('continueWithTelegram')}
                             </Button>
@@ -293,16 +281,16 @@ const RegisterPage: React.FC = () => {
                                 variant="soft"
                                 color="neutral"
                                 fullWidth
-                                startDecorator={<GoogleIcon/>}
+                                startDecorator={<GoogleIcon />}
                             >
                                 {t('continueWithGoogle')}
                             </Button>
                         </Stack>
                     </Box>
 
-                    <Box component="footer" sx={{py: 3}}>
+                    <Box component="footer" sx={{ py: 3 }}>
                         <Typography level="body-xs" textAlign="center">
-                            {t('footerText', {year: new Date().getFullYear()})}
+                            {t('footerText', { year: new Date().getFullYear() })}
                         </Typography>
                     </Box>
                 </Box>
@@ -315,7 +303,7 @@ const RegisterPage: React.FC = () => {
                     right: 0,
                     top: 0,
                     bottom: 0,
-                    left: {xs: 0, md: '50vw'},
+                    left: { xs: 0, md: '50vw' },
                     transition: 'background-image var(--Transition-duration), left var(--Transition-duration) !important',
                     transitionDelay: 'calc(var(--Transition-duration) + 0.1s)',
                     backgroundColor: 'background.level1',

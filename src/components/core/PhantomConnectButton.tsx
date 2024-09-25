@@ -1,13 +1,22 @@
-import * as React from 'react';
-import { Button } from '@mui/joy';
+import React, { useState } from 'react';
+import { Button, CircularProgress, Alert } from '@mui/joy';
 import PhantomIconPurple from './PhantomIconPurple';
 import { useTranslation } from 'react-i18next';
 
-const PhantomConnectButton = ({ onConnect }: { onConnect: (walletAddress: string) => void }) => {
-    const [isConnected, setIsConnected] = React.useState(false);
+interface PhantomConnectButtonProps {
+    onConnect: (walletAddress: string) => void;
+}
+
+const PhantomConnectButton: React.FC<PhantomConnectButtonProps> = ({ onConnect }) => {
+    const [isConnected, setIsConnected] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const { t } = useTranslation();
 
     const connectPhantom = async () => {
+        setLoading(true);
+        setError(null);
+
         try {
             const { solana } = window;
             if (solana && solana.isPhantom) {
@@ -16,25 +25,42 @@ const PhantomConnectButton = ({ onConnect }: { onConnect: (walletAddress: string
                 setIsConnected(true);
                 onConnect(walletAddress);
             } else {
-                alert(t('phantomNotFound'));
+                setError(t('phantomNotFound'));
             }
         } catch (error) {
             console.error('Connection to Phantom failed:', error);
-            alert(t('phantomConnectFailed'));
+            setError(t('phantomConnectFailed'));
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <Button
-            onClick={connectPhantom}
-            fullWidth
-            variant="soft"
-            color="neutral"
-            startDecorator={<PhantomIconPurple />}
-            sx={{ mt: 2, mb: 2 }}
-        >
-            {isConnected ? t('phantomConnected') : t('connectPhantom')}
-        </Button>
+        <>
+            {error && (
+                <Alert color="danger" variant="soft" sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
+            )}
+            <Button
+                onClick={connectPhantom}
+                fullWidth
+                variant="soft"
+                color="neutral"
+                startDecorator={loading ? <CircularProgress size="sm" /> : <PhantomIconPurple />}
+                disabled={loading || isConnected}
+                sx={{
+                    mt: 2,
+                    mb: 2,
+                    transition: 'background-color 0.3s ease',
+                    '&:hover': {
+                        backgroundColor: isConnected ? 'success.lightBg' : 'primary.lightBg',
+                    },
+                }}
+            >
+                {loading ? t('connecting') : isConnected ? t('phantomConnected') : t('connectPhantom')}
+            </Button>
+        </>
     );
 };
 

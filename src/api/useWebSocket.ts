@@ -13,7 +13,6 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
     const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
-    // Функция отправки heartbeat
     const sendHeartbeat = () => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify({ type: 'heartbeat' }));
@@ -23,7 +22,6 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
         }
     };
 
-    // Устанавливаем соединение WebSocket
     const connectWebSocket = () => {
         const token = localStorage.getItem('token');
 
@@ -43,12 +41,10 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
                 reconnectTimeout.current = null;
             }
 
-            // Стартуем отправку heartbeat каждые 5 минут
             if (!heartbeatInterval.current) {
                 heartbeatInterval.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
             }
 
-            // Обновляем статус пользователя на онлайн при подключении
             if (token && currentUserId !== null) {
                 console.log('Attempting to update user status to online', { currentUserId, token });
                 try {
@@ -99,7 +95,6 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
         };
     };
 
-    // Обрабатываем переподключение
     const handleReconnection = () => {
         if (reconnectTimeout.current) {
             return;
@@ -117,7 +112,6 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
         }, RECONNECT_INTERVAL);
     };
 
-    // Инициализация WebSocket после извлечения userId из токена
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {

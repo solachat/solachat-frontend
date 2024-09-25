@@ -42,7 +42,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
 
     const handleClose = () => {
         setIsImageOpen(false);
-        setImageSrc(null);
+        setTimeout(() => setImageSrc(null), 300);
     };
 
     const handleCopy = () => {
@@ -91,7 +91,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 color={isSent ? 'primary' : 'neutral'}
                 variant={isSent ? 'solid' : 'soft'}
                 sx={{
-                    maxWidth: '70%',
+                    maxWidth: isEdited ? '75%' : '70%',
                     minWidth: 'fit-content',
                     padding: !isImage ? { xs: '6px 10px', sm: '8px 14px' } : 0,
                     borderRadius: '18px',
@@ -121,7 +121,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             cursor: 'pointer',
                             overflow: 'hidden',
                             mb: content ? 2 : 0,
-                            position: 'relative',
                         }}
                         onClick={handleImageClick}
                     >
@@ -132,7 +131,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 width: '100%',
                                 maxWidth: '700px',
                                 maxHeight: '500px',
-                                borderRadius: '8px',
                                 objectFit: 'contain',
                             }}
                         />
@@ -155,39 +153,43 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             wordWrap: 'break-word',
                             whiteSpace: 'pre-wrap',
                             display: 'inline-block',
-                            paddingRight: '50px', // Отступ справа для времени
+                            paddingRight: isEdited ? '100px' : '40px',
                         }}
                     >
                         {content}
                     </Typography>
                 )}
 
-                <Typography
+                <Stack
+                    direction="row"
+                    spacing={1}
                     sx={{
-                        fontSize: '12px',
-                        color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
                         position: 'absolute',
                         bottom: '4px',
-                        right: '10px', // Время всегда справа
-                        display: 'block', // Всегда в новой строке для длинных сообщений и с отступом
+                        right: '10px',
+                        alignItems: 'center',
                     }}
                 >
-                    {formattedTime}
-                </Typography>
+                    {isEdited && (
+                        <Typography
+                            sx={{
+                                fontSize: '12px',
+                                color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
+                            }}
+                        >
+                            {t('edited')}
+                        </Typography>
+                    )}
 
-                {isEdited && (
                     <Typography
                         sx={{
                             fontSize: '12px',
                             color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
-                            display: 'block',
-                            marginBottom: '4px',
-                            marginTop: '4px',
                         }}
                     >
-                        {t('edited')}
+                        {formattedTime}
                     </Typography>
-                )}
+                </Stack>
 
                 {!isImage && attachment && (
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
@@ -222,6 +224,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             justifyContent: 'center',
                             zIndex: 999,
                             cursor: 'pointer',
+                            transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+                            transform: isImageOpen ? 'scale(1)' : 'scale(0.95)',
+                            opacity: isImageOpen ? 1 : 0,
                         }}
                         onClick={handleClose}
                     >
@@ -233,7 +238,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 maxHeight: '90%',
                                 objectFit: 'contain',
                                 borderRadius: '12px',
-                                transition: 'transform 0.3s ease-in-out',
+                                transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+                                transform: isImageOpen ? 'scale(1)' : 'scale(0.95)',
+                                opacity: isImageOpen ? 1 : 0,
                             }}
                         />
                     </Box>

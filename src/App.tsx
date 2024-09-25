@@ -5,14 +5,13 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPassword from './pages/ForgotPassword';
 import MyAccount from './pages/AccountPage';
-import OperationsPage from './pages/OperationsPage';
 import { HelmetProvider } from 'react-helmet-async';
 import HomePage from './pages/HomePage';
 import ContactsPage from './pages/ContactsPage';
 import MyMessages from './components/messages/MyMessages';
 import NotFoundPage from './pages/NotFoundPage';
 import UnderConstruction from './pages/UnderConstruction';
-import PrivateRoute from './api/PrivateRoute'; // Импортируем PrivateRoute
+import PrivateRoute from './api/PrivateRoute';
 import MainPage from './pages/MainPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -32,7 +31,6 @@ const App: React.FC = () => {
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/forgotpassword" element={<ForgotPassword />} />
                         <Route path="/account" element={<MyAccount />} />
-                        <Route path="/operations" element={<OperationsPage />} />
                         <Route path="/" element={<HomePage />} />
                         <Route path="/contacts" element={<ContactsPage />} />
                         <Route path="/chat" element={<PrivateRoute element={<MyMessages />} />} />

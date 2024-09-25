@@ -239,15 +239,6 @@ const Login = () => {
                                 variant="soft"
                                 color="neutral"
                                 fullWidth
-                                startDecorator={<PhantomIconPurple/>}
-                                onClick={connectPhantom}
-                            >
-                                {isConnected ? t('phantomConnected') : t('connectPhantom')}
-                            </Button>
-                            <Button
-                                variant="soft"
-                                color="neutral"
-                                fullWidth
                                 startDecorator={<TelegramIcon/>}
                             >
                                 {t('continueWithTelegram')}

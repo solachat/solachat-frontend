@@ -64,7 +64,7 @@
   "title.forgotPassword": "Восстановление пароля",
   "title.accountPage": "Профиль ",
   "title.operationsPage": "История заказов",
-  "shareEmail": "Делиться эл.почтой",
+  "shareEmail": "Делиться почтой",
   "shareCountry": "Делиться страной",
   "shareTimezone": "Делиться часовым поясом",
   "lastLogin": "Был в сети",
@@ -178,5 +178,5 @@
   "english": "Английский",
   "russian": "Русский",
   "chinese": "Китайский",
-  "edited": "Изменено"
+  "edited": "изменено"
 }
