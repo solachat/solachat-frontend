@@ -3,14 +3,16 @@ import { useTranslation } from 'react-i18next';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
-import { Box, Chip, Input, List } from '@mui/joy';
+import { Box, Chip, Input, List, IconButton } from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import AddIcon from '@mui/icons-material/Add';
 import ChatListItem from './ChatListItem';
 import { ChatProps, UserProps } from '../core/types';
-import { searchUsers, fetchChatsFromServer, createPrivateChat } from '../../api/api';
+import { searchUsers, fetchChatsFromServer } from '../../api/api';
 import LanguageSwitcher from '../core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
 import { CssVarsProvider } from '@mui/joy/styles';
+import GroupChatModal from './GroupChatModal'; // Импортируем модальное окно
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -27,6 +29,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
     const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
     const [loadingChats, setLoadingChats] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
+    const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false); // Управление состоянием модального окна
 
     // Загрузка чатов из сервера
     React.useEffect(() => {
@@ -63,22 +66,19 @@ export default function ChatsPane(props: ChatsPaneProps) {
         }
     };
 
-    // Выбор пользователя для создания нового чата
-    const handleUserSelect = async (user: UserProps) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const newChat = await createPrivateChat(currentUser.id, user.id, token);
-                if (newChat && newChat.id) {
-                    setChats([...chats, newChat]);
-                    setSelectedChat(newChat);
-                }
-            } catch (error) {
-                console.error('Error creating chat:', error);
-            }
-        } else {
-            console.error('Token is missing');
-        }
+    // Открытие и закрытие модального окна для создания группы
+    const handleCreateGroupClick = () => {
+        setIsGroupModalOpen(true);
+    };
+
+    const handleCloseGroupModal = () => {
+        setIsGroupModalOpen(false);
+    };
+
+    const handleCreateGroup = (groupName: string) => {
+        console.log('Group created with name:', groupName);
+        // Логика создания группового чата
+        setIsGroupModalOpen(false);
     };
 
     return (
@@ -126,7 +126,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                     </div>
                 </Stack>
 
-                <Box sx={{ px: 2, pb: 1.5 }}>
+                <Box sx={{ px: 2, pb: 1.5, display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <Input
                         size="sm"
                         startDecorator={<SearchRoundedIcon />}
@@ -134,7 +134,20 @@ export default function ChatsPane(props: ChatsPaneProps) {
                         value={searchTerm}
                         onChange={handleSearchChange}
                         aria-label="Search"
+                        sx={{
+                            flex: 1,
+                            maxWidth: '95%', // Уменьшаем ширину поисковой строки
+                            fontSize: '14px', // Уменьшаем размер шрифта
+                        }}
                     />
+                    <IconButton
+                        onClick={handleCreateGroupClick} // Открываем модальное окно
+                        size="sm"
+
+                        color="primary"
+                    >
+                        <AddIcon />
+                    </IconButton>
                 </Box>
 
                 {searchResults.length > 0 ? (
@@ -178,6 +191,13 @@ export default function ChatsPane(props: ChatsPaneProps) {
                         )}
                     </>
                 )}
+
+                {/* Добавляем модальное окно для создания группового чата */}
+                <GroupChatModal
+                    open={isGroupModalOpen}
+                    onClose={handleCloseGroupModal}
+                    onCreateGroup={handleCreateGroup}
+                />
             </Sheet>
         </CssVarsProvider>
     );

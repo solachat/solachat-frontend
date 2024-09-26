@@ -138,6 +138,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 width: '100%',
                                 maxWidth: '700px',
                                 maxHeight: '500px',
+                                borderRadius: '12px',
                                 objectFit: 'contain',
                             }}
                         />
@@ -241,10 +242,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             src={imageSrc}
                             alt="attachment-preview"
                             style={{
-                                maxWidth: '90%',
-                                maxHeight: '90%',
+                                maxWidth: '100%',
+                                maxHeight: '100%',
                                 objectFit: 'contain',
-                                borderRadius: '12px',
                                 transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
                                 transform: isImageOpen ? 'scale(1)' : 'scale(0.95)',
                                 opacity: isImageOpen ? 1 : 0,
