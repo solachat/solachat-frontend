@@ -6,7 +6,8 @@ import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import { useTheme } from '@mui/system';
 import { deleteChat } from '../../api/api';
 import { toast } from 'react-toastify';
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 type MessagesMenuProps = {
     chatId: number;
@@ -15,7 +16,7 @@ type MessagesMenuProps = {
 };
 
 export default function MessagesMenu({ chatId, token, onDeleteChat }: MessagesMenuProps) {
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
     const navigate = useNavigate();
 
@@ -33,8 +34,8 @@ export default function MessagesMenu({ chatId, token, onDeleteChat }: MessagesMe
         try {
             await deleteChat(chatId, token);
             onDeleteChat();
-            window.location.reload()
-            navigate('/')
+            window.location.reload();
+            navigate('/');
         } catch (error) {
             console.error('Failed to delete chat:', error);
             toast.error('Failed to delete chat');

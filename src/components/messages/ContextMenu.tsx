@@ -9,37 +9,45 @@ import { styled } from '@mui/material/styles';
 // Стили для MenuItem
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
     '&:hover': {
-        backgroundColor: theme.palette.primary.main, // Цвет фона при наведении
-        transition: 'background-color 0.3s ease', // Плавный переход цвета
+        backgroundColor: theme.palette.primary.main,
+        transition: 'background-color 0.3s ease',
     },
     display: 'flex',
     alignItems: 'center',
-    fontSize: '0.875rem', // Увеличение размера шрифта
-    color: '#fff', // Цвет текста
+    fontSize: '0.875rem',
+    color: '#fff',
 }));
 
 // Стили для меню
 const StyledMenu = styled(Menu)(({ theme }) => ({
     '& .MuiPaper-root': {
-        background: 'linear-gradient(135deg, #76baff, #4778e2)', // Градиентный фон
+        background: 'linear-gradient(135deg, #76baff, #4778e2)',
         minWidth: '160px',
         borderRadius: '8px',
     },
 }));
 
 type ContextMenuProps = {
+    anchorPosition?: { top: number; left: number };
     onEdit: () => void;
     onCopy: () => void;
     onForward: () => void;
     onClose: () => void;
-    anchorEl: null | HTMLElement;
     open: boolean;
 };
 
-export default function ContextMenu({ onEdit, onCopy, onForward, onClose, anchorEl, open }: ContextMenuProps) {
+export default function ContextMenu({
+                                        anchorPosition,
+                                        onEdit,
+                                        onCopy,
+                                        onForward,
+                                        onClose,
+                                        open,
+                                    }: ContextMenuProps) {
     return (
         <StyledMenu
-            anchorEl={anchorEl}
+            anchorReference="anchorPosition"
+            anchorPosition={anchorPosition}
             open={open}
             onClose={onClose}
         >

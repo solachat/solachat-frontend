@@ -11,6 +11,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import IconButton from '@mui/joy/IconButton';
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
@@ -22,11 +24,21 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
     const [textAreaValue, setTextAreaValue] = useState<string>('');
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+    const [isFarFromBottom, setIsFarFromBottom] = useState<boolean>(false); // состояние для стрелочки
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const handleScroll = () => {
+        const container = messagesContainerRef.current;
+        if (container) {
+            const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 300;
+            setIsFarFromBottom(!isNearBottom); // если не около низа, показываем стрелочку
+        }
     };
 
     useEffect(() => {
@@ -50,6 +62,15 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
         scrollToBottom();
     }, [chatMessages]);
 
+    // Подписка на прокрутку для отображения стрелочки
+    useEffect(() => {
+        const container = messagesContainerRef.current;
+        if (container) {
+            container.addEventListener('scroll', handleScroll);
+            return () => container.removeEventListener('scroll', handleScroll);
+        }
+    }, []);
+
     // Обработчик для добавления нового сообщения
     const handleNewMessage = (newMessage: MessageProps) => {
         setChatMessages((prevMessages) => {
@@ -68,16 +89,14 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                 msg.id === updatedMessage.id
                     ? {
                         ...msg,
-                        content: updatedMessage.content, // Меняем контент
-                        isEdited: updatedMessage.isEdited, // Добавляем поле isEdited
+                        content: updatedMessage.content,
+                        isEdited: updatedMessage.isEdited,
                     }
                     : msg
             )
         );
     };
 
-
-    // Настройка WebSocket для обработки новых и отредактированных сообщений
     useWebSocket((message) => {
         if (message.type === 'newMessage') {
             if (message.message.chatId === chat?.id) {
@@ -86,11 +105,10 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                 console.log(`Received message for chat ID ${message.message.chatId}, but current chat ID is ${chat?.id}. Ignoring.`);
             }
         } else if (message.type === 'editMessage') {
-            handleEditMessageInList(message.message); // Обработка отредактированного сообщения
+            handleEditMessageInList(message.message);
         }
     });
 
-    // Обработчик редактирования сообщения
     const handleEditMessage = (messageId: number, content: string) => {
         setEditingMessageId(messageId);
         setTextAreaValue(content);
@@ -115,6 +133,7 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
             )}
 
             <Box
+                ref={messagesContainerRef} // Реф контейнера для прокрутки
                 sx={{
                     flex: 1,
                     display: 'flex',
@@ -131,7 +150,6 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                     <Stack spacing={2} sx={{ width: '100%' }}>
                         {chatMessages.map((message: MessageProps, index: number) => {
                             const isCurrentUser = message.userId === currentUserId;
-
                             return (
                                 <Stack
                                     key={index}
@@ -145,7 +163,7 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                                         variant={isCurrentUser ? 'sent' : 'received'}
                                         user={message.user}
                                         content={message.content}
-                                        createdAt={message.createdAt} // Используем оригинальную дату создания
+                                        createdAt={message.createdAt}
                                         attachment={message.attachment}
                                         isEdited={message.isEdited}
                                         onEditMessage={handleEditMessage}
@@ -172,6 +190,24 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                 )}
             </Box>
 
+            {isFarFromBottom && (
+                <IconButton
+                    sx={{
+                        position: 'fixed',
+                        bottom: 16,
+                        right: 16,
+                        zIndex: 10,
+                        backgroundColor: 'primary.main',
+                        '&:hover': {
+                            backgroundColor: 'primary.dark',
+                        },
+                    }}
+                    onClick={scrollToBottom}
+                >
+                    <ArrowDownwardIcon />
+                </IconButton>
+            )}
+
             {chat && (
                 <MessageInput
                     chatId={Number(chat?.id ?? 0)}
@@ -183,11 +219,11 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                             user: chat?.users?.find((user) => user.id === currentUserId)!,
                             userId: currentUserId!,
                             content: textAreaValue,
-                            createdAt: new Date().toISOString(), // Используем текущее время для нового сообщения
+                            createdAt: new Date().toISOString(),
                         };
                         handleNewMessage(newMessage);
                         setTextAreaValue('');
-                        setEditingMessageId(null); // Сброс состояния редактирования
+                        setEditingMessageId(null);
                     }}
                     editingMessage={
                         editingMessageId !== null
@@ -207,10 +243,10 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                                 (msgItem) => msgItem.content === msg.content
                             );
                             if (messageToEdit) {
-                                setEditingMessageId(Number(messageToEdit.id)); // Убедитесь, что id - это число
+                                setEditingMessageId(Number(messageToEdit.id));
                             }
                         }
-                    }} // Передаем функцию для изменения ID редактируемого сообщения
+                    }}
                 />
             )}
         </Sheet>

@@ -7,7 +7,7 @@ import Typography from '@mui/joy/Typography';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
 import DownloadIcon from '@mui/icons-material/Download';
 import { MessageProps } from '../core/types';
-import { IconButton } from "@mui/joy";
+import { IconButton } from '@mui/joy';
 import ContextMenu from './ContextMenu';
 import { useTranslation } from 'react-i18next';
 
@@ -32,8 +32,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
     });
 
     const [isImageOpen, setIsImageOpen] = useState(false);
-    const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [imageSrc, setImageSrc] = useState<string | null>(null);
+    const [anchorPosition, setAnchorPosition] = useState<{ mouseX: number; mouseY: number } | null>(null);
 
     const handleImageClick = () => {
         setImageSrc(getAttachmentUrl());
@@ -64,12 +65,18 @@ export default function ChatBubble(props: ChatBubbleProps) {
 
     const handleContextMenu = (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
-        setAnchorEl(event.currentTarget as HTMLElement);
+
+        setAnchorPosition({
+            mouseX: event.clientX,
+            mouseY: event.clientY,
+        });
     };
+
+
 
     const handleEdit = () => {
         onEditMessage(Number(id), content);
-        setAnchorEl(null);
+        setAnchorPosition(null);
     };
 
     return (
@@ -248,13 +255,16 @@ export default function ChatBubble(props: ChatBubbleProps) {
             </Sheet>
 
             <ContextMenu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={() => setAnchorEl(null)}
+                anchorPosition={
+                    anchorPosition !== null ? { top: anchorPosition.mouseY, left: anchorPosition.mouseX } : undefined
+                } // Теперь используем координаты клика
+                open={Boolean(anchorPosition)}
+                onClose={() => setAnchorPosition(null)} // Закрываем меню
                 onEdit={handleEdit}
                 onCopy={handleCopy}
                 onForward={handleForward}
             />
+
         </Box>
     );
 }
