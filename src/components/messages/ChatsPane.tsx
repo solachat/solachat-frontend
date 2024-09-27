@@ -30,9 +30,8 @@ export default function ChatsPane(props: ChatsPaneProps) {
     const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
     const [loadingChats, setLoadingChats] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
-    const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false); // Управление состоянием модального окна
+    const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
 
-    // Загрузка чатов из сервера
     React.useEffect(() => {
         const loadChats = async () => {
             try {
@@ -56,7 +55,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
         loadChats();
     }, [currentUser.id]);
 
-    // Обработка поиска
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
         if (e.target.value.trim()) {
@@ -67,7 +65,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
         }
     };
 
-    // Открытие и закрытие модального окна для создания группы
     const handleCreateGroupClick = () => {
         setIsGroupModalOpen(true);
     };
@@ -84,7 +81,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
     return (
         <CssVarsProvider>
             <Box sx={{ display: 'flex', height: 'auto' }}>
-                {/* Sidebar всегда видим слева */}
                 <Sidebar />
 
                 {/* Основное содержимое чатов */}
@@ -93,7 +89,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                         borderRight: '1px solid',
                         borderColor: 'divider',
                         height: '100%',
-                        width: 'calc(100% - 140px)',
+                        width: 'calc(100% - 150px)',
                         overflowY: 'auto',
                     }}
                 >
@@ -112,16 +108,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
                             fontSize={{ xs: 'md', sm: 'lg' }}
                             component="h1"
                             fontWeight="lg"
-                            endDecorator={
-                                <Chip
-                                    variant="soft"
-                                    color="primary"
-                                    size="md"
-                                    slotProps={{ root: { component: 'span' } }}
-                                >
-                                    {chats.length}
-                                </Chip>
-                            }
                             sx={{ mr: 'auto' }}
                         >
                             {t('Messages')}
@@ -142,17 +128,10 @@ export default function ChatsPane(props: ChatsPaneProps) {
                             aria-label="Search"
                             sx={{
                                 flex: 1,
-                                maxWidth: '95%',
+                                maxWidth: '100%',
                                 fontSize: '14px',
                             }}
                         />
-                        <IconButton
-                            onClick={handleCreateGroupClick}
-                            size="sm"
-                            color="primary"
-                        >
-                            <AddIcon />
-                        </IconButton>
                     </Box>
 
                     {searchResults.length > 0 ? (

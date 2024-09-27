@@ -133,7 +133,7 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
             )}
 
             <Box
-                ref={messagesContainerRef} // Реф контейнера для прокрутки
+                ref={messagesContainerRef}
                 sx={{
                     flex: 1,
                     display: 'flex',

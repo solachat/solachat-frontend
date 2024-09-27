@@ -71,7 +71,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ chatId, onFileUploadS
                     {selectedFile ? selectedFile.name : 'Upload a file'}
                 </Typography>
 
-                {/* Превью изображения, если файл является изображением */}
                 {preview && (
                     <Box
                         sx={{

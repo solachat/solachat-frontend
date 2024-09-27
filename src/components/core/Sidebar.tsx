@@ -105,7 +105,7 @@ export default function Sidebar() {
                 width: '180px',
             }}
         >
-            <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2, marginLeft: '5px', marginBottom: '0px' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2, marginLeft: '5px', marginBottom: '0px', marginTop: '5px' }}>
                 <Avatar
                     variant="outlined"
                     size="lg"
