@@ -150,5 +150,11 @@
   "ratinguser": "评分用户",
   "english": "英语",
   "russian": "俄语",
-  "chinese": "中文"
+  "chinese": "中文",
+  "Music": "音乐",
+  "Clips": "剪辑",
+  "myMessages": "我的消息",
+  "Create a Group": "创建群组",
+  "Users": "用户",
+  "Create a new user": "创建新用户"
 }

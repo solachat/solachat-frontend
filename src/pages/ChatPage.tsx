@@ -7,6 +7,7 @@ import { ChatProps } from '../components/core/types';
 import { fetchChatsFromServer } from '../api/api';
 import LanguageSwitcher from '../components/core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
+import Sidebar from '../components/core/Sidebar';
 import { Typography } from "@mui/joy";
 import { useTranslation } from "react-i18next";
 
@@ -72,77 +73,82 @@ export default function MyProfile() {
     }, [chats, id, selectedChat, navigate]);
 
     return (
-            <div>
-                <header style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    padding: '10px'
-                }}>
-                    <div style={{ display: 'flex', gap: '20px' }}>
-                        <LanguageSwitcher />
-                        <ColorSchemeToggle />
-                    </div>
-                </header>
+        <div>
+            <header style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '10px',
+                width: '100%',
+                position: 'relative'
+            }}>
+                <div style={{display: 'flex', gap: '20px'}}>
+                    <LanguageSwitcher/>
+                    <ColorSchemeToggle/>
+                </div>
+                <div style={{width: '270px'}}>
+                    <Sidebar/>
+                </div>
+            </header>
+            <Sheet
+                sx={{
+                    flex: 1,
+                    width: '100%',
+                    mx: 'auto',
+                    pt: {xs: 'var(--Header-height)', sm: 0},
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'minmax(min-content, min(30%, 400px)) 1fr',
+                    },
+                }}
+            >
                 <Sheet
                     sx={{
-                        flex: 1,
-                        width: '100%',
-                        mx: 'auto',
-                        pt: { xs: 'var(--Header-height)', sm: 0 },
-                        display: 'grid',
-                        gridTemplateColumns: {
-                            xs: '1fr',
-                            sm: 'minmax(min-content, min(30%, 400px)) 1fr',
+                        transform: {
+                            xs: 'translateX(calc(100% * (var(--MessagesPane-slideIn, 0) - 1)))',
+                            sm: 'none',
                         },
+                        transition: 'transform 0.4s, width 0.4s',
+                        zIndex: 100,
+                        width: '100%',
+                        top: 52,
                     }}
                 >
-                    <Sheet
-                        sx={{
-                            transform: {
-                                xs: 'translateX(calc(100% * (var(--MessagesPane-slideIn, 0) - 1)))',
-                                sm: 'none',
-                            },
-                            transition: 'transform 0.4s, width 0.4s',
-                            zIndex: 100,
-                            width: '100%',
-                            top: 52,
-                        }}
-                    >
-                        {Array.isArray(chats) && chats.length > 0 ? (
-                            <ChatsPane
-                                chats={chats}
-                                selectedChatId={selectedChat ? String(selectedChat.id) : ''}
-                                setSelectedChat={setSelectedChat}
-                                currentUser={currentUser}
-                            />
-                        ) : (
-                            <div>No chats available. Start communicating!</div>
-                        )}
-                    </Sheet>
-
-                    <Sheet
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            backgroundColor: 'background.level1',
-                        }}
-                    >
-                        {error ? (
-                            <Typography sx={{ textAlign: 'center', color: 'red' }}>
-                                {error}
-                            </Typography>
-                        ) : loading ? (
-                            <Typography>Loading chats...</Typography>
-                        ) : selectedChat ? (
-                            <MessagesPane chat={selectedChat} />
-                        ) : (
-                            <Typography>No messages yet.</Typography>
-                        )}
-                    </Sheet>
+                    {Array.isArray(chats) && chats.length > 0 ? (
+                        <ChatsPane
+                            chats={chats}
+                            selectedChatId={selectedChat ? String(selectedChat.id) : ''}
+                            setSelectedChat={setSelectedChat}
+                            currentUser={currentUser}
+                        />
+                    ) : (
+                        <div>No chats available. Start communicating!</div>
+                    )}
                 </Sheet>
-            </div>
+
+                <Sheet
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        backgroundColor: 'background.level1',
+                    }}
+                >
+                    {error ? (
+                        <Typography sx={{textAlign: 'center', color: 'red'}}>
+                            {error}
+                        </Typography>
+                    ) : loading ? (
+                        <Typography>Loading chats...</Typography>
+                    ) : selectedChat ? (
+                        <MessagesPane chat={selectedChat}/>
+                    ) : (
+                        <Typography>No messages yet.</Typography>
+                    )}
+                </Sheet>
+            </Sheet>
+        </div>
     );
 }

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
-import { Box, Chip, Input, List, IconButton } from '@mui/joy';
+import { Box, Chip, Input, List, IconButton } from '@mui/joy'; // Убираем Drawer, так как Sidebar будет фиксированным
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import AddIcon from '@mui/icons-material/Add';
 import ChatListItem from './ChatListItem';
@@ -13,6 +13,7 @@ import LanguageSwitcher from '../core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
 import { CssVarsProvider } from '@mui/joy/styles';
 import GroupChatModal from './GroupChatModal'; // Импортируем модальное окно
+import Sidebar from '../core/Sidebar'; // Импортируем Sidebar
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -77,128 +78,133 @@ export default function ChatsPane(props: ChatsPaneProps) {
 
     const handleCreateGroup = (groupName: string) => {
         console.log('Group created with name:', groupName);
-        // Логика создания группового чата
         setIsGroupModalOpen(false);
     };
 
     return (
         <CssVarsProvider>
-            <Sheet
-                sx={{
-                    borderRight: '1px solid',
-                    borderColor: 'divider',
-                    height: 'calc(100dvh - var(--Header-height))',
-                    overflowY: 'auto',
-                }}
-            >
-                <Stack
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                    justifyContent="space-between"
-                    p={2}
-                    pb={1.5}
+            <Box sx={{ display: 'flex', height: 'auto' }}>
+                {/* Sidebar всегда видим слева */}
+                <Sidebar />
+
+                {/* Основное содержимое чатов */}
+                <Sheet
                     sx={{
-                        flexDirection: { xs: 'column', sm: 'row' },
+                        borderRight: '1px solid',
+                        borderColor: 'divider',
+                        height: '100%',
+                        width: 'calc(100% - 140px)',
+                        overflowY: 'auto',
                     }}
                 >
-                    <Typography
-                        fontSize={{ xs: 'md', sm: 'lg' }}
-                        component="h1"
-                        fontWeight="lg"
-                        endDecorator={
-                            <Chip
-                                variant="soft"
-                                color="primary"
-                                size="md"
-                                slotProps={{ root: { component: 'span' } }}
-                            >
-                                {chats.length}
-                            </Chip>
-                        }
-                        sx={{ mr: 'auto' }}
-                    >
-                        {t('Messages')}
-                    </Typography>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <LanguageSwitcher />
-                        <ColorSchemeToggle />
-                    </div>
-                </Stack>
-
-                <Box sx={{ px: 2, pb: 1.5, display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <Input
-                        size="sm"
-                        startDecorator={<SearchRoundedIcon />}
-                        placeholder={t('Search')}
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                        aria-label="Search"
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        justifyContent="space-between"
+                        p={2}
+                        pb={1.5}
                         sx={{
-                            flex: 1,
-                            maxWidth: '95%', // Уменьшаем ширину поисковой строки
-                            fontSize: '14px', // Уменьшаем размер шрифта
+                            flexDirection: { xs: 'column', sm: 'row' },
                         }}
-                    />
-                    <IconButton
-                        onClick={handleCreateGroupClick} // Открываем модальное окно
-                        size="sm"
-
-                        color="primary"
                     >
-                        <AddIcon />
-                    </IconButton>
-                </Box>
+                        <Typography
+                            fontSize={{ xs: 'md', sm: 'lg' }}
+                            component="h1"
+                            fontWeight="lg"
+                            endDecorator={
+                                <Chip
+                                    variant="soft"
+                                    color="primary"
+                                    size="md"
+                                    slotProps={{ root: { component: 'span' } }}
+                                >
+                                    {chats.length}
+                                </Chip>
+                            }
+                            sx={{ mr: 'auto' }}
+                        >
+                            {t('Messages')}
+                        </Typography>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <LanguageSwitcher />
+                            <ColorSchemeToggle />
+                        </div>
+                    </Stack>
 
-                {searchResults.length > 0 ? (
-                    <List>
-                        {searchResults.map((user) => (
-                            <ChatListItem
-                                key={user.id.toString()}
-                                id={user.id.toString()}
-                                sender={user}
-                                messages={[]}
-                                setSelectedChat={setSelectedChat}
-                                currentUserId={currentUser.id}
-                                chats={chats}
-                            />
-                        ))}
-                    </List>
-                ) : (
-                    <>
-                        {loadingChats ? (
-                            <Typography>Loading chats...</Typography>
-                        ) : (
-                            chats.length > 0 ? (
-                                <List>
-                                    {chats.map((chat) => (
-                                        <ChatListItem
-                                            key={chat.id.toString()}
-                                            id={chat.id.toString()}
-                                            sender={chat.users.find(user => user.id !== currentUser.id)}
-                                            messages={chat.messages}
-                                            setSelectedChat={setSelectedChat}
-                                            currentUserId={currentUser.id}
-                                            chats={chats}
-                                        />
-                                    ))}
-                                </List>
+                    <Box sx={{ px: 2, pb: 1.5, display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <Input
+                            size="sm"
+                            startDecorator={<SearchRoundedIcon />}
+                            placeholder={t('Search')}
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            aria-label="Search"
+                            sx={{
+                                flex: 1,
+                                maxWidth: '95%',
+                                fontSize: '14px',
+                            }}
+                        />
+                        <IconButton
+                            onClick={handleCreateGroupClick}
+                            size="sm"
+                            color="primary"
+                        >
+                            <AddIcon />
+                        </IconButton>
+                    </Box>
+
+                    {searchResults.length > 0 ? (
+                        <List>
+                            {searchResults.map((user) => (
+                                <ChatListItem
+                                    key={user.id.toString()}
+                                    id={user.id.toString()}
+                                    sender={user}
+                                    messages={[]}
+                                    setSelectedChat={setSelectedChat}
+                                    currentUserId={currentUser.id}
+                                    chats={chats}
+                                />
+                            ))}
+                        </List>
+                    ) : (
+                        <>
+                            {loadingChats ? (
+                                <Typography>Loading chats...</Typography>
                             ) : (
-                                <Typography sx={{ textAlign: 'center', mt: 3 }}>
-                                    {t('startcommunicate')}
-                                </Typography>
-                            )
-                        )}
-                    </>
-                )}
+                                chats.length > 0 ? (
+                                    <List>
+                                        {chats.map((chat) => (
+                                            <ChatListItem
+                                                key={chat.id.toString()}
+                                                id={chat.id.toString()}
+                                                sender={chat.users.find(user => user.id !== currentUser.id)}
+                                                messages={chat.messages}
+                                                setSelectedChat={setSelectedChat}
+                                                currentUserId={currentUser.id}
+                                                chats={chats}
+                                            />
+                                        ))}
+                                    </List>
+                                ) : (
+                                    <Typography sx={{ textAlign: 'center', mt: 3 }}>
+                                        {t('startcommunicate')}
+                                    </Typography>
+                                )
+                            )}
+                        </>
+                    )}
 
-                {/* Добавляем модальное окно для создания группового чата */}
-                <GroupChatModal
-                    open={isGroupModalOpen}
-                    onClose={handleCloseGroupModal}
-                    onCreateGroup={handleCreateGroup}
-                />
-            </Sheet>
+                    {/* Модальное окно для создания группового чата */}
+                    <GroupChatModal
+                        open={isGroupModalOpen}
+                        onClose={handleCloseGroupModal}
+                        onCreateGroup={handleCreateGroup}
+                    />
+                </Sheet>
+            </Box>
         </CssVarsProvider>
     );
 }

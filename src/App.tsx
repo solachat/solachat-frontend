@@ -6,7 +6,6 @@ import RegisterPage from './pages/RegisterPage';
 import ForgotPassword from './pages/ForgotPassword';
 import MyAccount from './pages/AccountPage';
 import { HelmetProvider } from 'react-helmet-async';
-import HomePage from './pages/HomePage';
 import ContactsPage from './pages/ContactsPage';
 import MyMessages from './components/messages/MyMessages';
 import NotFoundPage from './pages/NotFoundPage';
@@ -31,9 +30,12 @@ const App: React.FC = () => {
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/forgotpassword" element={<ForgotPassword />} />
                         <Route path="/account" element={<MyAccount />} />
-                        <Route path="/" element={<HomePage />} />
+                        <Route path="/" element={<Navigate to="/chatOrLogin" />} />
                         <Route path="/contacts" element={<ContactsPage />} />
                         <Route path="/chat" element={<PrivateRoute element={<MyMessages />} />} />
+                        <Route path="/chatOrLogin" element={
+                            <PrivateRoute element={<Navigate to={localStorage.getItem('jwt') ? '/chat' : '/login'} />} />
+                        } />
                         {underDevelopmentRoutes.map((route) => (
                             <Route path={route} element={<Navigate to="/new-feature" />} key={route} />
                         ))}
