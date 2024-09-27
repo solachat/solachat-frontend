@@ -26,44 +26,39 @@ type ChatListItemProps = ListItemButtonProps & {
     setSelectedChat: (chat: ChatProps) => void;
     currentUserId: number;
     chats: ChatProps[];
+    isGroup?: boolean; // добавляем проверку на групповость
 };
 
 export default function ChatListItem(props: ChatListItemProps) {
-    const { id, sender, messages, selectedChatId, setSelectedChat, currentUserId, chats } = props;
+    const { id, sender, messages, selectedChatId, setSelectedChat, currentUserId, chats, isGroup } = props;
     const selected = selectedChatId === id;
     const hasMessages = Array.isArray(messages) && messages.length > 0;
     const lastMessage = hasMessages ? messages[messages.length - 1] : null;
     const navigate = useNavigate();
 
     const existingChat = Array.isArray(chats)
-        ? chats.find((chat: ChatProps) =>
-            chat.users.some((user: UserProps) => user.id === sender?.id)
-        )
+        ? chats.find((chat: ChatProps) => chat.id === Number(id))
         : null;
 
     const handleClick = async () => {
         if (existingChat) {
             setSelectedChat(existingChat);
             navigate(`/chat/#${existingChat.id}`);
-        } else {
+        } else if (sender) {
             const token = localStorage.getItem('token');
-            if (token && sender) {
-                const newChat = await createPrivateChat(currentUserId, sender.id, token);
-                if (newChat) {
-                    toast.success('Chat created successfully!');
-                    setSelectedChat({ ...newChat, users: [sender, { id: currentUserId }] });
-                    navigate(`/chat/#${newChat.id}`);
-                } else {
-                    toast.error('Failed to create chat.');
-                }
+            const newChat = await createPrivateChat(currentUserId, sender.id, token || '');
+            if (newChat) {
+                toast.success('Chat created successfully!');
+                setSelectedChat({ ...newChat, users: [sender, { id: currentUserId }] });
+                navigate(`/chat/#${newChat.id}`);
             } else {
-                console.error('Token is missing or sender is undefined');
+                toast.error('Failed to create chat.');
             }
         }
     };
 
-    if (!sender) {
-        return null;
+    if (!sender && !isGroup) {
+        return null; // если нет отправителя и это не группа, ничего не выводим
     }
 
     return (
@@ -80,17 +75,35 @@ export default function ChatListItem(props: ChatListItemProps) {
                     }}
                 >
                     <Stack direction="row" spacing={1.5}>
-                        <AvatarWithStatus
-                            online={sender.online}
-                            src={sender.avatar}
-                            sx={{
-                                width: { xs: 32, sm: 48 },
-                                height: { xs: 32, sm: 48 },
-                            }}
-                        />
+                        {isGroup ? (
+                            // Если это группа, выводим групповой аватар и название группы
+                            <AvatarWithStatus
+                                online={!isGroup && sender?.online} // Устанавливаем статус онлайн только для приватных чатов
+                                src={isGroup ? existingChat?.groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
+                                sx={{
+                                    width: { xs: 32, sm: 48 },
+                                    height: { xs: 32, sm: 48 },
+                                }}
+                            />
+                        ) : (
+                            // Если это приватный чат, выводим аватар пользователя
+                            <AvatarWithStatus
+                                online={sender?.online}
+                                src={sender?.avatar}
+                                sx={{
+                                    width: { xs: 32, sm: 48 },
+                                    height: { xs: 32, sm: 48 },
+                                }}
+                            />
+                        )}
+
                         <Box sx={{ flex: 1 }}>
                             <Typography level="body-md" fontSize={{ xs: 'sm', sm: 'md' }}>
-                                {sender.realname || 'No Name'} ({sender.username || 'No Username'})
+                                {isGroup ? (
+                                    existingChat?.name || 'Group Chat' // Если это группа, выводим название группы
+                                ) : (
+                                    `${sender?.realname || 'No Name'} (${sender?.username || 'No Username'})` // Если приватный чат, выводим имя и никнейм
+                                )}
                             </Typography>
                             {hasMessages && lastMessage && (
                                 <Typography
@@ -133,27 +146,6 @@ export default function ChatListItem(props: ChatListItemProps) {
                             </Box>
                         )}
                     </Stack>
-                    {/*{hasMessages && lastMessage && (*/}
-                    {/*    <Typography*/}
-                    {/*        level="body-sm"*/}
-                    {/*        sx={{*/}
-                    {/*            display: '-webkit-box',*/}
-                    {/*            WebkitLineClamp: '2',*/}
-                    {/*            WebkitBoxOrient: 'vertical',*/}
-                    {/*            overflow: 'hidden',*/}
-                    {/*            textOverflow: 'ellipsis',*/}
-                    {/*            color: 'text.secondary',*/}
-                    {/*            marginTop: '3px',*/}
-                    {/*            marginLeft: '65px'*/}
-                    {/*        }}*/}
-                    {/*    >*/}
-                    {/*        {lastMessage.attachment ? (*/}
-                    {/*            <i>{lastMessage.attachment.fileName}</i>*/}
-                    {/*        ) : (*/}
-                    {/*            lastMessage.content*/}
-                    {/*        )}*/}
-                    {/*    </Typography>*/}
-                    {/*)}*/}
                 </ListItemButton>
             </ListItem>
             <ListDivider sx={{ margin: 0 }} />

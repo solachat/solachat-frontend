@@ -60,13 +60,22 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
             const message = JSON.parse(event.data);
             console.log('Received WebSocket message:', message);
 
-            if (!message.message.sender) {
-                console.error('Sender information is missing:', message);
-            } else {
-                console.log('Sender information:', message.message.sender);
+            switch (message.type) {
+                case 'newMessage':
+                    onMessage(message);
+                    break;
+                case 'userAdded':
+                    toast.info(`User with ID ${message.userId} added to chat ${message.chatId}`);
+                    break;
+                case 'userRemoved':
+                    toast.info(`User with ID ${message.userId} removed from chat ${message.chatId}`);
+                    break;
+                case 'roleChange':
+                    toast.info(`User with ID ${message.userId} assigned role ${message.newRole}`);
+                    break;
+                default:
+                    console.warn('Unknown message type:', message.type);
             }
-
-            onMessage(message);
         };
 
         ws.onerror = (error) => {
@@ -118,7 +127,7 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
             try {
                 const decodedToken: { id: number } = jwtDecode(token);
                 setCurrentUserId(decodedToken.id);
-                console.log('Текущий пользователь (ID):', decodedToken.id);
+                console.log('Current user (ID):', decodedToken.id);
             } catch (error) {
                 console.error('Failed to decode token', error);
             }

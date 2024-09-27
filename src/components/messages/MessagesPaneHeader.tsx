@@ -16,9 +16,12 @@ import MessagesMenu from './MessagesMenu';
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
     chatId: number;
+    isGroup?: boolean;
+    chatName?: string;
+    groupAvatar?: string;
 };
 
-export default function MessagesPaneHeader({ sender, chatId }: MessagesPaneHeaderProps) {
+export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, groupAvatar }: MessagesPaneHeaderProps) {
     const { t } = useTranslation();
 
     const handleDeleteChat = () => {
@@ -26,10 +29,6 @@ export default function MessagesPaneHeader({ sender, chatId }: MessagesPaneHeade
     };
 
     const userToken = localStorage.getItem('token');
-
-    if (!sender) {
-        return null;
-    }
 
     return (
         <Stack
@@ -59,7 +58,7 @@ export default function MessagesPaneHeader({ sender, chatId }: MessagesPaneHeade
                 >
                     <ArrowBackIosNewRoundedIcon />
                 </IconButton>
-                <Avatar size="lg" src={sender.avatar} />
+                <Avatar size="lg" src={isGroup ? groupAvatar : sender?.avatar} />
                 <div>
                     <Typography
                         fontWeight="lg"
@@ -67,7 +66,7 @@ export default function MessagesPaneHeader({ sender, chatId }: MessagesPaneHeade
                         component="h2"
                         noWrap
                         endDecorator={
-                            sender.online ? (
+                            !isGroup && sender?.online ? (
                                 <Chip
                                     variant="outlined"
                                     size="sm"
@@ -86,9 +85,9 @@ export default function MessagesPaneHeader({ sender, chatId }: MessagesPaneHeade
                         }
                         sx={{ fontWeight: 'lg', fontSize: 'lg' }}
                     >
-                        {sender.realname}
+                        {isGroup ? chatName : sender?.realname}
                     </Typography>
-                    <Typography level="body-sm">{sender.username}</Typography>
+                    {!isGroup && <Typography level="body-sm">{sender?.username}</Typography>}
                 </div>
             </Stack>
             <Stack spacing={1} direction="row" alignItems="center">
@@ -108,7 +107,7 @@ export default function MessagesPaneHeader({ sender, chatId }: MessagesPaneHeade
                     variant="outlined"
                     size="sm"
                     sx={{ display: { xs: 'none', md: 'inline-flex' } }}
-                    onClick={() => window.location.href = `/account?username=${sender.username}`}
+                    onClick={() => window.location.href = `/account?username=${sender?.username}`}
                 >
                     {t('viewprofile')}
                 </Button>

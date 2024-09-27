@@ -159,13 +159,15 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                             <ChatListItem
                                                 key={chat.id.toString()}
                                                 id={chat.id.toString()}
-                                                sender={chat.users.find(user => user.id !== currentUser.id)}
+                                                sender={chat.isGroup ? undefined : chat.users.find(user => user.id !== currentUser.id)}
                                                 messages={chat.messages}
                                                 setSelectedChat={setSelectedChat}
                                                 currentUserId={currentUser.id}
                                                 chats={chats}
+                                                isGroup={chat.isGroup}
                                             />
                                         ))}
+
                                     </List>
                                 ) : (
                                     <Typography sx={{ textAlign: 'center', mt: 3 }}>
@@ -176,12 +178,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
                         </>
                     )}
 
-                    {/* Модальное окно для создания группового чата */}
-                    <GroupChatModal
-                        open={isGroupModalOpen}
-                        onClose={handleCloseGroupModal}
-                        onCreateGroup={handleCreateGroup}
-                    />
                 </Sheet>
             </Box>
         </CssVarsProvider>

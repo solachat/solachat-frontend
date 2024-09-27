@@ -20,6 +20,7 @@ import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
 import CallRoundedIcon from '@mui/icons-material/CallRounded';
 import VideoLibraryRoundedIcon from '@mui/icons-material/VideoLibraryRounded';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import {UserProps} from "./types";
 
 interface DecodedToken {
     username: string;
@@ -92,8 +93,12 @@ export default function Sidebar() {
         setIsGroupModalOpen(false);
     };
 
-    const handleCreateGroup = (groupName: string) => {
+    const handleCreateGroup = async (groupName: string, avatar?: File | null, selectedUsers?: UserProps[]) => {
         console.log('Group created with name:', groupName);
+        console.log('Selected users:', selectedUsers);
+        console.log('Avatar:', avatar);
+
+
         setIsGroupModalOpen(false);
     };
 
@@ -135,7 +140,6 @@ export default function Sidebar() {
 
                 <Divider />
 
-                {/* Основной контент Sidebar */}
                 <Box
                     sx={{
                         minHeight: 0,
@@ -272,7 +276,6 @@ export default function Sidebar() {
             <GroupChatModal
                 open={isGroupModalOpen}
                 onClose={handleCloseGroupModal}
-                onCreateGroup={handleCreateGroup}
             />
         </>
     );

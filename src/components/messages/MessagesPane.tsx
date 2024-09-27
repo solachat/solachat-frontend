@@ -9,7 +9,7 @@ import MessagesPaneHeader from './MessagesPaneHeader';
 import { ChatProps, MessageProps } from '../core/types';
 import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
-import { jwtDecode } from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import IconButton from '@mui/joy/IconButton';
@@ -24,7 +24,7 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
     const [textAreaValue, setTextAreaValue] = useState<string>('');
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
-    const [isFarFromBottom, setIsFarFromBottom] = useState<boolean>(false); // состояние для стрелочки
+    const [isFarFromBottom, setIsFarFromBottom] = useState<boolean>(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -37,7 +37,7 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
         const container = messagesContainerRef.current;
         if (container) {
             const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 300;
-            setIsFarFromBottom(!isNearBottom); // если не около низа, показываем стрелочку
+            setIsFarFromBottom(!isNearBottom);
         }
     };
 
@@ -62,7 +62,6 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
         scrollToBottom();
     }, [chatMessages]);
 
-    // Подписка на прокрутку для отображения стрелочки
     useEffect(() => {
         const container = messagesContainerRef.current;
         if (container) {
@@ -71,7 +70,6 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
         }
     }, []);
 
-    // Обработчик для добавления нового сообщения
     const handleNewMessage = (newMessage: MessageProps) => {
         setChatMessages((prevMessages) => {
             const exists = prevMessages.some((message) => message.id === newMessage.id);
@@ -82,7 +80,6 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
         });
     };
 
-    // Обработчик для изменения сообщения без обновления времени
     const handleEditMessageInList = (updatedMessage: MessageProps) => {
         setChatMessages((prevMessages) =>
             prevMessages.map((msg) =>
@@ -114,7 +111,9 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
         setTextAreaValue(content);
     };
 
-    const interlocutor = chat?.users?.find((user) => user.id !== currentUserId);
+    const interlocutor = chat?.isGroup
+        ? undefined
+        : chat?.users?.find((user) => user.id !== currentUserId);
 
     return (
         <Sheet
@@ -128,8 +127,14 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                 overflow: 'hidden',
             }}
         >
-            {interlocutor && chat?.id && (
-                <MessagesPaneHeader sender={interlocutor} chatId={chat.id} />
+            {chat?.id && (
+                <MessagesPaneHeader
+                    sender={interlocutor}
+                    chatId={chat.id}
+                    isGroup={chat.isGroup}
+                    chatName={chat.isGroup ? chat.name : undefined}
+                    groupAvatar={chat.isGroup ? 'path/to/default-group-avatar.jpg' : undefined}
+                />
             )}
 
             <Box

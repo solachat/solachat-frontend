@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import {UserProps} from "../components/core/types";
+import {jwtDecode} from "jwt-decode";
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
@@ -200,3 +202,104 @@ export const editMessage = async (messageId: number, content: string, token: str
         throw new Error('Could not edit message');
     }
 };
+
+export const addUsersToGroupChat = async (chatId: number, newUserIds: number[], token: string) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/chats/add-users`,
+            {
+                chatId,
+                newUserIds
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        toast.success('Users added to group successfully');
+        return response.data;
+    } catch (error) {
+        console.error('Error adding users to group:', error);
+        toast.error('Failed to add users');
+        throw error;
+    }
+};
+
+export const assignRoleInChat = async (chatId: number, userId: number, role: 'admin' | 'member', token: string) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/chats/assign-role`,
+            {
+                chatId,
+                userId,
+                role
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        toast.success('Role assigned successfully');
+        return response.data;
+    } catch (error) {
+        console.error('Error assigning role:', error);
+        toast.error('Failed to assign role');
+        throw error;
+    }
+};
+
+export const createGroupChat = async (
+    groupName: string,
+    avatar?: File | null,
+    selectedUserIds?: number[]
+): Promise<number | null> => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('Token is missing');
+
+        const decodedToken: any = jwtDecode(token);
+        const creatorId = decodedToken.id;
+
+        const allUserIds = [...(selectedUserIds || []), creatorId].filter((id, index, self) => self.indexOf(id) === index);
+
+        const formData = new FormData();
+        formData.append('groupName', groupName);
+        if (avatar) {
+            formData.append('avatar', avatar);
+        }
+
+        allUserIds.forEach(id => formData.append('selectedUsers[]', id.toString()));
+
+        console.log('Отправляемые данные:', {
+            groupName,
+            avatar,
+            selectedUsers: allUserIds,
+        });
+
+        const response = await axios.post(`${API_URL}/api/chats/group`, formData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        const groupId = response.data.id;
+        console.log('Group created with ID:', groupId);
+        return groupId;
+    } catch (error) {
+        console.error('Error creating group:', error);
+        toast.error('Failed to create group');
+        return null;
+    }
+};
+
+
+
+
+//
+// console.log('Отправляемые данные:', {
+//     groupName,
+//     avatar,
+//     selectedUsers: selectedUserIds,
+// });

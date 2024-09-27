@@ -26,6 +26,9 @@ export type ChatProps = {
     user: UserProps;
     users: UserProps[];
     messages: MessageProps[];
+    isGroup?: boolean;
+    groupAvatar?: string;
+    name?: string;
 };
 
 export type JwtPayload = {

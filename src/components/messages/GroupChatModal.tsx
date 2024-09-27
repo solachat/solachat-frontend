@@ -1,38 +1,21 @@
 import * as React from 'react';
 import { Box, Button, Modal, Input, Stack, IconButton, Typography, Avatar } from '@mui/joy';
-import { Chip, createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material';
+import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import { searchUsers } from '../../api/api';
+import { searchUsers, createGroupChat } from '../../api/api'; // вызов API для создания группы
 import { UserProps } from '../core/types';
-import { ThemeProvider, useTheme } from '../../theme/ThemeContext';
-import CloseIcon from "@mui/icons-material/Close";
+import CloseIcon from '@mui/icons-material/Close';
+import { toast } from 'react-toastify';
 
-const muiTheme = createTheme({
-    components: {
-        MuiChip: {
-            styleOverrides: {
-                root: {
-                    '&.Mui-selected': {
-                        backgroundColor: 'transparent',  // Убираем ненужные стили для selected
-                        '&:hover': {
-                            backgroundColor: 'transparent', // Убираем стили при наведении на selected
-                        },
-                    },
-                },
-            },
-        },
-    },
-});
-
+const muiTheme = createTheme();
 
 type GroupChatModalProps = {
     open: boolean;
     onClose: () => void;
-    onCreateGroup: (groupName: string, avatar?: File | null, selectedUsers?: UserProps[]) => void;
 };
 
-export default function GroupChatModal({ open, onClose, onCreateGroup }: GroupChatModalProps) {
+export default function GroupChatModal({ open, onClose }: GroupChatModalProps) {
     const [groupName, setGroupName] = React.useState('');
     const [avatar, setAvatar] = React.useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
@@ -68,17 +51,32 @@ export default function GroupChatModal({ open, onClose, onCreateGroup }: GroupCh
 
     const handleNextStep = () => {
         if (groupName.trim() === '') {
-            setError('Название группы не может быть пустым или состоять только из пробелов');
+            setError('Название группы не может быть пустым');
         } else {
             setError('');
             setIsAddingUsers(true);
         }
     };
 
-    const handleFinish = () => {
-        onCreateGroup(groupName, avatar, selectedUsers);
-        handleClose();
+    const handleFinish = async () => {
+        if (!selectedUsers || selectedUsers.length === 0) {
+            setError('Вы должны выбрать хотя бы одного пользователя для создания группового чата.');
+            return;
+        }
+
+        try {
+            const userIds = selectedUsers.map(user => user.id);
+            await createGroupChat(groupName, avatar, userIds);
+
+            toast.success('Групповой чат успешно создан!');
+            resetState();
+            onClose();
+        } catch (error) {
+            console.error('Ошибка при создании группы:', error);
+            setError('Не удалось создать группу');
+        }
     };
+
 
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const searchTerm = e.target.value;
@@ -258,4 +256,3 @@ export default function GroupChatModal({ open, onClose, onCreateGroup }: GroupCh
         </MuiThemeProvider>
     );
 }
-
