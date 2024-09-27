@@ -10,7 +10,7 @@ import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import FileUploadModal from './FileUploadModal';
-import { sendMessage, editMessage } from '../../api/api'; // Добавляем функцию editMessage
+import { sendMessage, editMessage } from '../../api/api';
 import { useRef, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
@@ -24,8 +24,8 @@ export type MessageInputProps = {
     textAreaValue: string;
     setTextAreaValue: (value: string) => void;
     onSubmit: (newMessage: any) => void;
-    editingMessage: { id: number | null, content: string | null } | null; // Сохраняем id и содержимое
-    setEditingMessage: (message: { id: number | null, content: string | null } | null) => void; // Функция для установки редактируемого сообщения
+    editingMessage: { id: number | null, content: string | null } | null;
+    setEditingMessage: (message: { id: number | null, content: string | null } | null) => void;
 };
 
 export default function MessageInput(props: MessageInputProps) {

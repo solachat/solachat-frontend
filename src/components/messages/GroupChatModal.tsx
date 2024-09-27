@@ -33,16 +33,15 @@ type GroupChatModalProps = {
 };
 
 export default function GroupChatModal({ open, onClose, onCreateGroup }: GroupChatModalProps) {
-    const [groupName, setGroupName] = React.useState(''); // Название группы
-    const [avatar, setAvatar] = React.useState<File | null>(null); // Сохраняем аватар
-    const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null); // Для предварительного просмотра аватара
-    const [error, setError] = React.useState(''); // Для отображения ошибок
-    const [isAddingUsers, setIsAddingUsers] = React.useState(false); // Шаг добавления участников
-    const [searchTerm, setSearchTerm] = React.useState(''); // Поисковый запрос для участников
-    const [searchResults, setSearchResults] = React.useState<UserProps[]>([]); // Результаты поиска пользователей
-    const [selectedUsers, setSelectedUsers] = React.useState<UserProps[]>([]); // Выбранные пользователи
+    const [groupName, setGroupName] = React.useState('');
+    const [avatar, setAvatar] = React.useState<File | null>(null);
+    const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
+    const [error, setError] = React.useState('');
+    const [isAddingUsers, setIsAddingUsers] = React.useState(false);
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
+    const [selectedUsers, setSelectedUsers] = React.useState<UserProps[]>([]);
 
-    // Функция сброса состояния
     const resetState = () => {
         setGroupName('');
         setAvatar(null);
@@ -54,51 +53,45 @@ export default function GroupChatModal({ open, onClose, onCreateGroup }: GroupCh
         setError('');
     };
 
-    // Обработка закрытия и сброса
     const handleClose = () => {
-        resetState(); // Сбрасываем состояние
-        onClose(); // Закрываем модальное окно
+        resetState();
+        onClose();
     };
 
-    // Обработка загрузки аватара
     const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             const file = event.target.files[0];
-            setAvatar(file); // Сохраняем загруженный файл
-            setAvatarPreview(URL.createObjectURL(file)); // Создаем ссылку для предварительного просмотра
+            setAvatar(file);
+            setAvatarPreview(URL.createObjectURL(file));
         }
     };
 
-    // Переход к шагу добавления участников
     const handleNextStep = () => {
         if (groupName.trim() === '') {
             setError('Название группы не может быть пустым или состоять только из пробелов');
         } else {
             setError('');
-            setIsAddingUsers(true); // Переходим к добавлению участников
+            setIsAddingUsers(true);
         }
     };
 
-    // Обработка завершения создания группы с участниками
     const handleFinish = () => {
-        onCreateGroup(groupName, avatar, selectedUsers); // Передаем название группы, аватар и выбранных участников
-        handleClose(); // Сбрасываем состояние и закрываем модальное окно
+        onCreateGroup(groupName, avatar, selectedUsers);
+        handleClose();
     };
 
-    // Обработка поиска пользователей
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const searchTerm = e.target.value;
         setSearchTerm(searchTerm);
 
         if (searchTerm.trim()) {
-            const results = await searchUsers(searchTerm); // Запрос на сервер для поиска пользователей
+            const results = await searchUsers(searchTerm);
             setSearchResults(results);
         } else {
             setSearchResults([]);
         }
     };
 
-    // Добавление или удаление пользователя из выбранных
     const toggleUserSelection = (user: UserProps) => {
         if (selectedUsers.some((u) => u.id === user.id)) {
             setSelectedUsers((prev) => prev.filter((u) => u.id !== user.id));
@@ -107,7 +100,6 @@ export default function GroupChatModal({ open, onClose, onCreateGroup }: GroupCh
         }
     };
 
-    // Удаление выбранного пользователя
     const handleRemoveUser = (userId: number) => {
         setSelectedUsers((prev) => prev.filter((user) => user.id !== userId));
     };
@@ -116,7 +108,6 @@ export default function GroupChatModal({ open, onClose, onCreateGroup }: GroupCh
         <MuiThemeProvider theme={muiTheme}>
             <Modal open={open} onClose={handleClose} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 {!isAddingUsers ? (
-                    // Первый шаг: ввод информации о группе
                     <Box sx={{ width: '400px', p: 3, borderRadius: '12px', boxShadow: 'lg', bgcolor: 'background.level2' }}>
                         <Stack spacing={2}>
                             <Stack direction="row" alignItems="center" spacing={2}>
@@ -168,7 +159,6 @@ export default function GroupChatModal({ open, onClose, onCreateGroup }: GroupCh
                         </Stack>
                     </Box>
                 ) : (
-                    // Второй шаг: добавление участников
                     <Box sx={{ width: '400px', p: 3, borderRadius: '12px', boxShadow: 'lg', bgcolor: 'background.level2' }}>
                         <Typography mb={2} sx={{ color: 'text.primary' }}>Добавить участников</Typography>
 
@@ -180,7 +170,7 @@ export default function GroupChatModal({ open, onClose, onCreateGroup }: GroupCh
                             autoFocus={false}
                             sx={{
                                 mb: 2,
-                                color: 'text.primary', // Цвет текста для input
+                                color: 'text.primary',
                             }}
                         />
 
@@ -198,7 +188,7 @@ export default function GroupChatModal({ open, onClose, onCreateGroup }: GroupCh
                                         minWidth: '60px',
                                         maxWidth: '100px',
                                         overflow: 'hidden',
-                                        color: 'text.primary', // Цвет текста для блока
+                                        color: 'text.primary',
                                     }}
                                 >
                                     <Avatar
@@ -216,7 +206,7 @@ export default function GroupChatModal({ open, onClose, onCreateGroup }: GroupCh
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            color: 'text.primary', // Цвет текста для имени пользователя
+                                            color: 'text.primary',
                                         }}
                                     >
                                         {user.username}

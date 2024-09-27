@@ -15,7 +15,7 @@ import MessagesMenu from './MessagesMenu';
 
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
-    chatId: number;  // Добавляем chatId как пропс
+    chatId: number;
 };
 
 export default function MessagesPaneHeader({ sender, chatId }: MessagesPaneHeaderProps) {
