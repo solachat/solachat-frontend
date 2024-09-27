@@ -26,7 +26,7 @@ type ChatListItemProps = ListItemButtonProps & {
     setSelectedChat: (chat: ChatProps) => void;
     currentUserId: number;
     chats: ChatProps[];
-    isGroup?: boolean; // добавляем проверку на групповость
+    isGroup?: boolean;
 };
 
 export default function ChatListItem(props: ChatListItemProps) {
@@ -58,7 +58,7 @@ export default function ChatListItem(props: ChatListItemProps) {
     };
 
     if (!sender && !isGroup) {
-        return null; // если нет отправителя и это не группа, ничего не выводим
+        return null;
     }
 
     return (
@@ -76,9 +76,8 @@ export default function ChatListItem(props: ChatListItemProps) {
                 >
                     <Stack direction="row" spacing={1.5}>
                         {isGroup ? (
-                            // Если это группа, выводим групповой аватар и название группы
                             <AvatarWithStatus
-                                online={!isGroup && sender?.online} // Устанавливаем статус онлайн только для приватных чатов
+                                online={!isGroup && sender?.online}
                                 src={isGroup ? existingChat?.groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
                                 sx={{
                                     width: { xs: 32, sm: 48 },
@@ -86,7 +85,6 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 }}
                             />
                         ) : (
-                            // Если это приватный чат, выводим аватар пользователя
                             <AvatarWithStatus
                                 online={sender?.online}
                                 src={sender?.avatar}
@@ -100,9 +98,9 @@ export default function ChatListItem(props: ChatListItemProps) {
                         <Box sx={{ flex: 1 }}>
                             <Typography level="body-md" fontSize={{ xs: 'sm', sm: 'md' }}>
                                 {isGroup ? (
-                                    existingChat?.name || 'Group Chat' // Если это группа, выводим название группы
+                                    existingChat?.name || 'Group Chat'
                                 ) : (
-                                    `${sender?.realname || 'No Name'} (${sender?.username || 'No Username'})` // Если приватный чат, выводим имя и никнейм
+                                    `${sender?.realname || 'No Name'} (${sender?.username || 'No Username'})`
                                 )}
                             </Typography>
                             {hasMessages && lastMessage && (

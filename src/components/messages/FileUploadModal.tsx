@@ -8,26 +8,25 @@ import { uploadFileToChat } from '../../api/api';
 
 interface FileUploadModalProps {
     chatId: number;
-    onFileUploadSuccess: (filePath: string) => void; // Оставляем только filePath
+    onFileUploadSuccess: (filePath: string) => void;
     open: boolean;
     handleClose: () => void;
 }
 
 const FileUploadModal: React.FC<FileUploadModalProps> = ({ chatId, onFileUploadSuccess, open, handleClose }) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [preview, setPreview] = useState<string | null>(null); // Для хранения превью изображения
+    const [preview, setPreview] = useState<string | null>(null);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             setSelectedFile(file);
 
-            // Если файл является изображением, создаем его превью
             if (file.type.startsWith('image/')) {
                 const imageUrl = URL.createObjectURL(file);
-                setPreview(imageUrl); // Сохраняем URL для отображения
+                setPreview(imageUrl);
             } else {
-                setPreview(null); // Удаляем превью, если файл не является изображением
+                setPreview(null);
             }
         }
     };
@@ -48,7 +47,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ chatId, onFileUploadS
 
                 onFileUploadSuccess(response.filePath);
                 setSelectedFile(null);
-                setPreview(null); // Убираем превью после успешной загрузки
+                setPreview(null);
                 handleClose();
             } catch (error) {
                 console.error('Failed to upload file:', error);

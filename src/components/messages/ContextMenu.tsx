@@ -2,11 +2,10 @@ import * as React from 'react';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import EditIcon from '@mui/icons-material/Edit';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy'; // Иконка для копирования
-import ForwardIcon from '@mui/icons-material/Send'; // Иконка для пересылки
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ForwardIcon from '@mui/icons-material/Send';
 import { styled } from '@mui/material/styles';
 
-// Стили для MenuItem
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
     '&:hover': {
         backgroundColor: theme.palette.primary.main,
@@ -18,7 +17,6 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
     color: '#fff',
 }));
 
-// Стили для меню
 const StyledMenu = styled(Menu)(({ theme }) => ({
     '& .MuiPaper-root': {
         background: 'linear-gradient(135deg, #76baff, #4778e2)',

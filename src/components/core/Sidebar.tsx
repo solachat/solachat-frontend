@@ -11,7 +11,7 @@ import Typography from '@mui/joy/Typography';
 import Sheet from '@mui/joy/Sheet';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
-import GroupChatModal from '../messages/GroupChatModal';
+import GroupChatModal from '../group/GroupChatModal';
 
 // Импорт иконок
 import QuestionAnswerRoundedIcon from '@mui/icons-material/QuestionAnswerRounded';

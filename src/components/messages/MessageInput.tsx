@@ -37,23 +37,20 @@ export default function MessageInput(props: MessageInputProps) {
     const [isFileUploadOpen, setFileUploadOpen] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
 
-    // Обработчик изменений в редакторе текста
     const handleEditorChange = (newState: EditorState) => {
         setEditorState(newState);
         const currentContent = newState.getCurrentContent().getPlainText();
         setTextAreaValue(currentContent);
     };
 
-    // Обработка нажатий клавиш, включая отправку по Enter
     const keyBindingFn = (e: React.KeyboardEvent): string | null => {
         if (e.key === 'Enter' && !e.shiftKey) {
-            handleClick(); // Отправляем сообщение при нажатии Enter
+            handleClick();
             return 'submit-message';
         }
         return getDefaultKeyBinding(e);
     };
 
-    // Обработчик отправки или редактирования сообщения
     const handleClick = async () => {
         if (!chatId || isNaN(chatId)) {
             console.error('Invalid chatId:', chatId);
@@ -67,18 +64,16 @@ export default function MessageInput(props: MessageInputProps) {
         }
 
         if (editingMessage && editingMessage.id !== null) {
-            // Если редактируем сообщение
             try {
                 await editMessage(editingMessage.id, textAreaValue, token);
-                setTextAreaValue(''); // Очищаем текстовое поле
-                setEditorState(EditorState.createEmpty()); // Очищаем Draft.js редактор
-                setUploadedFiles([]); // Очищаем файлы после отправки
-                setEditingMessage(null); // Сбрасываем редактируемое сообщение
+                setTextAreaValue('');
+                setEditorState(EditorState.createEmpty());
+                setUploadedFiles([]);
+                setEditingMessage(null);
             } catch (error) {
                 console.error('Ошибка при редактировании сообщения:', error);
             }
         } else {
-            // Отправка нового сообщения
             if (textAreaValue.trim() !== '' || uploadedFiles.length > 0) {
                 try {
                     const filePaths = uploadedFiles.map((fileData) => fileData.filePath);
@@ -88,9 +83,9 @@ export default function MessageInput(props: MessageInputProps) {
                         token as string,
                         filePaths.length > 0 ? filePaths[0] : undefined
                     );
-                    setTextAreaValue(''); // Очищаем текстовое поле
-                    setEditorState(EditorState.createEmpty()); // Очищаем Draft.js редактор
-                    setUploadedFiles([]); // Очищаем файлы после отправки
+                    setTextAreaValue('');
+                    setEditorState(EditorState.createEmpty());
+                    setUploadedFiles([]);
                 } catch (error) {
                     console.error('Ошибка при отправке сообщения:', error);
                 }
@@ -98,12 +93,10 @@ export default function MessageInput(props: MessageInputProps) {
         }
     };
 
-    // Обработчик успешной загрузки файла
     const handleFileUploadSuccess = (filePath: string) => {
         setUploadedFiles((prevFiles) => [...prevFiles, { filePath }]);
     };
 
-    // Удаление файла из списка загруженных
     const removeUploadedFile = (index: number) => {
         setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     };
@@ -123,7 +116,6 @@ export default function MessageInput(props: MessageInputProps) {
                         backgroundColor: 'background.level1',
                     }}
                 >
-                    {/* Если редактируемое сообщение есть, отображаем его над полем ввода */}
                     {editingMessage && editingMessage.content && (
                         <Stack
                             direction="row"
@@ -131,12 +123,12 @@ export default function MessageInput(props: MessageInputProps) {
                             justifyContent="space-between"
                             sx={{
                                 width: '100%',
-                                height: '40px', // Установите фиксированную высоту
+                                height: '40px',
                                 padding: '8px',
                                 borderRadius: '4px',
                                 marginBottom: '8px',
                                 mr: '1px',
-                                overflow: 'hidden', // Скрыть переполнение
+                                overflow: 'hidden',
                             }}
                         >
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -161,14 +153,12 @@ export default function MessageInput(props: MessageInputProps) {
                         </Stack>
                     )}
 
-                    {/* Основное поле ввода */}
                     <Stack
                         direction="row"
                         alignItems="center"
                         justifyContent="space-between"
                         sx={{ width: '100%' }}
                     >
-                        {/* Иконка загрузки (скрепка) */}
                         <IconButton
                             size="sm"
                             variant="plain"
@@ -179,7 +169,6 @@ export default function MessageInput(props: MessageInputProps) {
                             <AttachFileIcon />
                         </IconButton>
 
-                        {/* Текстовое поле */}
                         <Box
                             sx={{
                                 display: 'flex',
@@ -214,7 +203,6 @@ export default function MessageInput(props: MessageInputProps) {
                             </Box>
                         </Box>
 
-                        {/* Плавное появление иконки отправки */}
                         <IconButton
                             size="sm"
                             color="primary"
@@ -231,7 +219,6 @@ export default function MessageInput(props: MessageInputProps) {
                 </Stack>
             </FormControl>
 
-            {/* Отображение прикрепленных файлов */}
             {uploadedFiles.length > 0 && (
                 <Box sx={{ mt: 2 }}>
                     <Stack direction="row" flexWrap="wrap" spacing={2} sx={{ mt: 1 }}>
@@ -273,7 +260,6 @@ export default function MessageInput(props: MessageInputProps) {
                 </Box>
             )}
 
-            {/* Модальное окно для загрузки файла */}
             <FileUploadModal
                 chatId={chatId}
                 open={isFileUploadOpen}

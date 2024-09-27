@@ -5,7 +5,7 @@ import {jwtDecode} from 'jwt-decode';
 
 const WS_URL = process.env.WS_URL || 'ws://localhost:4005';
 const RECONNECT_INTERVAL = 3000;
-const HEARTBEAT_INTERVAL = 5 * 60 * 1000; // 5 минут
+const HEARTBEAT_INTERVAL = 10 * 1000;
 
 export const useWebSocket = (onMessage: (message: any) => void) => {
     const wsRef = useRef<WebSocket | null>(null);

@@ -7,6 +7,7 @@ import { searchUsers, createGroupChat } from '../../api/api'; // вызов API 
 import { UserProps } from '../core/types';
 import CloseIcon from '@mui/icons-material/Close';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const muiTheme = createTheme();
 
@@ -16,6 +17,7 @@ type GroupChatModalProps = {
 };
 
 export default function GroupChatModal({ open, onClose }: GroupChatModalProps) {
+    const { t } = useTranslation(); // Инициализация перевода
     const [groupName, setGroupName] = React.useState('');
     const [avatar, setAvatar] = React.useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function GroupChatModal({ open, onClose }: GroupChatModalProps) {
 
     const handleNextStep = () => {
         if (groupName.trim() === '') {
-            setError('Название группы не может быть пустым');
+            setError(t('Group name cannot be empty'));
         } else {
             setError('');
             setIsAddingUsers(true);
@@ -60,7 +62,7 @@ export default function GroupChatModal({ open, onClose }: GroupChatModalProps) {
 
     const handleFinish = async () => {
         if (!selectedUsers || selectedUsers.length === 0) {
-            setError('Вы должны выбрать хотя бы одного пользователя для создания группового чата.');
+            setError(t('You must select at least one user to create a group chat.'));
             return;
         }
 
@@ -68,15 +70,14 @@ export default function GroupChatModal({ open, onClose }: GroupChatModalProps) {
             const userIds = selectedUsers.map(user => user.id);
             await createGroupChat(groupName, avatar, userIds);
 
-            toast.success('Групповой чат успешно создан!');
+            toast.success(t('Group chat created successfully!'));
             resetState();
             onClose();
         } catch (error) {
             console.error('Ошибка при создании группы:', error);
-            setError('Не удалось создать группу');
+            setError(t('Failed to create group'));
         }
     };
-
 
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const searchTerm = e.target.value;
@@ -131,7 +132,7 @@ export default function GroupChatModal({ open, onClose }: GroupChatModalProps) {
                                 <Input
                                     value={groupName}
                                     onChange={(e) => setGroupName(e.target.value)}
-                                    placeholder="Название группы"
+                                    placeholder={t('Group Name')}
                                     sx={{
                                         flex: 1,
                                         backgroundColor: 'transparent',
@@ -148,21 +149,21 @@ export default function GroupChatModal({ open, onClose }: GroupChatModalProps) {
 
                             <Stack direction="row" justifyContent="flex-end" spacing={1}>
                                 <Button variant="plain" onClick={handleClose}>
-                                    Отмена
+                                    {t('Cancel')}
                                 </Button>
                                 <Button variant="solid" onClick={handleNextStep}>
-                                    Далее
+                                    {t('Next')}
                                 </Button>
                             </Stack>
                         </Stack>
                     </Box>
                 ) : (
                     <Box sx={{ width: '400px', p: 3, borderRadius: '12px', boxShadow: 'lg', bgcolor: 'background.level2' }}>
-                        <Typography mb={2} sx={{ color: 'text.primary' }}>Добавить участников</Typography>
+                        <Typography mb={2} sx={{ color: 'text.primary' }}>{t('Add participants')}</Typography>
 
                         <Input
                             startDecorator={<SearchRoundedIcon />}
-                            placeholder="Поиск пользователей"
+                            placeholder={t('Search users')}
                             value={searchTerm}
                             onChange={handleSearchChange}
                             autoFocus={false}
@@ -244,10 +245,10 @@ export default function GroupChatModal({ open, onClose }: GroupChatModalProps) {
 
                         <Stack direction="row" justifyContent="flex-end" spacing={1} mt={2}>
                             <Button variant="plain" onClick={handleClose}>
-                                Отмена
+                                {t('Cancel')}
                             </Button>
                             <Button variant="solid" onClick={handleFinish}>
-                                Готово
+                                {t('Done')}
                             </Button>
                         </Stack>
                     </Box>

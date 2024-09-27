@@ -3,17 +3,15 @@ import { useTranslation } from 'react-i18next';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
-import { Box, Chip, Input, List, IconButton } from '@mui/joy'; // Убираем Drawer, так как Sidebar будет фиксированным
+import { Box, Input, List } from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import AddIcon from '@mui/icons-material/Add';
 import ChatListItem from './ChatListItem';
 import { ChatProps, UserProps } from '../core/types';
 import { searchUsers, fetchChatsFromServer } from '../../api/api';
 import LanguageSwitcher from '../core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
 import { CssVarsProvider } from '@mui/joy/styles';
-import GroupChatModal from './GroupChatModal'; // Импортируем модальное окно
-import Sidebar from '../core/Sidebar'; // Импортируем Sidebar
+import Sidebar from '../core/Sidebar';
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -83,7 +81,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
             <Box sx={{ display: 'flex', height: 'auto' }}>
                 <Sidebar />
 
-                {/* Основное содержимое чатов */}
                 <Sheet
                     sx={{
                         borderRight: '1px solid',

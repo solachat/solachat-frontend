@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useSearchParams} from 'react-router-dom'; // Добавляем для работы с параметрами URL
+import {useSearchParams} from 'react-router-dom';
 import Sheet from '@mui/joy/Sheet';
 import MessagesPane from './MessagesPane';
 import ChatsPane from './ChatsPane';
@@ -9,7 +9,7 @@ import {Typography} from '@mui/joy';
 import {useTranslation} from "react-i18next";
 import {JwtPayload} from "jsonwebtoken";
 import {jwtDecode} from 'jwt-decode';
-import {Helmet} from "react-helmet-async"; // Правильный импорт
+import {Helmet} from "react-helmet-async";
 
 export default function MyProfile() {
     const [chats, setChats] = React.useState<ChatProps[]>([]);
@@ -35,6 +35,7 @@ export default function MyProfile() {
                 realname: 'User Realname',
                 avatar: '',
                 online: true,
+                role: 'member'
             };
         } catch (error) {
             console.error('Error decoding token:', error);
@@ -129,7 +130,10 @@ export default function MyProfile() {
                             ) : loading ? (
                                 <Typography>Loading chats...</Typography>
                             ) : selectedChat ? (
-                                <MessagesPane chat={selectedChat}/>
+                                    <MessagesPane
+                                        chat={selectedChat}
+                                        members={selectedChat?.users || []}
+                                    />
                             ) : (
                                 <MessagesPane chat={null}/>
                             )}

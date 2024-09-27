@@ -32,7 +32,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
     });
 
     const [isImageOpen, setIsImageOpen] = useState(false);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ mouseX: number; mouseY: number } | null>(null);
 

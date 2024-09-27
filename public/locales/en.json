@@ -152,5 +152,9 @@
   "russian": "Russian",
   "chinese": "Chinese",
   "edited": "Edited",
-  "myMessages": "My messages"
+  "myMessages": "My messages",
+  "participant": "участник",
+  "participants_two": "участника",
+  "participants_many": "участников",
+  "online": "в сети"
 }

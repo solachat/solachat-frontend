@@ -6,19 +6,20 @@ import Typography from '@mui/joy/Typography';
 import ChatBubble from './ChatBubble';
 import MessageInput from './MessageInput';
 import MessagesPaneHeader from './MessagesPaneHeader';
-import { ChatProps, MessageProps } from '../core/types';
+import { ChatProps, MessageProps, UserProps } from '../core/types';
 import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import IconButton from '@mui/joy/IconButton';
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
+    members?: UserProps[];
 };
 
-export default function MessagesPane({ chat }: MessagesPaneProps) {
+export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) {
     const { t } = useTranslation();
     const [chatMessages, setChatMessages] = useState<MessageProps[]>(chat?.messages || []);
     const [textAreaValue, setTextAreaValue] = useState<string>('');
@@ -133,7 +134,8 @@ export default function MessagesPane({ chat }: MessagesPaneProps) {
                     chatId={chat.id}
                     isGroup={chat.isGroup}
                     chatName={chat.isGroup ? chat.name : undefined}
-                    groupAvatar={chat.isGroup ? 'path/to/default-group-avatar.jpg' : undefined}
+                    groupAvatar={chat.isGroup ? chat.groupAvatar || 'path/to/default-group-avatar.jpg' : undefined}
+                    members={chat?.users || []}
                 />
             )}
 
