@@ -30,6 +30,7 @@ export type ChatProps = {
     isGroup?: boolean;
     groupAvatar?: string;
     name?: string;
+    avatar?: string
 };
 
 export type JwtPayload = {

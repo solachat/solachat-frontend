@@ -15,11 +15,16 @@ type GroupInfoModalProps = {
     groupName: string;
     groupAvatar: string;
     users: UserProps[];
+    currentUserId: number;
+    chatId: number;  // Добавляем chatId
+    token: string;   // Добавляем token
 };
 
-export default function GroupInfoModal({ open, onClose, groupName, groupAvatar, users }: GroupInfoModalProps) {
+export default function GroupInfoModal({ open, onClose, groupName, groupAvatar, users, currentUserId, chatId, token }: GroupInfoModalProps) {
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
-    const currentUserRole = 'owner';
+
+    const currentUser = users.find(user => user.id === currentUserId);
+    const currentUserRole = currentUser?.role as 'owner' | 'admin' | 'member' || 'member';
 
     const handleToggleSettings = () => {
         setIsSettingsOpen(!isSettingsOpen);
@@ -27,12 +32,12 @@ export default function GroupInfoModal({ open, onClose, groupName, groupAvatar, 
 
     const handleRoleChange = (userId: number, newRole: 'owner' | 'admin' | 'member') => {
         console.log(`Change role of user ${userId} to ${newRole}`);
-        // Добавьте логику изменения роли
+        // Добавьте логику для API вызова изменения роли
     };
 
     const handleRemoveUser = (userId: number) => {
         console.log(`Remove user with id ${userId}`);
-        // Добавьте логику удаления пользователя
+        // Добавьте логику для API вызова удаления пользователя
     };
 
     return (
@@ -67,17 +72,19 @@ export default function GroupInfoModal({ open, onClose, groupName, groupAvatar, 
                         <CloseIcon />
                     </IconButton>
 
-                    <IconButton
-                        onClick={handleToggleSettings}
-                        sx={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 48,
-                            zIndex: 10,
-                        }}
-                    >
-                        <SettingsIcon />
-                    </IconButton>
+                    {currentUserRole === 'owner' && (
+                        <IconButton
+                            onClick={handleToggleSettings}
+                            sx={{
+                                position: 'absolute',
+                                top: 8,
+                                right: 48,
+                                zIndex: 10,
+                            }}
+                        >
+                            <SettingsIcon />
+                        </IconButton>
+                    )}
 
                     {isSettingsOpen ? (
                         <ChatSettings onCloseSettings={handleToggleSettings} />
@@ -96,6 +103,8 @@ export default function GroupInfoModal({ open, onClose, groupName, groupAvatar, 
                                 currentUserRole={currentUserRole}
                                 onRoleChange={handleRoleChange}
                                 onRemoveUser={handleRemoveUser}
+                                chatId={chatId}
+                                token={token}
                             />
                         </>
                     )}

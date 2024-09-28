@@ -3,33 +3,42 @@ import { Box, Avatar, Typography, Stack, IconButton, Select, Option } from '@mui
 import { UserProps } from '../core/types';
 import { useTranslation } from 'react-i18next';
 import CloseIcon from '@mui/icons-material/Close';
+import { assignRoleInChat, removeUserFromChat } from '../../api/api';
 
 type GroupUserItemProps = {
     user: UserProps;
-    currentUserRole: 'owner' | 'admin' | 'member';
-    onRoleChange: (userId: number, newRole: 'owner' | 'admin' | 'member') => void;
-    onRemoveUser: (userId: number) => void;
+    currentUserRole: 'owner' | 'admin' | 'member'; // Роль текущего пользователя
+    onRoleChange: (userId: number, newRole: 'owner' | 'admin' | 'member') => void; // Функция изменения роли
+    onRemoveUser: (userId: number) => void; // Функция удаления пользователя
+    chatId: number; // Добавляем chatId
+    token: string; // Токен для авторизации
 };
 
-function GroupUserItem({ user, currentUserRole, onRoleChange, onRemoveUser }: GroupUserItemProps) {
+function GroupUserItem({ user, currentUserRole, onRoleChange, onRemoveUser, chatId, token }: GroupUserItemProps) {
     const { t } = useTranslation();
-
-    const roleTranslation: Record<'owner' | 'admin' | 'member', string> = {
-        owner: t('Owner'),
-        admin: t('Admin'),
-        member: t('Member'),
-    };
 
     const userRole = user.role as 'owner' | 'admin' | 'member';
 
-    const handleRemoveUser = () => {
-        if (window.confirm(t('Are you sure you want to remove this user from the chat?'))) {
-            onRemoveUser(user.id);
+    // Функция для смены роли
+    const handleRoleChange = async (newRole: 'admin' | 'member') => {
+        try {
+            await assignRoleInChat(chatId, user.id, newRole, token);
+            onRoleChange(user.id, newRole); // Обновляем роль на клиенте
+        } catch (error) {
+            console.error('Error assigning role:', error);
         }
     };
 
-    const handleRoleChange = (value: 'owner' | 'admin' | 'member') => {
-        onRoleChange(user.id, value);
+    // Функция для удаления пользователя
+    const handleRemoveUser = async () => {
+        if (window.confirm(t('Are you sure you want to remove this user from the chat?'))) {
+            try {
+                await removeUserFromChat(chatId, user.id, token);
+                onRemoveUser(user.id)
+            } catch (error) {
+                console.error('Error removing user:', error);
+            }
+        }
     };
 
     return (
@@ -53,22 +62,27 @@ function GroupUserItem({ user, currentUserRole, onRoleChange, onRemoveUser }: Gr
             </Stack>
 
             <Stack direction="row" alignItems="center" spacing={1}>
-                {(userRole === 'admin' || userRole === 'member') && currentUserRole === 'owner' ? (
-                    <Select
-                        value={userRole}
-                        onChange={(_, value) => handleRoleChange(value as 'owner' | 'admin' | 'member')}
-                        sx={{ width: 120 }}
-                    >
-                        <Option value="member">{t('Member')}</Option>
-                        <Option value="admin">{t('Admin')}</Option>
-                    </Select>
-                ) : (
+                {/* Отображаем "Owner" для владельцев чата */}
+                {userRole === 'owner' ? (
                     <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
-                        {roleTranslation[userRole]}
+                        {t('Owner')}
                     </Typography>
+                ) : (
+                    // Только владелец чата может менять роли участников
+                    currentUserRole === 'owner' && (
+                        <Select
+                            value={userRole}
+                            onChange={(_, value) => handleRoleChange(value as 'admin' | 'member')}
+                            sx={{ width: 120 }}
+                        >
+                            <Option value="member">{t('Member')}</Option>
+                            <Option value="admin">{t('Admin')}</Option>
+                        </Select>
+                    )
                 )}
 
-                {currentUserRole === 'owner' && (
+                {/* Только владелец или администратор может удалять участников, но не владельца */}
+                {(currentUserRole === 'owner' || currentUserRole === 'admin') && userRole !== 'owner' && (
                     <IconButton onClick={handleRemoveUser}>
                         <CloseIcon />
                     </IconButton>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Stack, Typography } from '@mui/joy';
+import { Box, Stack } from '@mui/joy';
 import GroupUserItem from './GroupUserItem';
 import { UserProps } from '../core/types';
 
@@ -8,9 +8,11 @@ type GroupMemberListProps = {
     currentUserRole: 'owner' | 'admin' | 'member';
     onRoleChange: (userId: number, newRole: 'owner' | 'admin' | 'member') => void;
     onRemoveUser: (userId: number) => void;
+    chatId: number; // Добавляем chatId
+    token: string;  // Добавляем token для API запросов
 };
 
-export default function GroupMemberList({ users, currentUserRole, onRoleChange, onRemoveUser }: GroupMemberListProps) {
+export default function GroupMemberList({ users, currentUserRole, onRoleChange, onRemoveUser, chatId, token }: GroupMemberListProps) {
     return (
         <Box sx={{ padding: '16px 24px', borderTop: '1px solid', borderColor: 'divider' }}>
             <Stack direction="column" spacing={2}>
@@ -21,6 +23,8 @@ export default function GroupMemberList({ users, currentUserRole, onRoleChange, 
                         currentUserRole={currentUserRole}
                         onRoleChange={onRoleChange}
                         onRemoveUser={onRemoveUser}
+                        chatId={chatId}
+                        token={token}
                     />
                 ))}
             </Stack>

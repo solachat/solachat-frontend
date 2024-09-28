@@ -229,10 +229,9 @@ export const addUsersToGroupChat = async (chatId: number, newUserIds: number[], 
 export const assignRoleInChat = async (chatId: number, userId: number, role: 'admin' | 'member', token: string) => {
     try {
         const response = await axios.post(
-            `${API_URL}/api/chats/assign-role`,
+            `${API_URL}/api/chats/${chatId}/assign-role`,
             {
-                chatId,
-                userId,
+                userIdToAssign: userId,
                 role
             },
             {
@@ -294,7 +293,26 @@ export const createGroupChat = async (
     }
 };
 
-
+export const removeUserFromChat = async (chatId: number, userId: number, token: string) => {
+    try {
+        console.log("Отправляем запрос с данными:", { chatId, userIdToKick: userId });
+        const response = await axios.post(
+            `${API_URL}/api/chats/${chatId}/kick-user`,
+            { userIdToKick: userId },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        toast.success('User removed successfully');
+        return response.data;
+    } catch (error) {
+        console.error('Error removing user:', error);
+        toast.error('Failed to remove user');
+        throw error;
+    }
+};
 
 
 //

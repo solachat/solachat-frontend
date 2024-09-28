@@ -77,8 +77,8 @@ export default function ChatListItem(props: ChatListItemProps) {
                     <Stack direction="row" spacing={1.5}>
                         {isGroup ? (
                             <AvatarWithStatus
-                                online={!isGroup && sender?.online}
-                                src={isGroup ? existingChat?.groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
+                                online={false}
+                                src={existingChat?.avatar || 'path/to/default-group-avatar.jpg'}
                                 sx={{
                                     width: { xs: 32, sm: 48 },
                                     height: { xs: 32, sm: 48 },

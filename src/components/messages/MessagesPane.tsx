@@ -116,6 +116,9 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
         ? undefined
         : chat?.users?.find((user) => user.id !== currentUserId);
 
+    console.log('chat.isGroup:', chat?.isGroup);
+    console.log('chat.groupAvatar:', chat?.groupAvatar);
+
     return (
         <Sheet
             sx={{
@@ -134,7 +137,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                     chatId={chat.id}
                     isGroup={chat.isGroup}
                     chatName={chat.isGroup ? chat.name : undefined}
-                    groupAvatar={chat.isGroup ? chat.groupAvatar || 'path/to/default-group-avatar.jpg' : undefined}
+                    groupAvatar={chat.isGroup ? chat.avatar || 'path/to/default-group-avatar.jpg' : undefined}
                     members={chat?.users || []}
                 />
             )}

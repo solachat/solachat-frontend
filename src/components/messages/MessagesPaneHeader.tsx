@@ -13,6 +13,7 @@ import { toggleMessagesPane } from '../../utils/utils';
 import { useTranslation } from "react-i18next";
 import MessagesMenu from './MessagesMenu';
 import GroupInfoModal from '../group/GroupInfoModal';
+import { jwtDecode } from 'jwt-decode';
 
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
@@ -26,12 +27,21 @@ type MessagesPaneHeaderProps = {
 export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, groupAvatar, members = [] }: MessagesPaneHeaderProps) {
     const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
 
-    const handleDeleteChat = () => {
-        console.log("Chat deleted");
-    };
+    React.useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            const decodedToken: { id: number } = jwtDecode(token);
+            setCurrentUserId(decodedToken.id);
+        }
+    }, []);
 
     const userToken = localStorage.getItem('token');
+
+    // Логируем значения для проверки
+    console.log('isGroup:', isGroup);
+    console.log('groupAvatar:', groupAvatar);
 
     return (
         <>
@@ -62,7 +72,11 @@ export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, 
                     >
                         <ArrowBackIosNewRoundedIcon />
                     </IconButton>
-                    <Avatar size="lg" src={isGroup ? groupAvatar : sender?.avatar} />
+                    <Avatar
+                        size="lg"
+                        src={isGroup ? groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
+                        alt={isGroup ? chatName : sender?.realname}
+                    />
                     <div>
                         <Typography
                             fontWeight="lg"
@@ -130,17 +144,20 @@ export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, 
                     <MessagesMenu
                         chatId={chatId}
                         token={userToken || ''}
-                        onDeleteChat={handleDeleteChat}
+                        onDeleteChat={() => console.log("Chat deleted")}
                     />
                 </Stack>
             </Stack>
-            {isGroup && (
+            {isGroup && currentUserId !== null && (
                 <GroupInfoModal
                     open={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     groupName={chatName || 'Group'}
                     groupAvatar={groupAvatar || ''}
                     users={members}
+                    currentUserId={currentUserId}
+                    chatId={chatId}
+                    token={userToken || ''}
                 />
             )}
         </>
