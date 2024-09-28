@@ -178,5 +178,8 @@
   "participant": "参与者",
   "participants_two": "参与者",
   "participants_many": "参与者",
-  "online": "在线"
+  "online": "在线",
+  "addParticipant": "添加参与者",
+  "enterUsername": "输入用户名",
+  "add": "添加"
 }

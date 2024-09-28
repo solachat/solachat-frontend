@@ -186,7 +186,7 @@
   "Users": "Пользователи",
   "Create a new user": "Создать нового пользователя",
   "Owner": "Владелец",
-  "Member": "Участник",
+  "member": "Участник",
   "Admin": "Администратор",
   "Notifications": "Уведомления",
   "Saved Messages": "Сообщения в избранном",
@@ -205,5 +205,13 @@
   "You must select at least one user to create a group chat.": "Вы должны выбрать хотя бы одного пользователя для создания группового чата.",
   "Failed to create group": "Не удалось создать группу",
   "Group chat created successfully!": "Групповой чат успешно создан!",
-  "Offline": "не в сети"
+  "Offline": "не в сети",
+  "Information": "Информация",
+  "participant": "участник",
+  "participants_two": "участника",
+  "participants_many": "участников",
+  "online": "в сети",
+  "addParticipant": "Добавить участника",
+  "enterUsername": "Введите имя пользователя",
+  "add": "Добавить"
 }

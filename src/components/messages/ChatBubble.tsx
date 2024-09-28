@@ -11,6 +11,7 @@ import { IconButton } from '@mui/joy';
 import ContextMenu from './ContextMenu';
 import { useTranslation } from 'react-i18next';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
+import VideoPlayer from '../core/VideoPlayer';
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
@@ -21,15 +22,23 @@ type ChatBubbleProps = MessageProps & {
         avatar: string;
         username: string;
     };
-    isGroupChat: boolean; // Новое свойство для определения группового чата
+    isGroupChat: boolean;
 };
 
 type DecodedToken = JwtPayload & { id?: number };
 
+// Функция для проверки, является ли файл изображением
 const isImageFile = (fileName: string) => {
     const imageExtensions = ['jpg', 'jpeg', 'png', 'gif'];
     const fileExtension = fileName.split('.').pop()?.toLowerCase();
     return imageExtensions.includes(fileExtension || '');
+};
+
+// Функция для проверки, является ли файл видеофайлом
+const isVideoFile = (fileName: string) => {
+    const videoExtensions = ['mp4', 'webm', 'ogg'];
+    const fileExtension = fileName.split('.').pop()?.toLowerCase();
+    return videoExtensions.includes(fileExtension || '');
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
@@ -78,6 +87,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
     };
 
     const isImage = isImageFile(attachment?.fileName || '');
+    const isVideo = isVideoFile(attachment?.fileName || '');
 
     const handleContextMenu = (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
@@ -101,7 +111,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 mb: { xs: 1, sm: 1 },
                 px: 1,
                 width: '45%',
-                flexDirection: 'column', // Меняем направление на колонку
+                flexDirection: 'column', // Вертикальное выравнивание
                 alignItems: isSent ? 'flex-end' : 'flex-start',
             }}
             onContextMenu={handleContextMenu}
@@ -144,7 +154,13 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     position: 'relative',
                 }}
             >
-                {isImage && (
+                {/* Обработка видеофайлов */}
+                {isVideo && (
+                    <VideoPlayer src={getAttachmentUrl()} fileName={attachment?.fileName || 'Video'} />
+                )}
+
+                {/* Обработка изображений */}
+                {isImage && !isVideo && (
                     <Box
                         sx={{
                             display: 'flex',
@@ -171,6 +187,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </Box>
                 )}
 
+                {/* Текст сообщения */}
                 {content && (
                     <Typography
                         sx={{
@@ -179,8 +196,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             color: isSent
                                 ? 'var(--joy-palette-common-white)'
                                 : 'var(--joy-palette-text-primary)',
-                            marginLeft: isImage ? '12px' : '0px',
-                            marginBottom: isImage ? '8px' : '4px',
+                            marginLeft: isImage || isVideo ? '12px' : '0px',
+                            marginBottom: isImage || isVideo ? '8px' : '4px',
                             textAlign: 'left',
                             transition: 'color 0.3s ease',
                             maxWidth: '100%',
@@ -194,6 +211,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </Typography>
                 )}
 
+                {/* Время сообщения */}
                 <Stack
                     direction="row"
                     spacing={1}
@@ -225,7 +243,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </Typography>
                 </Stack>
 
-                {!isImage && attachment && (
+                {/* Обработка файлов, отличных от изображений и видео */}
+                {!isImage && !isVideo && attachment && (
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
                         <Typography sx={{ fontSize: 'sm' }}>{attachment.fileName}</Typography>
@@ -244,6 +263,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </Stack>
                 )}
 
+                {/* Просмотр изображения в полном размере */}
                 {isImageOpen && imageSrc && (
                     <Box
                         sx={{
@@ -280,6 +300,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 )}
             </Sheet>
 
+            {/* Контекстное меню */}
             <ContextMenu
                 anchorPosition={
                     anchorPosition !== null ? { top: anchorPosition.mouseY, left: anchorPosition.mouseX } : undefined

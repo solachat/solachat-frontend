@@ -1,19 +1,15 @@
-import * as React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Modal, ModalDialog, Typography, IconButton, Box } from '@mui/joy';
 import UploadIcon from '@mui/icons-material/Upload';
 import CloseIcon from '@mui/icons-material/Close';
-import { toast } from 'react-toastify';
-import { uploadFileToChat } from '../../api/api';
 
 interface FileUploadModalProps {
-    chatId: number;
-    onFileUploadSuccess: (filePath: string) => void;
+    onFileSelect: (file: File) => void; // Вместо отправки сразу на сервер, файл просто передаётся в MessageInput
     open: boolean;
     handleClose: () => void;
 }
 
-const FileUploadModal: React.FC<FileUploadModalProps> = ({ chatId, onFileUploadSuccess, open, handleClose }) => {
+const FileUploadModal: React.FC<FileUploadModalProps> = ({ onFileSelect, open, handleClose }) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
 
@@ -31,29 +27,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ chatId, onFileUploadS
         }
     };
 
-    const handleUploadClick = async () => {
+    const handleFileSelectClick = () => {
         if (selectedFile) {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                toast.error('Authorization token is missing');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-
-            try {
-                const response = await uploadFileToChat(chatId, formData, token);
-
-                onFileUploadSuccess(response.filePath);
-                setSelectedFile(null);
-                setPreview(null);
-                handleClose();
-            } catch (error) {
-                console.error('Failed to upload file:', error);
-            }
-        } else {
-            toast.error('Please select a file first');
+            onFileSelect(selectedFile); // Отправляем файл в родительский компонент (MessageInput)
+            setSelectedFile(null);
+            setPreview(null);
+            handleClose();
         }
     };
 
@@ -104,11 +83,11 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ chatId, onFileUploadS
                     </Button>
                 </label>
                 <Button
-                    onClick={handleUploadClick}
+                    onClick={handleFileSelectClick}
                     disabled={!selectedFile}
                     sx={{ mt: 2 }}
                 >
-                    Upload
+                    Attach File
                 </Button>
             </ModalDialog>
         </Modal>

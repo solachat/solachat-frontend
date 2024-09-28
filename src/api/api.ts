@@ -85,32 +85,27 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
     }
 };
 
-export const sendMessage = async (chatId: number, content: string, token: string, filePath?: string) => {
+export const sendMessage = async (chatId: number, formData: FormData, token: string) => {
     try {
-        const requestData = {
-            content,
-            filePath,
-        };
-
-        console.log('Sending filePath to server:', filePath);
-
+        console.log('FormData being sent:', Array.from(formData.entries())); // Логирование содержимого FormData
         const response = await axios.post(
             `${API_URL}/api/messages/${chatId}`,
-            requestData,
+            formData,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
                 },
             }
         );
-
         return response.data;
     } catch (error) {
-        toast.error('Failed to send message');
         console.error('Error sending message:', error);
         throw new Error('Could not send message');
     }
 };
+
+
 
 export const updateUserStatus = async (userId: number, isOnline: boolean, token: string) => {
     if (!token) {

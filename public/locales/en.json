@@ -153,8 +153,11 @@
   "chinese": "Chinese",
   "edited": "Edited",
   "myMessages": "My messages",
-  "participant": "участник",
-  "participants_two": "участника",
-  "participants_many": "участников",
-  "online": "в сети"
+  "participant": "member",
+  "participants_two": "members",
+  "participants_many": "members",
+  "online": "online",
+  "addParticipant": "Add Participant",
+  "enterUsername": "Enter username",
+  "add": "Add"
 }

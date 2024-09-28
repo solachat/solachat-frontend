@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Editor, EditorState, getDefaultKeyBinding } from 'draft-js';
 import 'draft-js/dist/Draft.css';
-import { useTranslation } from 'react-i18next';
 import Box from '@mui/joy/Box';
 import FormControl from '@mui/joy/FormControl';
 import { IconButton, Stack, Typography, Avatar } from '@mui/joy';
@@ -16,7 +15,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 
 export type UploadedFileData = {
-    filePath: string;
+    file: File;
 };
 
 export type MessageInputProps = {
@@ -24,12 +23,11 @@ export type MessageInputProps = {
     textAreaValue: string;
     setTextAreaValue: (value: string) => void;
     onSubmit: (newMessage: any) => void;
-    editingMessage: { id: number | null, content: string | null } | null;
+    editingMessage?: { id: number | null, content: string | null } | null;
     setEditingMessage: (message: { id: number | null, content: string | null } | null) => void;
 };
 
 export default function MessageInput(props: MessageInputProps) {
-    const { t } = useTranslation();
     const { setTextAreaValue, chatId, textAreaValue, editingMessage, setEditingMessage } = props;
 
     const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
@@ -37,10 +35,12 @@ export default function MessageInput(props: MessageInputProps) {
     const [isFileUploadOpen, setFileUploadOpen] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
 
+    // Обработчик изменения редактора
     const handleEditorChange = (newState: EditorState) => {
         setEditorState(newState);
         const currentContent = newState.getCurrentContent().getPlainText();
-        setTextAreaValue(currentContent);
+        console.log('Editor content:', currentContent); // Логирование содержимого редактора
+        setTextAreaValue(currentContent); // Обновляем состояние с текстом
     };
 
     const keyBindingFn = (e: React.KeyboardEvent): string | null => {
@@ -52,49 +52,33 @@ export default function MessageInput(props: MessageInputProps) {
     };
 
     const handleClick = async () => {
-        if (!chatId || isNaN(chatId)) {
-            console.error('Invalid chatId:', chatId);
-            return;
-        }
+        if (textAreaValue.trim() !== '' || uploadedFiles.length > 0) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error('Authorization token is missing');
+                return;
+            }
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.error('Authorization token is missing');
-            return;
-        }
+            const formData = new FormData();
+            formData.append('content', textAreaValue);
+            uploadedFiles.forEach((fileData, index) => {
+                formData.append('file', fileData.file);
+            });
 
-        if (editingMessage && editingMessage.id !== null) {
             try {
-                await editMessage(editingMessage.id, textAreaValue, token);
+                await sendMessage(chatId, formData, token);
                 setTextAreaValue('');
                 setEditorState(EditorState.createEmpty());
                 setUploadedFiles([]);
-                setEditingMessage(null);
             } catch (error) {
-                console.error('Ошибка при редактировании сообщения:', error);
-            }
-        } else {
-            if (textAreaValue.trim() !== '' || uploadedFiles.length > 0) {
-                try {
-                    const filePaths = uploadedFiles.map((fileData) => fileData.filePath);
-                    const newMessage = await sendMessage(
-                        chatId,
-                        textAreaValue,
-                        token as string,
-                        filePaths.length > 0 ? filePaths[0] : undefined
-                    );
-                    setTextAreaValue('');
-                    setEditorState(EditorState.createEmpty());
-                    setUploadedFiles([]);
-                } catch (error) {
-                    console.error('Ошибка при отправке сообщения:', error);
-                }
+                console.error('Error sending message:', error);
             }
         }
     };
 
-    const handleFileUploadSuccess = (filePath: string) => {
-        setUploadedFiles((prevFiles) => [...prevFiles, { filePath }]);
+
+    const handleFileSelect = (file: File) => {
+        setUploadedFiles((prevFiles) => [...prevFiles, { file }]);
     };
 
     const removeUploadedFile = (index: number) => {
@@ -195,7 +179,7 @@ export default function MessageInput(props: MessageInputProps) {
                                     editorState={editorState}
                                     keyBindingFn={keyBindingFn}
                                     onChange={handleEditorChange}
-                                    placeholder={t('writeMessage')}
+                                    placeholder="Write a message..."
                                     ref={editorRef}
                                     spellCheck={true}
                                     stripPastedStyles={true}
@@ -248,7 +232,7 @@ export default function MessageInput(props: MessageInputProps) {
                                         <InsertDriveFileIcon />
                                     </Avatar>
                                     <Typography noWrap sx={{ maxWidth: '120px' }}>
-                                        {file.filePath.split('/').pop()}
+                                        {file.file.name}
                                     </Typography>
                                 </Stack>
                                 <IconButton onClick={() => removeUploadedFile(index)} size="sm">
@@ -261,10 +245,9 @@ export default function MessageInput(props: MessageInputProps) {
             )}
 
             <FileUploadModal
-                chatId={chatId}
                 open={isFileUploadOpen}
                 handleClose={() => setFileUploadOpen(false)}
-                onFileUploadSuccess={handleFileUploadSuccess}
+                onFileSelect={handleFileSelect}
             />
         </Box>
     );
