@@ -12,11 +12,6 @@ import { createPrivateChat } from '../../api/api';
 import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
 
-const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-};
-
 type ChatListItemProps = ListItemButtonProps & {
     id: string;
     unread?: boolean;
@@ -56,6 +51,13 @@ export default function ChatListItem(props: ChatListItemProps) {
             }
         }
     };
+
+    React.useEffect(() => {
+        if (existingChat) {
+            // Обновляем состояние чата, если произошли изменения
+            setSelectedChat(existingChat);
+        }
+    }, [existingChat, setSelectedChat]);
 
     if (!sender && !isGroup) {
         return null;
@@ -139,7 +141,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     display={{ xs: 'none', md: 'block' }}
                                     noWrap
                                 >
-                                    {formatDate(lastMessage.createdAt) || 'No Timestamp'}
+                                    {new Date(lastMessage.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                                 </Typography>
                             </Box>
                         )}

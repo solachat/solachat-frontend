@@ -147,7 +147,7 @@ export default function GroupInfoModal({ open, onClose, groupName, groupAvatar, 
                     onClose={() => setIsAddUserModalOpen(false)}
                     chatId={chatId}
                     token={token}
-                    searchUsers={searchUsers} // Функция поиска пользователей
+                    searchUsers={searchUsers}
                 />
             </Box>
         </Modal>

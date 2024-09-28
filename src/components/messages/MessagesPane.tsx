@@ -85,12 +85,15 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
         setChatMessages((prevMessages) =>
             prevMessages.map((msg) =>
                 msg.id === updatedMessage.id
-                    ? { ...msg, content: updatedMessage.content, isEdited: updatedMessage.isEdited }
+                    ? {
+                        ...msg,
+                        content: updatedMessage.content,
+                        isEdited: updatedMessage.isEdited,
+                    }
                     : msg
             )
         );
     };
-
 
     useWebSocket((message) => {
         if (message.type === 'newMessage') {
@@ -112,6 +115,9 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     const interlocutor = chat?.isGroup
         ? undefined
         : chat?.users?.find((user) => user.id !== currentUserId);
+
+    console.log('chat.isGroup:', chat?.isGroup);
+    console.log('chat.groupAvatar:', chat?.groupAvatar);
 
     return (
         <Sheet
