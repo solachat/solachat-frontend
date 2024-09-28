@@ -85,15 +85,12 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
         setChatMessages((prevMessages) =>
             prevMessages.map((msg) =>
                 msg.id === updatedMessage.id
-                    ? {
-                        ...msg,
-                        content: updatedMessage.content,
-                        isEdited: updatedMessage.isEdited,
-                    }
+                    ? { ...msg, content: updatedMessage.content, isEdited: updatedMessage.isEdited }
                     : msg
             )
         );
     };
+
 
     useWebSocket((message) => {
         if (message.type === 'newMessage') {
@@ -115,9 +112,6 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     const interlocutor = chat?.isGroup
         ? undefined
         : chat?.users?.find((user) => user.id !== currentUserId);
-
-    console.log('chat.isGroup:', chat?.isGroup);
-    console.log('chat.groupAvatar:', chat?.groupAvatar);
 
     return (
         <Sheet
@@ -160,6 +154,8 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                     <Stack spacing={2} sx={{ width: '100%' }}>
                         {chatMessages.map((message: MessageProps, index: number) => {
                             const isCurrentUser = message.userId === currentUserId;
+                            const messageCreatorId = message.userId;
+
                             return (
                                 <Stack
                                     key={index}
@@ -177,6 +173,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                                         attachment={message.attachment}
                                         isEdited={message.isEdited}
                                         onEditMessage={handleEditMessage}
+                                        messageCreatorId={messageCreatorId} // Передаем messageCreatorId
                                     />
                                 </Stack>
                             );

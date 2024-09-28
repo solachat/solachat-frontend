@@ -32,6 +32,8 @@ type ContextMenuProps = {
     onForward: () => void;
     onClose: () => void;
     open: boolean;
+    currentUserId: number; // Текущий пользователь
+    messageCreatorId: number; // Создатель сообщения
 };
 
 export default function ContextMenu({
@@ -41,6 +43,8 @@ export default function ContextMenu({
                                         onForward,
                                         onClose,
                                         open,
+                                        currentUserId,
+                                        messageCreatorId,
                                     }: ContextMenuProps) {
     return (
         <StyledMenu
@@ -49,10 +53,12 @@ export default function ContextMenu({
             open={open}
             onClose={onClose}
         >
-            <StyledMenuItem onClick={() => { onEdit(); onClose(); }}>
-                <EditIcon sx={{ marginRight: 1 }} />
-                Edit
-            </StyledMenuItem>
+            {currentUserId === messageCreatorId && (
+                <StyledMenuItem onClick={() => { onEdit(); onClose(); }}>
+                    <EditIcon sx={{ marginRight: 1 }} />
+                    Edit
+                </StyledMenuItem>
+            )}
             <StyledMenuItem onClick={() => { onCopy(); onClose(); }}>
                 <ContentCopyIcon sx={{ marginRight: 1 }} />
                 Copy

@@ -24,8 +24,22 @@ type MessagesPaneHeaderProps = {
     members?: UserProps[];
 };
 
+const getMemberLabel = (count: number, locale: string = 'en') => {
+    if (locale === 'ru') {
+        if (count % 10 === 1 && count % 100 !== 11) {
+            return 'участник';
+        } else if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) {
+            return 'участника';
+        } else {
+            return 'участников';
+        }
+    } else {
+        return count === 1 ? 'member' : 'members';
+    }
+};
+
 export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, groupAvatar, members = [] }: MessagesPaneHeaderProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
 
@@ -38,10 +52,6 @@ export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, 
     }, []);
 
     const userToken = localStorage.getItem('token');
-
-    // Логируем значения для проверки
-    console.log('isGroup:', isGroup);
-    console.log('groupAvatar:', groupAvatar);
 
     return (
         <>
@@ -105,6 +115,15 @@ export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, 
                         >
                             {isGroup ? chatName : sender?.realname}
                         </Typography>
+
+                        {/* Количество участников для группы с правильным склонением */}
+                        {isGroup && (
+                            <Typography level="body-sm">
+                                {members.length} {getMemberLabel(members.length, i18n.language)}
+                            </Typography>
+                        )}
+
+                        {/* Отображение имени пользователя для приватного чата */}
                         {!isGroup && <Typography level="body-sm">{sender?.username}</Typography>}
                     </div>
                 </Stack>

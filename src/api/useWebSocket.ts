@@ -64,6 +64,9 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
                 case 'newMessage':
                     onMessage(message);
                     break;
+                case 'editMessage':
+                    onMessage(message);
+                    break;
                 case 'userAdded':
                     toast.info(`User with ID ${message.userId} added to chat ${message.chatId}`);
                     break;

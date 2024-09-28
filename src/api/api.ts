@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import {UserProps} from "../components/core/types";
 import {jwtDecode} from "jwt-decode";
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
@@ -165,23 +164,28 @@ export const uploadFileToChat = async (chatId: number, formData: FormData, token
 
 export const deleteChat = async (chatId: number, token: string) => {
     try {
-        const response = await axios.delete(`${API_URL}/api/chats/${chatId}`, {
+        const response = await fetch(`${API_URL}/api/chats/${chatId}`, {
+            method: 'DELETE',
             headers: {
                 Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
             },
         });
-        toast.success('Chat deleted successfully');
-        return response.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            console.error('Error deleting chat:', error.response?.data || error.message);
-        } else {
-            console.error('Unexpected error deleting chat:', error);
+
+        if (!response.ok) {
+            throw new Error('Failed to delete chat');
         }
+
+        const data = await response.json();
+        toast.success('Chat deleted successfully');
+        return data;
+    } catch (error) {
+        console.error('Error deleting chat:', error);
         toast.error('Failed to delete chat');
         throw new Error('Could not delete chat');
     }
 };
+
 
 export const editMessage = async (messageId: number, content: string, token: string) => {
     try {
@@ -206,7 +210,7 @@ export const editMessage = async (messageId: number, content: string, token: str
 export const addUsersToGroupChat = async (chatId: number, newUserIds: number[], token: string) => {
     try {
         const response = await axios.post(
-            `${API_URL}/api/chats/add-users`,
+            `${API_URL}/api/chats/${chatId}/add-users`,
             {
                 chatId,
                 newUserIds

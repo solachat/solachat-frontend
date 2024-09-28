@@ -10,11 +10,15 @@ import { MessageProps } from '../core/types';
 import { IconButton } from '@mui/joy';
 import ContextMenu from './ContextMenu';
 import { useTranslation } from 'react-i18next';
+import {jwtDecode, JwtPayload } from 'jwt-decode'; // Правильный импорт jwt_decode
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
     onEditMessage: (messageId: number, content: string) => void;
+    messageCreatorId: number; // Добавлено
 };
+
+type DecodedToken = JwtPayload & { id?: number };
 
 const isImageFile = (fileName: string) => {
     const imageExtensions = ['jpg', 'jpeg', 'png', 'gif'];
@@ -24,7 +28,7 @@ const isImageFile = (fileName: string) => {
 
 export default function ChatBubble(props: ChatBubbleProps) {
     const { t } = useTranslation();
-    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage } = props;
+    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId } = props; // messageCreatorId из пропсов
     const isSent = variant === 'sent';
     const formattedTime = new Date(createdAt).toLocaleTimeString([], {
         hour: '2-digit',
@@ -34,6 +38,14 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const [isImageOpen, setIsImageOpen] = useState(false);
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ mouseX: number; mouseY: number } | null>(null);
+
+    // Получение токена из localStorage
+    const token = localStorage.getItem('token');
+    let currentUserId: number | null = null;
+    if (token) {
+        const decodedToken: DecodedToken = jwtDecode(token); // Используем jwt_decode
+        currentUserId = decodedToken.id || 0; // Безопасная установка ID
+    }
 
     const handleImageClick = () => {
         setImageSrc(getAttachmentUrl());
@@ -71,12 +83,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
         });
     };
 
-
-
     const handleEdit = () => {
         onEditMessage(Number(id), content);
         setAnchorPosition(null);
     };
+
 
     return (
         <Box
@@ -256,14 +267,15 @@ export default function ChatBubble(props: ChatBubbleProps) {
             <ContextMenu
                 anchorPosition={
                     anchorPosition !== null ? { top: anchorPosition.mouseY, left: anchorPosition.mouseX } : undefined
-                } // Теперь используем координаты клика
+                }
                 open={Boolean(anchorPosition)}
-                onClose={() => setAnchorPosition(null)} // Закрываем меню
+                onClose={() => setAnchorPosition(null)}
                 onEdit={handleEdit}
                 onCopy={handleCopy}
                 onForward={handleForward}
+                currentUserId={currentUserId ?? 0}
+                messageCreatorId={messageCreatorId}
             />
-
         </Box>
     );
 }

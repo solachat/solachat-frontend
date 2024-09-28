@@ -19,17 +19,15 @@ function GroupUserItem({ user, currentUserRole, onRoleChange, onRemoveUser, chat
 
     const userRole = user.role as 'owner' | 'admin' | 'member';
 
-    // Функция для смены роли
     const handleRoleChange = async (newRole: 'admin' | 'member') => {
         try {
             await assignRoleInChat(chatId, user.id, newRole, token);
-            onRoleChange(user.id, newRole); // Обновляем роль на клиенте
+            onRoleChange(user.id, newRole);
         } catch (error) {
             console.error('Error assigning role:', error);
         }
     };
 
-    // Функция для удаления пользователя
     const handleRemoveUser = async () => {
         if (window.confirm(t('Are you sure you want to remove this user from the chat?'))) {
             try {
@@ -62,13 +60,11 @@ function GroupUserItem({ user, currentUserRole, onRoleChange, onRemoveUser, chat
             </Stack>
 
             <Stack direction="row" alignItems="center" spacing={1}>
-                {/* Отображаем "Owner" для владельцев чата */}
                 {userRole === 'owner' ? (
                     <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
                         {t('Owner')}
                     </Typography>
                 ) : (
-                    // Только владелец чата может менять роли участников
                     currentUserRole === 'owner' && (
                         <Select
                             value={userRole}
@@ -81,7 +77,6 @@ function GroupUserItem({ user, currentUserRole, onRoleChange, onRemoveUser, chat
                     )
                 )}
 
-                {/* Только владелец или администратор может удалять участников, но не владельца */}
                 {(currentUserRole === 'owner' || currentUserRole === 'admin') && userRole !== 'owner' && (
                     <IconButton onClick={handleRemoveUser}>
                         <CloseIcon />

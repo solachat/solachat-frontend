@@ -10,7 +10,7 @@ type GroupHeaderProps = {
 };
 
 export default function GroupHeader({ groupName, groupAvatar, totalMembers, onlineMembers }: GroupHeaderProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const getMemberText = (count: number) => {
         const textForms = [t('participant'), t('participants_two'), t('participants_many')];
