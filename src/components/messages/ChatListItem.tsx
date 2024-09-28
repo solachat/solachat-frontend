@@ -7,6 +7,7 @@ import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
 import CircleIcon from '@mui/icons-material/Circle';
 import AvatarWithStatus from './AvatarWithStatus';
+import Avatar from '@mui/joy/Avatar'; // Импортируем компонент Avatar
 import { ChatProps, MessageProps, UserProps } from '../core/types';
 import { createPrivateChat } from '../../api/api';
 import { toast } from "react-toastify";
@@ -52,13 +53,6 @@ export default function ChatListItem(props: ChatListItemProps) {
         }
     };
 
-    React.useEffect(() => {
-        if (existingChat) {
-            // Обновляем состояние чата, если произошли изменения
-            setSelectedChat(existingChat);
-        }
-    }, [existingChat, setSelectedChat]);
-
     if (!sender && !isGroup) {
         return null;
     }
@@ -78,8 +72,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                 >
                     <Stack direction="row" spacing={1.5}>
                         {isGroup ? (
-                            <AvatarWithStatus
-                                online={false}
+                            <Avatar
                                 src={existingChat?.avatar || 'path/to/default-group-avatar.jpg'}
                                 sx={{
                                     width: { xs: 32, sm: 48 },
@@ -123,6 +116,11 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     ) : (
                                         lastMessage.content
                                     )}
+                                </Typography>
+                            )}
+                            {!hasMessages && (
+                                <Typography level="body-sm">
+                                    No messages
                                 </Typography>
                             )}
                         </Box>

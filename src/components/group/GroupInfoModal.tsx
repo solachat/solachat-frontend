@@ -10,8 +10,8 @@ import GroupStats from './GroupStats';
 import ChatSettings from './ChatSetitngs';
 import { UserProps } from '../core/types';
 import { useTranslation } from 'react-i18next';
-import AddUserModal from './AddUserModal'; // Импортируем компонент
-import { searchUsers } from '../../api/api'; // Импортируем функцию поиска пользователей
+import AddUserModal from './AddUserModal';
+import { searchUsers } from '../../api/api';
 
 type GroupInfoModalProps = {
     open: boolean;
@@ -49,14 +49,9 @@ export default function GroupInfoModal({ open, onClose, groupName, groupAvatar, 
         setIsSettingsOpen(!isSettingsOpen);
     };
 
-    const handleAddUser = (selectedUsers: UserProps[]) => {
-        console.log('Добавлены пользователи:', selectedUsers);
-        // Логика для обработки добавления выбранных пользователей
-    };
-
     return (
         <Modal open={open} onClose={onClose}>
-            <Box> {/* Оборачиваем весь контент модального окна в Box */}
+            <Box>
                 <Box
                     sx={{
                         display: 'flex',
@@ -102,7 +97,12 @@ export default function GroupInfoModal({ open, onClose, groupName, groupAvatar, 
                         )}
 
                         {isSettingsOpen ? (
-                            <ChatSettings onCloseSettings={handleToggleSettings} />
+                            <ChatSettings
+                                chatId={chatId}
+                                currentGroupName={groupName}
+                                currentAvatar={groupAvatar}
+                                onCloseSettings={handleToggleSettings}
+                            />
                         ) : (
                             <Box>
                                 <GroupHeader

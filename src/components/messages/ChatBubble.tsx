@@ -10,12 +10,18 @@ import { MessageProps } from '../core/types';
 import { IconButton } from '@mui/joy';
 import ContextMenu from './ContextMenu';
 import { useTranslation } from 'react-i18next';
-import {jwtDecode, JwtPayload } from 'jwt-decode'; // Правильный импорт jwt_decode
+import { jwtDecode, JwtPayload } from 'jwt-decode';
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
     onEditMessage: (messageId: number, content: string) => void;
-    messageCreatorId: number; // Добавлено
+    messageCreatorId: number;
+    previousMessage?: MessageProps | null;
+    user: {
+        avatar: string;
+        username: string;
+    };
+    isGroupChat: boolean; // Новое свойство для определения группового чата
 };
 
 type DecodedToken = JwtPayload & { id?: number };
@@ -28,7 +34,7 @@ const isImageFile = (fileName: string) => {
 
 export default function ChatBubble(props: ChatBubbleProps) {
     const { t } = useTranslation();
-    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId } = props; // messageCreatorId из пропсов
+    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, previousMessage, user, isGroupChat } = props;
     const isSent = variant === 'sent';
     const formattedTime = new Date(createdAt).toLocaleTimeString([], {
         hour: '2-digit',
@@ -39,12 +45,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ mouseX: number; mouseY: number } | null>(null);
 
-    // Получение токена из localStorage
     const token = localStorage.getItem('token');
     let currentUserId: number | null = null;
     if (token) {
-        const decodedToken: DecodedToken = jwtDecode(token); // Используем jwt_decode
-        currentUserId = decodedToken.id || 0; // Безопасная установка ID
+        const decodedToken: DecodedToken = jwtDecode(token);
+        currentUserId = decodedToken.id || 0;
     }
 
     const handleImageClick = () => {
@@ -76,7 +81,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
 
     const handleContextMenu = (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
-
         setAnchorPosition({
             mouseX: event.clientX,
             mouseY: event.clientY,
@@ -88,7 +92,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
         setAnchorPosition(null);
     };
 
-
     return (
         <Box
             component="div"
@@ -98,12 +101,25 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 mb: { xs: 1, sm: 1 },
                 px: 1,
                 width: '45%',
-                '@media (max-width: 600px)': {
-                    flexDirection: 'column',
-                },
+                flexDirection: 'column', // Меняем направление на колонку
+                alignItems: isSent ? 'flex-end' : 'flex-start',
             }}
             onContextMenu={handleContextMenu}
         >
+            {/* Показать аватар и имя пользователя только для полученных сообщений в групповых чатах */}
+            {isGroupChat && !isSent && (
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <img
+                        src={user.avatar || 'path/to/default-avatar.jpg'}
+                        alt="avatar"
+                        style={{ width: '30px', height: '30px', borderRadius: '50%', marginRight: '8px' }}
+                    />
+                    <Typography>
+                        {user.username}
+                    </Typography>
+                </Box>
+            )}
+
             <Sheet
                 color={isSent ? 'primary' : 'neutral'}
                 variant={isSent ? 'solid' : 'soft'}

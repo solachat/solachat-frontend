@@ -318,6 +318,37 @@ export const removeUserFromChat = async (chatId: number, userId: number, token: 
     }
 };
 
+export const updateChatSettings = async (chatId: number, groupName?: string, avatar?: File | null) => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('Token is missing');
+
+        const formData = new FormData();
+        if (groupName) {
+            formData.append('groupName', groupName);
+        }
+        if (avatar) {
+            formData.append('avatar', avatar);
+        }
+
+        console.log('Chat settings being sent:', { groupName, avatar });
+
+        const response = await axios.put(`${API_URL}/api/chats/${chatId}/settings`, formData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        toast.success('Chat settings updated successfully!');
+        return response.data;
+    } catch (error) {
+        console.error('Error updating chat settings:', error);
+        toast.error('Failed to update chat settings');
+        throw error;
+    }
+};
+
+
 
 //
 // console.log('Отправляемые данные:', {

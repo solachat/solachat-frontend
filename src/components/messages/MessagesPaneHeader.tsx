@@ -116,14 +116,11 @@ export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, 
                             {isGroup ? chatName : sender?.realname}
                         </Typography>
 
-                        {/* Количество участников для группы с правильным склонением */}
                         {isGroup && (
                             <Typography level="body-sm">
                                 {members.length} {getMemberLabel(members.length, i18n.language)}
                             </Typography>
                         )}
-
-                        {/* Отображение имени пользователя для приватного чата */}
                         {!isGroup && <Typography level="body-sm">{sender?.username}</Typography>}
                     </div>
                 </Stack>

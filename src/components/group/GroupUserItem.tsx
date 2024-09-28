@@ -43,7 +43,7 @@ function GroupUserItem({ user, currentUserRole, onRoleChange, onRemoveUser, chat
         <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Stack direction="row" alignItems="center" gap={1}>
                 <Avatar
-                    src={user.avatar || 'https://via.placeholder.com/40'}
+                    src={user.avatar || 'path/to/default-group-avatar.jpg'}
                     sx={{ width: 40, height: 40 }}
                 />
                 <Box>

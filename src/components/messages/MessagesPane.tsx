@@ -179,7 +179,8 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                                         attachment={message.attachment}
                                         isEdited={message.isEdited}
                                         onEditMessage={handleEditMessage}
-                                        messageCreatorId={messageCreatorId} // Передаем messageCreatorId
+                                        messageCreatorId={messageCreatorId}
+                                        isGroupChat={chat?.isGroup || false}
                                     />
                                 </Stack>
                             );
