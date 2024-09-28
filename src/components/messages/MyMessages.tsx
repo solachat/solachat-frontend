@@ -1,100 +1,224 @@
 import * as React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Sheet from '@mui/joy/Sheet';
 import MessagesPane from './MessagesPane';
 import ChatsPane from './ChatsPane';
-import { ChatProps } from '../core/types';
-import { useParams, useNavigate } from 'react-router-dom';
-import { chats as initialChats } from '../../utils/data';
-import { loadChatsFromStorage, saveChatsToStorage } from '../../utils/utils';
+import { ChatProps, UserProps } from '../core/types';
+import { fetchChatsFromServer } from '../../api/api';
+import {CircularProgress, Typography} from '@mui/joy';
+import { useTranslation } from 'react-i18next';
+import { JwtPayload } from 'jsonwebtoken';
+import { jwtDecode } from 'jwt-decode';
+import { useWebSocket } from '../../api/useWebSocket';
+import {Helmet} from "react-helmet-async";
+import Box from "@mui/joy/Box";  // Импортируем WebSocket хук
 
 export default function MyProfile() {
-    const [chats, setChats] = React.useState<ChatProps[]>(loadChatsFromStorage());
-    const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
+    const [chats, setChats] = React.useState<ChatProps[]>([]);
+    const [selectedChat, setSelectedChat] = React.useState<ChatProps | null>(null);
+    const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
+    const [currentUser, setCurrentUser] = React.useState<UserProps | null>(null);
+    const [searchParams] = useSearchParams();
+    const { t } = useTranslation();
 
-    const currentUser = { id: 1 };
-
-    React.useEffect(() => {
-        if (!chats.length) {
-            setChats(initialChats);
-            saveChatsToStorage(initialChats);
+    // Получаем текущего пользователя по токену
+    const getCurrentUserFromToken = (): UserProps | null => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('Authorization token is missing');
+            return null;
         }
-    }, [chats]);
 
-    const selectedChat = chats.find((chat) => chat.id === id) || chats[0];
-
-    const setSelectedChat = (chat: ChatProps) => {
-        navigate(`/chat?id=${chat.id}`);
+        try {
+            const decodedToken = jwtDecode<JwtPayload>(token);
+            return {
+                id: decodedToken.id,
+                username: decodedToken.username,
+                realname: 'User Realname',
+                avatar: '',
+                online: true,
+                role: 'member',
+            };
+        } catch (error) {
+            console.error('Error decoding token:', error);
+            return null;
+        }
     };
 
+    // Функция обновления последнего сообщения в списке чатов
+    const updateLastMessageInChatList = (newMessage: any) => {
+        setChats((prevChats) =>
+            prevChats.map((chat) =>
+                chat.id === newMessage.chatId
+                    ? { ...chat, lastMessage: newMessage }
+                    : chat
+            )
+        );
+    };
+
+    // Функция добавления нового чата
+    const addNewChat = (chatId: number) => {
+        // Предположим, что для нового чата нужно запросить его с сервера
+        fetchChatsFromServer(currentUser!.id, localStorage.getItem('token')!).then((fetchedChats: ChatProps[]) => {
+            const newChat = fetchedChats.find((chat: ChatProps) => chat.id === chatId);
+            if (newChat) {
+                setChats((prevChats) => [...prevChats, newChat]);
+            }
+        });
+    };
+
+    // Функция удаления пользователя из чата
+    const removeUserFromChat = (chatId: number, userId: number) => {
+        setChats((prevChats) =>
+            prevChats.map((chat) =>
+                chat.id === chatId
+                    ? { ...chat, users: chat.users.filter(user => user.id !== userId) }
+                    : chat
+            )
+        );
+    };
+
+    // Функция изменения роли пользователя в чате
+    const updateRoleInChat = (chatId: number, userId: number, newRole: string) => {
+        setChats((prevChats) =>
+            prevChats.map((chat) =>
+                chat.id === chatId
+                    ? {
+                        ...chat,
+                        users: chat.users.map(user =>
+                            user.id === userId ? { ...user, role: newRole } : user
+                        ),
+                    }
+                    : chat
+            )
+        );
+    };
+
+    // Обработка событий WebSocket
+    const handleWebSocketMessage = (message: any) => {
+        switch (message.type) {
+            case 'newMessage':
+                updateLastMessageInChatList(message.message);
+                break;
+            case 'userAdded':
+                addNewChat(message.chatId);
+                break;
+            case 'userRemoved':
+                removeUserFromChat(message.chatId, message.userId);
+                break;
+            case 'roleChange':
+                updateRoleInChat(message.chatId, message.userId, message.newRole);
+                break;
+            default:
+                console.warn('Unknown message type:', message.type);
+        }
+    };
+
+    useWebSocket(handleWebSocketMessage); // Используем хук WebSocket
+
     React.useEffect(() => {
-        const handleActivity = () => {
-            console.log('User is active');
-        };
-
-        const handleInactivity = () => {
-            console.log('User is inactive');
-        };
-
-        const timeout = setTimeout(handleInactivity, 2 * 60 * 1000);
-
-        window.addEventListener('mousemove', handleActivity);
-        window.addEventListener('keypress', handleActivity);
-
-        return () => {
-            clearTimeout(timeout);
-            window.removeEventListener('mousemove', handleActivity);
-            window.removeEventListener('keypress', handleActivity);
-        };
+        const user = getCurrentUserFromToken();
+        if (user) {
+            setCurrentUser(user);
+        } else {
+            setError('Failed to decode user from token');
+        }
     }, []);
 
-    if (!selectedChat) {
-        return <div>Loading...</div>;
-    }
+    React.useEffect(() => {
+        if (!currentUser) return;
+
+        const loadChats = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    setError('Authorization token is missing');
+                    return;
+                }
+                const fetchedChats = await fetchChatsFromServer(currentUser.id, token);
+                if (Array.isArray(fetchedChats) && fetchedChats.length > 0) {
+                    setChats(fetchedChats);
+
+                    const chatIdFromUrl = searchParams.get('id');
+                    if (chatIdFromUrl) {
+                        const chatFromUrl = fetchedChats.find(chat => chat.id === Number(chatIdFromUrl));
+                        setSelectedChat(chatFromUrl || fetchedChats[0]);
+                    } else {
+                        setSelectedChat(fetchedChats[0]);
+                    }
+                } else {
+                    setChats([]);
+                }
+            } catch (error) {
+                setError('Failed to load chats.');
+                console.error('Error loading chats:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadChats();
+    }, [currentUser, searchParams]);
 
     return (
-        <Sheet
-            sx={{
-                flex: 1,
-                width: '100%',
-                mx: 'auto',
-                pt: { xs: 'var(--Header-height)', sm: 0 },
-                display: 'grid',
-                gridTemplateColumns: {
-                    xs: '1fr',
-                    sm: 'minmax(min-content, min(30%, 400px)) 1fr',
-                },
-            }}
-        >
+        <>
+            <Helmet>
+                <title>Messenger</title>
+            </Helmet>
             <Sheet
                 sx={{
-                    position: { xs: 'fixed', sm: 'sticky' },
-                    transform: {
-                        xs: 'translateX(calc(100% * (var(--MessagesPane-slideIn, 0) - 1)))',
-                        sm: 'none',
-                    },
-                    transition: 'transform 0.4s, width 0.4s',
-                    zIndex: 100,
+                    flex: 1,
                     width: '100%',
-                    top: 52,
+                    mx: 'auto',
+                    pt: { xs: 'var(--Header-height)', sm: 0 },
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'minmax(min-content, min(70%, 700px)) 1fr',
+                    },
                 }}
             >
-                {selectedChat ? (
-                    <ChatsPane
-                        chats={chats}
-                        selectedChatId={selectedChat.id}
-                        setSelectedChat={setSelectedChat}
-                        currentUser={currentUser}
-                    />
+                {currentUser ? (
+                    <>
+                        <ChatsPane
+                            chats={chats}
+                            selectedChatId={selectedChat ? String(selectedChat.id) : ''}
+                            setSelectedChat={(chat: ChatProps) => {
+                                setSelectedChat(chat);
+                            }}
+                            currentUser={currentUser}
+                        />
+
+                        <Sheet
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                backgroundColor: 'background.level1',
+                            }}
+                        >
+                            {error ? (
+                                <Typography sx={{ textAlign: 'center', color: 'red' }}>{error}</Typography>
+                            ) : loading ? (
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                                    <Typography>Loading chats...</Typography>
+                                    <CircularProgress sx={{ marginTop: 2 }} />
+                                </Box>
+                            ) : selectedChat ? (
+                                <MessagesPane
+                                    chat={selectedChat}
+                                    members={selectedChat?.users || []}
+                                />
+                            ) : (
+                                <MessagesPane chat={null}/>
+                            )}
+                        </Sheet>
+                    </>
                 ) : (
-                    <div>Loading chats...</div>
+                    <Typography>{t('loadingUserInformation')}</Typography>
                 )}
             </Sheet>
-            {selectedChat ? (
-                <MessagesPane chat={selectedChat} />
-            ) : (
-                <div>Loading messages...</div>
-            )}
-        </Sheet>
+        </>
     );
 }

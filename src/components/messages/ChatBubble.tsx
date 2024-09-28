@@ -1,129 +1,297 @@
 import * as React from 'react';
-import Avatar from '@mui/joy/Avatar';
+import { useState } from 'react';
 import Box from '@mui/joy/Box';
-import IconButton from '@mui/joy/IconButton';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
-import CelebrationOutlinedIcon from '@mui/icons-material/CelebrationOutlined';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
-import {MessageProps} from '../core/types';
+import DownloadIcon from '@mui/icons-material/Download';
+import { MessageProps } from '../core/types';
+import { IconButton } from '@mui/joy';
+import ContextMenu from './ContextMenu';
+import { useTranslation } from 'react-i18next';
+import { jwtDecode, JwtPayload } from 'jwt-decode';
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
+    onEditMessage: (messageId: number, content: string) => void;
+    messageCreatorId: number;
+    previousMessage?: MessageProps | null;
+    user: {
+        avatar: string;
+        username: string;
+    };
+    isGroupChat: boolean; // Новое свойство для определения группового чата
+};
+
+type DecodedToken = JwtPayload & { id?: number };
+
+const isImageFile = (fileName: string) => {
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+    const fileExtension = fileName.split('.').pop()?.toLowerCase();
+    return imageExtensions.includes(fileExtension || '');
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
-    const {content, variant, timestamp, attachment = undefined, sender} = props;
+    const { t } = useTranslation();
+    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, previousMessage, user, isGroupChat } = props;
     const isSent = variant === 'sent';
-    const [isHovered, setIsHovered] = React.useState<boolean>(false);
-    const [isLiked, setIsLiked] = React.useState<boolean>(false);
-    const [isCelebrated, setIsCelebrated] = React.useState<boolean>(false);
+    const formattedTime = new Date(createdAt).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
+    const [isImageOpen, setIsImageOpen] = useState(false);
+    const [imageSrc, setImageSrc] = useState<string | null>(null);
+    const [anchorPosition, setAnchorPosition] = useState<{ mouseX: number; mouseY: number } | null>(null);
+
+    const token = localStorage.getItem('token');
+    let currentUserId: number | null = null;
+    if (token) {
+        const decodedToken: DecodedToken = jwtDecode(token);
+        currentUserId = decodedToken.id || 0;
+    }
+
+    const handleImageClick = () => {
+        setImageSrc(getAttachmentUrl());
+        setIsImageOpen(true);
+    };
+
+    const handleClose = () => {
+        setIsImageOpen(false);
+        setTimeout(() => setImageSrc(null), 300);
+    };
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(content);
+    };
+
+    const handleForward = () => {
+        console.log('Forwarding:', content);
+    };
+
+    const getAttachmentUrl = () => {
+        if (!attachment) return '';
+
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+        return `${baseUrl}/${attachment.filePath.replace('.enc', '')}`;
+    };
+
+    const isImage = isImageFile(attachment?.fileName || '');
+
+    const handleContextMenu = (event: React.MouseEvent<HTMLElement>) => {
+        event.preventDefault();
+        setAnchorPosition({
+            mouseX: event.clientX,
+            mouseY: event.clientY,
+        });
+    };
+
+    const handleEdit = () => {
+        onEditMessage(Number(id), content);
+        setAnchorPosition(null);
+    };
+
     return (
-        <Box sx={{maxWidth: '60%', minWidth: 'auto'}}>
-            <Stack
-                direction="row"
-                justifyContent="space-between"
-                spacing={2}
-                sx={{mb: 0.25}}
-            >
-                <Typography level="body-xs">
-                    {sender === 'You' ? sender : sender.name}
-                </Typography>
-                <Typography level="body-xs">{timestamp}</Typography>
-            </Stack>
-            {attachment ? (
-                <Sheet
-                    variant="outlined"
-                    sx={{
-                        px: 1.75,
-                        py: 1.25,
-                        borderRadius: 'lg',
-                        borderTopRightRadius: isSent ? 0 : 'lg',
-                        borderTopLeftRadius: isSent ? 'lg' : 0,
-                    }}
-                >
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Avatar color="primary" size="lg">
-                            <InsertDriveFileRoundedIcon/>
-                        </Avatar>
-                        <div>
-                            <Typography fontSize="sm">{attachment.fileName}</Typography>
-                            <Typography level="body-sm">{attachment.size}</Typography>
-                        </div>
-                    </Stack>
-                </Sheet>
-            ) : (
-                <Box
-                    sx={{position: 'relative'}}
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
-                >
-                    <Sheet
-                        color={isSent ? 'primary' : 'neutral'}
-                        variant={isSent ? 'solid' : 'soft'}
-                        sx={{
-                            p: 1.25,
-                            borderRadius: 'lg',
-                            borderTopRightRadius: isSent ? 0 : 'lg',
-                            borderTopLeftRadius: isSent ? 'lg' : 0,
-                            backgroundColor: isSent
-                                ? 'var(--joy-palette-primary-solidBg)'
-                                : 'background.body',
-                        }}
-                    >
-                        <Typography
-                            level="body-sm"
-                            sx={{
-                                color: isSent
-                                    ? 'var(--joy-palette-common-white)'
-                                    : 'var(--joy-palette-text-primary)',
-                            }}
-                        >
-                            {content}
-                        </Typography>
-                    </Sheet>
-                    {(isHovered || isLiked || isCelebrated) && (
-                        <Stack
-                            direction="row"
-                            justifyContent={isSent ? 'flex-end' : 'flex-start'}
-                            spacing={0.5}
-                            sx={{
-                                position: 'absolute',
-                                top: '50%',
-                                p: 1.5,
-                                ...(isSent
-                                    ? {
-                                        left: 0,
-                                        transform: 'translate(-100%, -50%)',
-                                    }
-                                    : {
-                                        right: 0,
-                                        transform: 'translate(100%, -50%)',
-                                    }),
-                            }}
-                        >
-                            <IconButton
-                                variant={isLiked ? 'soft' : 'plain'}
-                                color={isLiked ? 'danger' : 'neutral'}
-                                size="sm"
-                                onClick={() => setIsLiked((prevState) => !prevState)}
-                            >
-                                {isLiked ? '❤️' : <FavoriteBorderIcon/>}
-                            </IconButton>
-                            <IconButton
-                                variant={isCelebrated ? 'soft' : 'plain'}
-                                color={isCelebrated ? 'warning' : 'neutral'}
-                                size="sm"
-                                onClick={() => setIsCelebrated((prevState) => !prevState)}
-                            >
-                                {isCelebrated ? '🎉' : <CelebrationOutlinedIcon/>}
-                            </IconButton>
-                        </Stack>
-                    )}
+        <Box
+            component="div"
+            sx={{
+                display: 'flex',
+                justifyContent: isSent ? 'flex-end' : 'flex-start',
+                mb: { xs: 1, sm: 1 },
+                px: 1,
+                width: '45%',
+                flexDirection: 'column', // Меняем направление на колонку
+                alignItems: isSent ? 'flex-end' : 'flex-start',
+            }}
+            onContextMenu={handleContextMenu}
+        >
+            {/* Показать аватар и имя пользователя только для полученных сообщений в групповых чатах */}
+            {isGroupChat && !isSent && (
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <img
+                        src={user.avatar || 'path/to/default-avatar.jpg'}
+                        alt="avatar"
+                        style={{ width: '30px', height: '30px', borderRadius: '50%', marginRight: '8px' }}
+                    />
+                    <Typography>
+                        {user.username}
+                    </Typography>
                 </Box>
             )}
+
+            <Sheet
+                color={isSent ? 'primary' : 'neutral'}
+                variant={isSent ? 'solid' : 'soft'}
+                sx={{
+                    maxWidth: isEdited ? '75%' : '70%',
+                    minWidth: 'fit-content',
+                    padding: !isImage ? { xs: '6px 10px', sm: '8px 14px' } : 0,
+                    borderRadius: '18px',
+                    borderBottomLeftRadius: isSent ? '18px' : '0px',
+                    borderBottomRightRadius: isSent ? '0px' : '18px',
+                    background: isImage && !content ? 'transparent' : (isSent ? 'linear-gradient(135deg, #76baff, #4778e2)' : 'var(--joy-palette-background-level2)'),
+                    boxShadow: isImage ? 'none' : '0 2px 10px rgba(0, 0, 0, 0.15)',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    display: 'inline-block',
+                    fontSize: '14px',
+                    lineHeight: '18px',
+                    '@media (max-width: 600px)': {
+                        maxWidth: '90%',
+                    },
+                    position: 'relative',
+                }}
+            >
+                {isImage && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            maxWidth: '100%',
+                            cursor: 'pointer',
+                            overflow: 'hidden',
+                            mb: content ? 2 : 0,
+                        }}
+                        onClick={handleImageClick}
+                    >
+                        <img
+                            src={getAttachmentUrl()}
+                            alt="attachment"
+                            style={{
+                                width: '100%',
+                                maxWidth: '700px',
+                                maxHeight: '500px',
+                                borderRadius: '12px',
+                                objectFit: 'contain',
+                            }}
+                        />
+                    </Box>
+                )}
+
+                {content && (
+                    <Typography
+                        sx={{
+                            fontSize: { xs: '14px', sm: '14px' },
+                            lineHeight: 1.6,
+                            color: isSent
+                                ? 'var(--joy-palette-common-white)'
+                                : 'var(--joy-palette-text-primary)',
+                            marginLeft: isImage ? '12px' : '0px',
+                            marginBottom: isImage ? '8px' : '4px',
+                            textAlign: 'left',
+                            transition: 'color 0.3s ease',
+                            maxWidth: '100%',
+                            wordWrap: 'break-word',
+                            whiteSpace: 'pre-wrap',
+                            display: 'inline-block',
+                            paddingRight: isEdited ? '100px' : '40px',
+                        }}
+                    >
+                        {content}
+                    </Typography>
+                )}
+
+                <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                        position: 'absolute',
+                        bottom: '4px',
+                        right: '10px',
+                        alignItems: 'center',
+                    }}
+                >
+                    {isEdited && (
+                        <Typography
+                            sx={{
+                                fontSize: '12px',
+                                color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
+                            }}
+                        >
+                            {t('edited')}
+                        </Typography>
+                    )}
+
+                    <Typography
+                        sx={{
+                            fontSize: '12px',
+                            color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
+                        }}
+                    >
+                        {formattedTime}
+                    </Typography>
+                </Stack>
+
+                {!isImage && attachment && (
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                        <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
+                        <Typography sx={{ fontSize: 'sm' }}>{attachment.fileName}</Typography>
+                        <IconButton
+                            component="a"
+                            href={getAttachmentUrl()}
+                            download={attachment?.fileName}
+                            sx={{
+                                ml: 0.5,
+                                color: isSent ? 'white' : '#0B6BCB',
+                                transition: 'color 0.3s ease',
+                            }}
+                        >
+                            <DownloadIcon />
+                        </IconButton>
+                    </Stack>
+                )}
+
+                {isImageOpen && imageSrc && (
+                    <Box
+                        sx={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 999,
+                            cursor: 'pointer',
+                            transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+                            transform: isImageOpen ? 'scale(1)' : 'scale(0.95)',
+                            opacity: isImageOpen ? 1 : 0,
+                        }}
+                        onClick={handleClose}
+                    >
+                        <img
+                            src={imageSrc}
+                            alt="attachment-preview"
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
+                                transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+                                transform: isImageOpen ? 'scale(1)' : 'scale(0.95)',
+                                opacity: isImageOpen ? 1 : 0,
+                            }}
+                        />
+                    </Box>
+                )}
+            </Sheet>
+
+            <ContextMenu
+                anchorPosition={
+                    anchorPosition !== null ? { top: anchorPosition.mouseY, left: anchorPosition.mouseX } : undefined
+                }
+                open={Boolean(anchorPosition)}
+                onClose={() => setAnchorPosition(null)}
+                onEdit={handleEdit}
+                onCopy={handleCopy}
+                onForward={handleForward}
+                currentUserId={currentUserId ?? 0}
+                messageCreatorId={messageCreatorId}
+            />
         </Box>
     );
 }

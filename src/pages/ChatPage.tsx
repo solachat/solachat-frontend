@@ -4,67 +4,90 @@ import Sheet from '@mui/joy/Sheet';
 import MessagesPane from '../components/messages/MessagesPane';
 import ChatsPane from '../components/messages/ChatsPane';
 import { ChatProps } from '../components/core/types';
-import { chats as initialChats } from '../utils/data';
-import { loadChatsFromStorage, saveChatsToStorage } from '../utils/utils';
+import { fetchChatsFromServer } from '../api/api';
 import LanguageSwitcher from '../components/core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
+import Sidebar from '../components/core/Sidebar';
+import { Typography } from "@mui/joy";
+import { useTranslation } from "react-i18next";
 
 export default function MyProfile() {
     const currentUser = { id: 1, username: 'current_user' };
 
-    const [chats, setChats] = React.useState<ChatProps[]>(loadChatsFromStorage());
+    const [chats, setChats] = React.useState<ChatProps[]>([]);
+    const [selectedChat, setSelectedChat] = React.useState<ChatProps | null>(null);
+    const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     React.useEffect(() => {
-        if (!chats.length) {
-            setChats(initialChats);
-            saveChatsToStorage(initialChats);
+        const loadChats = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Authorization token is missing');
+                }
+
+                const fetchedChats = await fetchChatsFromServer(currentUser.id, token);
+
+                if (Array.isArray(fetchedChats)) {
+                    setChats(fetchedChats);
+                } else {
+                    setError('No chats available.');
+                    setChats([]);
+                }
+            } catch (error) {
+                console.error('Error loading chats:', error);
+                setError('Failed to load chats.');
+                setChats([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadChats();
+    }, [currentUser.id]);
+
+    React.useEffect(() => {
+        if (chats.length > 0) {
+            if (id) {
+                const numericId = Number(id);
+                if (!isNaN(numericId)) {
+                    const chatById = chats.find(chat => chat.id === numericId);
+                    if (chatById) {
+                        setSelectedChat(chatById);
+                    } else {
+                        setSelectedChat(chats[0]);
+                    }
+                } else {
+                    console.error('Параметр id не является числом');
+                    setSelectedChat(chats[0]);
+                }
+            } else {
+                setSelectedChat(chats[0]);
+            }
         }
-    }, [chats]);
 
-    const selectedChat = chats.find(chat => chat.id === id) || chats[0];
-
-    const setSelectedChat = (chat: ChatProps) => {
-        navigate(`/chat?id=${chat.id}`);
-    };
-
-    React.useEffect(() => {
-        const handleActivity = () => {
-            console.log("User is active");
-        };
-
-        const handleInactivity = () => {
-            console.log("User is inactive");
-        };
-
-        const timeout = setTimeout(handleInactivity, 2 * 60 * 1000);
-
-        window.addEventListener('mousemove', handleActivity);
-        window.addEventListener('keypress', handleActivity);
-
-        return () => {
-            clearTimeout(timeout);
-            window.removeEventListener('mousemove', handleActivity);
-            window.removeEventListener('keypress', handleActivity);
-        };
-    }, []);
-
-    if (!selectedChat) {
-        return <div>Loading...</div>;
-    }
+    }, [chats, id, selectedChat, navigate]);
 
     return (
         <div>
             <header style={{
                 display: 'flex',
-                justifyContent: 'center', /* Центрируем */
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '10px'
+                padding: '10px',
+                width: '100%',
+                position: 'relative'
             }}>
                 <div style={{display: 'flex', gap: '20px'}}>
                     <LanguageSwitcher/>
                     <ColorSchemeToggle/>
+                </div>
+                <div style={{width: '270px'}}>
+                    <Sidebar/>
                 </div>
             </header>
             <Sheet
@@ -82,7 +105,6 @@ export default function MyProfile() {
             >
                 <Sheet
                     sx={{
-                        position: {xs: 'fixed', sm: 'sticky'},
                         transform: {
                             xs: 'translateX(calc(100% * (var(--MessagesPane-slideIn, 0) - 1)))',
                             sm: 'none',
@@ -93,22 +115,39 @@ export default function MyProfile() {
                         top: 52,
                     }}
                 >
-                    {selectedChat ? (
+                    {Array.isArray(chats) && chats.length > 0 ? (
                         <ChatsPane
                             chats={chats}
-                            selectedChatId={selectedChat.id}
+                            selectedChatId={selectedChat ? String(selectedChat.id) : ''}
                             setSelectedChat={setSelectedChat}
                             currentUser={currentUser}
                         />
                     ) : (
-                        <div>Loading chats...</div>
+                        <div>No chats available. Start communicating!</div>
                     )}
                 </Sheet>
-                {selectedChat ? (
-                    <MessagesPane chat={selectedChat}/>
-                ) : (
-                    <div>Loading messages...</div>
-                )}
+
+                <Sheet
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        backgroundColor: 'background.level1',
+                    }}
+                >
+                    {error ? (
+                        <Typography sx={{textAlign: 'center', color: 'red'}}>
+                            {error}
+                        </Typography>
+                    ) : loading ? (
+                        <Typography>Loading chats...</Typography>
+                    ) : selectedChat ? (
+                        <MessagesPane chat={selectedChat}/>
+                    ) : (
+                        <Typography>No messages yet.</Typography>
+                    )}
+                </Sheet>
             </Sheet>
         </div>
     );

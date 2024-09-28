@@ -1,124 +1,271 @@
 import * as React from 'react';
-import { Editor, EditorState, RichUtils } from 'draft-js';
+import { Editor, EditorState, getDefaultKeyBinding } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import { useTranslation } from 'react-i18next';
 import Box from '@mui/joy/Box';
-import Button from '@mui/joy/Button';
 import FormControl from '@mui/joy/FormControl';
-import { IconButton, Stack } from '@mui/joy';
-import FormatBoldRoundedIcon from '@mui/icons-material/FormatBoldRounded';
-import FormatItalicRoundedIcon from '@mui/icons-material/FormatItalicRounded';
-import StrikethroughSRoundedIcon from '@mui/icons-material/StrikethroughSRounded';
-import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded';
+import { IconButton, Stack, Typography, Avatar } from '@mui/joy';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
+import DeleteIcon from '@mui/icons-material/Delete';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import FileUploadModal from './FileUploadModal';
+import { sendMessage, editMessage } from '../../api/api';
+import { useRef, useState } from "react";
+import CloseIcon from "@mui/icons-material/Close";
+import EditIcon from "@mui/icons-material/Edit";
+
+export type UploadedFileData = {
+    filePath: string;
+};
 
 export type MessageInputProps = {
-  textAreaValue: string;
-  setTextAreaValue: (value: string) => void;
-  onSubmit: () => void;
+    chatId: number;
+    textAreaValue: string;
+    setTextAreaValue: (value: string) => void;
+    onSubmit: (newMessage: any) => void;
+    editingMessage: { id: number | null, content: string | null } | null;
+    setEditingMessage: (message: { id: number | null, content: string | null } | null) => void;
 };
 
 export default function MessageInput(props: MessageInputProps) {
-  const { t } = useTranslation();
-  const { textAreaValue, setTextAreaValue, onSubmit } = props;
-  const [editorState, setEditorState] = React.useState(() =>
-    EditorState.createEmpty()
-  );
-  const editorRef = React.useRef<Editor | null>(null);
+    const { t } = useTranslation();
+    const { setTextAreaValue, chatId, textAreaValue, editingMessage, setEditingMessage } = props;
 
-  const handleKeyCommand = (command: string, editorState: EditorState) => {
-    const newState = RichUtils.handleKeyCommand(editorState, command);
-    if (newState) {
-      setEditorState(newState);
-      return 'handled';
-    }
-    return 'not-handled';
-  };
+    const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
+    const editorRef = useRef<Editor | null>(null);
+    const [isFileUploadOpen, setFileUploadOpen] = useState(false);
+    const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
 
-  const onBoldClick = () => {
-    setEditorState(RichUtils.toggleInlineStyle(editorState, 'BOLD'));
-  };
+    const handleEditorChange = (newState: EditorState) => {
+        setEditorState(newState);
+        const currentContent = newState.getCurrentContent().getPlainText();
+        setTextAreaValue(currentContent);
+    };
 
-  const onItalicClick = () => {
-    setEditorState(RichUtils.toggleInlineStyle(editorState, 'ITALIC'));
-  };
+    const keyBindingFn = (e: React.KeyboardEvent): string | null => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            handleClick();
+            return 'submit-message';
+        }
+        return getDefaultKeyBinding(e);
+    };
 
-  const onStrikethroughClick = () => {
-    setEditorState(RichUtils.toggleInlineStyle(editorState, 'STRIKETHROUGH'));
-  };
+    const handleClick = async () => {
+        if (!chatId || isNaN(chatId)) {
+            console.error('Invalid chatId:', chatId);
+            return;
+        }
 
-  const onBulletListClick = () => {
-    setEditorState(RichUtils.toggleBlockType(editorState, 'unordered-list-item'));
-  };
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('Authorization token is missing');
+            return;
+        }
 
-  const handleClick = () => {
-    if (textAreaValue.trim() !== '') {
-      onSubmit();
-      setTextAreaValue('');
-    }
-  };
+        if (editingMessage && editingMessage.id !== null) {
+            try {
+                await editMessage(editingMessage.id, textAreaValue, token);
+                setTextAreaValue('');
+                setEditorState(EditorState.createEmpty());
+                setUploadedFiles([]);
+                setEditingMessage(null);
+            } catch (error) {
+                console.error('Ошибка при редактировании сообщения:', error);
+            }
+        } else {
+            if (textAreaValue.trim() !== '' || uploadedFiles.length > 0) {
+                try {
+                    const filePaths = uploadedFiles.map((fileData) => fileData.filePath);
+                    const newMessage = await sendMessage(
+                        chatId,
+                        textAreaValue,
+                        token as string,
+                        filePaths.length > 0 ? filePaths[0] : undefined
+                    );
+                    setTextAreaValue('');
+                    setEditorState(EditorState.createEmpty());
+                    setUploadedFiles([]);
+                } catch (error) {
+                    console.error('Ошибка при отправке сообщения:', error);
+                }
+            }
+        }
+    };
 
-  return (
-    <Box sx={{ px: 2, pb: 3 }}>
-      <FormControl>
-        <Box
-          sx={{
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: '4px',
-            padding: '8px',
-            minHeight: '100px',
-            cursor: 'text'
-          }}
-          onClick={() => {
-            editorRef.current?.focus();
-          }}
-        >
-          <Editor
-            editorState={editorState}
-            handleKeyCommand={handleKeyCommand}
-            onChange={setEditorState}
-            placeholder={t('Type something here…')}
-            ref={editorRef}
-          />
+    const handleFileUploadSuccess = (filePath: string) => {
+        setUploadedFiles((prevFiles) => [...prevFiles, { filePath }]);
+    };
+
+    const removeUploadedFile = (index: number) => {
+        setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    };
+
+    return (
+        <Box sx={{ position: 'relative', px: 3, pb: 1 }}>
+            <FormControl sx={{ position: 'sticky', zIndex: 10 }}>
+                <Stack
+                    direction="column"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: '4px',
+                        padding: '6px',
+                        backgroundColor: 'background.level1',
+                    }}
+                >
+                    {editingMessage && editingMessage.content && (
+                        <Stack
+                            direction="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            sx={{
+                                width: '100%',
+                                height: '40px',
+                                padding: '8px',
+                                borderRadius: '4px',
+                                marginBottom: '8px',
+                                mr: '1px',
+                                overflow: 'hidden',
+                            }}
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <EditIcon
+                                    sx={{
+                                        marginRight: '20px',
+                                        marginLeft: '5px',
+                                        color: 'neutral.main',
+                                        fontSize: '1.50rem',
+                                    }}
+                                />
+                                <Typography>
+                                    Редактирование <br /> {editingMessage.content}
+                                </Typography>
+                            </Box>
+                            <IconButton
+                                size="sm"
+                                onClick={() => setEditingMessage(null)}
+                            >
+                                <CloseIcon />
+                            </IconButton>
+                        </Stack>
+                    )}
+
+                    <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        sx={{ width: '100%' }}
+                    >
+                        <IconButton
+                            size="sm"
+                            variant="plain"
+                            color="neutral"
+                            onClick={() => setFileUploadOpen(true)}
+                            sx={{ mr: 1 }}
+                        >
+                            <AttachFileIcon />
+                        </IconButton>
+
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                flexGrow: 1,
+                                minHeight: 'auto',
+                                cursor: 'text',
+                                paddingLeft: '10px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                width: '100%',
+                            }}
+                            onClick={() => editorRef.current?.focus()}
+                        >
+                            <Box
+                                sx={{
+                                    width: '100%',
+                                    maxWidth: '800px',
+                                    minWidth: '300px',
+                                }}
+                            >
+                                <Editor
+                                    editorState={editorState}
+                                    keyBindingFn={keyBindingFn}
+                                    onChange={handleEditorChange}
+                                    placeholder={t('writeMessage')}
+                                    ref={editorRef}
+                                    spellCheck={true}
+                                    stripPastedStyles={true}
+                                />
+                            </Box>
+                        </Box>
+
+                        <IconButton
+                            size="sm"
+                            color="primary"
+                            onClick={handleClick}
+                            sx={{
+                                ml: 1,
+                                opacity: textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 1 : 0,
+                                transition: 'opacity 0.1s ease',
+                            }}
+                        >
+                            <SendRoundedIcon />
+                        </IconButton>
+                    </Stack>
+                </Stack>
+            </FormControl>
+
+            {uploadedFiles.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                    <Stack direction="row" flexWrap="wrap" spacing={2} sx={{ mt: 1 }}>
+                        {uploadedFiles.map((file, index) => (
+                            <Box
+                                key={index}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '8px 16px',
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    borderRadius: '8px',
+                                    backgroundColor: 'background.level2',
+                                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.05)',
+                                    minWidth: '200px',
+                                    transition: 'transform 0.2s ease-in-out',
+                                    '&:hover': {
+                                        transform: 'scale(1.02)',
+                                        boxShadow: '0px 6px 16px rgba(0, 0, 0, 0.1)',
+                                    },
+                                }}
+                            >
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                    <Avatar sx={{ backgroundColor: 'primary.main' }}>
+                                        <InsertDriveFileIcon />
+                                    </Avatar>
+                                    <Typography noWrap sx={{ maxWidth: '120px' }}>
+                                        {file.filePath.split('/').pop()}
+                                    </Typography>
+                                </Stack>
+                                <IconButton onClick={() => removeUploadedFile(index)} size="sm">
+                                    <DeleteIcon />
+                                </IconButton>
+                            </Box>
+                        ))}
+                    </Stack>
+                </Box>
+            )}
+
+            <FileUploadModal
+                chatId={chatId}
+                open={isFileUploadOpen}
+                handleClose={() => setFileUploadOpen(false)}
+                onFileUploadSuccess={handleFileUploadSuccess}
+            />
         </Box>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          flexGrow={1}
-          sx={{
-            py: 1,
-            pr: 1,
-            borderTop: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <div>
-            <IconButton size="sm" variant="plain" color="neutral" onClick={onBoldClick}>
-              <FormatBoldRoundedIcon />
-            </IconButton>
-            <IconButton size="sm" variant="plain" color="neutral" onClick={onItalicClick}>
-              <FormatItalicRoundedIcon />
-            </IconButton>
-            <IconButton size="sm" variant="plain" color="neutral" onClick={onStrikethroughClick}>
-              <StrikethroughSRoundedIcon />
-            </IconButton>
-            <IconButton size="sm" variant="plain" color="neutral" onClick={onBulletListClick}>
-              <FormatListBulletedRoundedIcon />
-            </IconButton>
-          </div>
-          <Button
-            size="sm"
-            color="primary"
-            sx={{ alignSelf: 'center', borderRadius: 'sm' }}
-            endDecorator={<SendRoundedIcon />}
-            onClick={handleClick}
-          >
-            {t('Send')}
-          </Button>
-        </Stack>
-      </FormControl>
-    </Box>
-  );
+    );
 }

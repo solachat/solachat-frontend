@@ -5,14 +5,15 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPassword from './pages/ForgotPassword';
 import MyAccount from './pages/AccountPage';
-import OperationsPage from './pages/OperationsPage';
 import { HelmetProvider } from 'react-helmet-async';
-import HomePage from './pages/HomePage';
 import ContactsPage from './pages/ContactsPage';
 import MyMessages from './components/messages/MyMessages';
 import NotFoundPage from './pages/NotFoundPage';
 import UnderConstruction from './pages/UnderConstruction';
-import MainPage from "./pages/MainPage";
+import PrivateRoute from './api/PrivateRoute';
+import MainPage from './pages/MainPage';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const underDevelopmentRoutes = [
     '/connect/telegram',
@@ -29,10 +30,12 @@ const App: React.FC = () => {
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/forgotpassword" element={<ForgotPassword />} />
                         <Route path="/account" element={<MyAccount />} />
-                        <Route path="/operations" element={<OperationsPage />} />
-                        <Route path="/" element={<HomePage />} />
+                        <Route path="/" element={<Navigate to="/chatOrLogin" />} />
                         <Route path="/contacts" element={<ContactsPage />} />
-                        <Route path="/chat" element={<MyMessages />} />
+                        <Route path="/chat" element={<PrivateRoute element={<MyMessages />} />} />
+                        <Route path="/chatOrLogin" element={
+                            <PrivateRoute element={<Navigate to={localStorage.getItem('jwt') ? '/chat' : '/login'} />} />
+                        } />
                         {underDevelopmentRoutes.map((route) => (
                             <Route path={route} element={<Navigate to="/new-feature" />} key={route} />
                         ))}
@@ -41,6 +44,7 @@ const App: React.FC = () => {
                         <Route path="/main" element={<MainPage />} />
                     </Routes>
                 </Router>
+                <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} />
             </ThemeProvider>
         </HelmetProvider>
     );

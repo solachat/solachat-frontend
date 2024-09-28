@@ -31,7 +31,6 @@ import axios from 'axios';
 import {Helmet} from "react-helmet-async";
 import {Checkbox} from "@mui/joy";
 
-import UserDeals from '../components/profile/UserDeals';
 import ConnectButtons from '../components/profile/ConnectButtons';
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
 import LanguageSwitcher from '../components/core/LanguageSwitcher';
@@ -97,16 +96,13 @@ export default function AccountPage() {
                         Authorization: `Bearer ${token}`,
                     },
                 });
+
                 const data = response.data;
                 setProfileData(data);
                 setShareEmail(data.shareEmail);
                 setAccountExists(true);
-
-                const balanceResponse = await axios.get(`${API_URL}/api/wallet/${data.public_key}/balance`);
-                setBalance(balanceResponse.data.balance);
-
-                const tokenBalanceResponse = await axios.get(`${API_URL}/api/tokens/${data.public_key}/balance`);
-                setTokenBalance(tokenBalanceResponse.data.balance);
+                setBalance(data.balance);
+                setTokenBalance(data.tokenBalance);
 
                 setShowAlert(true);
                 setTimeout(() => {
@@ -266,13 +262,13 @@ export default function AccountPage() {
                                         maxWidth: 120,
                                         borderRadius: '50%',
                                         overflow: 'hidden',
-                                        cursor: 'pointer',
+                                        cursor: isOwner ? 'pointer' : 'default', // Курсор меняется только для владельца
                                         transition: '0.3s ease',
                                         '&:hover img': {
-                                            filter: 'brightness(0.7)',
+                                            filter: isOwner ? 'brightness(0.7)' : 'none', // Эффект наводки только для владельца
                                         },
                                     }}
-                                    onClick={() => setShowAvatarModal(true)}
+                                    onClick={() => isOwner && setShowAvatarModal(true)} // Открытие модалки только для владельца
                                 >
                                     <img src={profileData.avatar || defaultAvatarUrl} loading="lazy" alt="Avatar" />
                                 </AspectRatio>
@@ -282,7 +278,7 @@ export default function AccountPage() {
                                         <StarIcon fontSize="large" sx={{ color: 'warning.300', ml: 1 }} />
                                     </Typography>
                                     <Typography sx={{ color: 'text.secondary', mt: 0 }}>
-                                        Rating user
+                                        {t('ratinguser')}
                                     </Typography>
                                     <Typography sx={{ color: 'text.secondary', mt: 1 }}>
                                         {t('lastLogin')}: {new Date(profileData.lastLogin).toLocaleString()}
@@ -307,41 +303,50 @@ export default function AccountPage() {
                                 <FormControl>
                                     <FormLabel sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                         {t('email')}
-                                        <Box sx={{ ml: 1 }} />
-                                        <Checkbox
-                                            size="sm"
-                                            checked={shareEmail}
-                                            onChange={() => setShareEmail(!shareEmail)}
-                                            disabled={!isEditable}
-                                        /> {t('hideEmail')}
+                                        {isOwner && (
+                                            <Box sx={{ ml: 1 }} />
+                                        )}
+                                        {isOwner && (
+                                            <Checkbox
+                                                size="sm"
+                                                checked={shareEmail}
+                                                onChange={() => setShareEmail(!shareEmail)}
+                                                disabled={!isEditable}
+                                            />
+                                        )}
+                                        {isOwner && t('shareEmail')}
                                     </FormLabel>
                                     <Input
                                         size="sm"
                                         type="email"
                                         startDecorator={<EmailRoundedIcon />}
-                                        value={profileData.email}
-                                        onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                                        disabled={!isEditable}
+                                        value={isOwner || shareEmail ? profileData.email : '******'}
+                                        onChange={(e) => isOwner && setProfileData({ ...profileData, email: e.target.value })}
+                                        disabled={!isOwner || !isEditable}
                                         sx={{
                                             width: '100%',
                                         }}
                                     />
                                 </FormControl>
                                 <FormControl>
-                                    <FormLabel>{t('wallet')} ({balance} SOL, {tokenBalance} {t('tokens')})</FormLabel>
+                                    <FormLabel>
+                                        {t('wallet')} ({balance} SOL, {tokenBalance} {t('tokens')})
+                                    </FormLabel>
                                     <Input
                                         size="sm"
-                                        value={profileData.public_key}
+                                        value={profileData.public_key ? profileData.public_key : '-'}
                                         endDecorator={
-                                            <IconButton
-                                                variant="plain"
-                                                size="sm"
-                                                color="neutral"
-                                                onClick={handleCopyPublicKey}
-                                                sx={{ cursor: 'pointer' }}
-                                            >
-                                                {copied ? <CheckIcon color="success" /> : <ContentCopyIcon />}
-                                            </IconButton>
+                                            profileData.public_key ? (
+                                                <IconButton
+                                                    variant="plain"
+                                                    size="sm"
+                                                    color="neutral"
+                                                    onClick={handleCopyPublicKey}
+                                                    sx={{ cursor: 'pointer' }}
+                                                >
+                                                    {copied ? <CheckIcon color="success" /> : <ContentCopyIcon />}
+                                                </IconButton>
+                                            ) : null
                                         }
                                         readOnly
                                         sx={{ pointerEvents: 'auto' }}
@@ -383,12 +388,8 @@ export default function AccountPage() {
                             </Stack>
                         </Stack>
                     </Card>
-                    <Card>
-                        <UserDeals username={username} currentUser={isOwner ? username : ''} />
-                    </Card>
                     <ConnectButtons />
 
-                    {/* Modal for Report */}
                     <ReportModal
                         open={showReportModal}
                         onClose={() => setShowReportModal(false)}
@@ -397,7 +398,6 @@ export default function AccountPage() {
                         username={username}
                     />
 
-                    {/* Modal for Upload Avatar */}
                     <AvatarUploadModal
                         open={showAvatarModal}
                         onClose={() => setShowAvatarModal(false)}

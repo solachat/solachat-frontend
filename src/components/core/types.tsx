@@ -1,26 +1,39 @@
 export type UserProps = {
     id: number;
-    name: string;
+    realname: string;
     username: string;
     avatar: string;
     online: boolean;
+    role: string;
 };
 
 export type MessageProps = {
     id: string;
     content: string;
-    timestamp: string;
+    createdAt: string;
     unread?: boolean;
-    sender: UserProps | 'You';
+    user: UserProps;
+    userId: number;
     attachment?: {
         fileName: string;
+        filePath: string;
         type: string;
-        size: string;
     };
+    isEdited?: boolean;
 };
 
 export type ChatProps = {
-    id: string;
-    sender: UserProps;
+    id: number;
+    user: UserProps;
+    users: UserProps[];
     messages: MessageProps[];
+    isGroup?: boolean;
+    groupAvatar?: string;
+    name?: string;
+    avatar?: string
+};
+
+export type JwtPayload = {
+    id: number;
+    username: string;
 };

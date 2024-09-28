@@ -7,27 +7,55 @@ import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
 import CircleIcon from '@mui/icons-material/Circle';
 import AvatarWithStatus from './AvatarWithStatus';
+import Avatar from '@mui/joy/Avatar'; // Импортируем компонент Avatar
 import { ChatProps, MessageProps, UserProps } from '../core/types';
-import { toggleMessagesPane } from '../../utils/utils';
+import { createPrivateChat } from '../../api/api';
+import { toast } from "react-toastify";
+import { useNavigate } from 'react-router-dom';
 
 type ChatListItemProps = ListItemButtonProps & {
     id: string;
     unread?: boolean;
-    sender: UserProps;
+    sender?: UserProps;
     messages: MessageProps[];
     selectedChatId?: string;
     setSelectedChat: (chat: ChatProps) => void;
+    currentUserId: number;
+    chats: ChatProps[];
+    isGroup?: boolean;
 };
 
 export default function ChatListItem(props: ChatListItemProps) {
-    const { id, sender, messages, selectedChatId, setSelectedChat } = props;
+    const { id, sender, messages, selectedChatId, setSelectedChat, currentUserId, chats, isGroup } = props;
     const selected = selectedChatId === id;
-    const hasMessages = messages.length > 0;
+    const hasMessages = Array.isArray(messages) && messages.length > 0;
+    const lastMessage = hasMessages ? messages[messages.length - 1] : null;
+    const navigate = useNavigate();
 
-    const handleClick = () => {
-        toggleMessagesPane();
-        setSelectedChat({ id, sender, messages });
+    const existingChat = Array.isArray(chats)
+        ? chats.find((chat: ChatProps) => chat.id === Number(id))
+        : null;
+
+    const handleClick = async () => {
+        if (existingChat) {
+            setSelectedChat(existingChat);
+            navigate(`/chat/#${existingChat.id}`);
+        } else if (sender) {
+            const token = localStorage.getItem('token');
+            const newChat = await createPrivateChat(currentUserId, sender.id, token || '');
+            if (newChat) {
+                toast.success('Chat created successfully!');
+                setSelectedChat({ ...newChat, users: [sender, { id: currentUserId }] });
+                navigate(`/chat/#${newChat.id}`);
+            } else {
+                toast.error('Failed to create chat.');
+            }
+        }
     };
+
+    if (!sender && !isGroup) {
+        return null;
+    }
 
     return (
         <React.Fragment>
@@ -43,24 +71,67 @@ export default function ChatListItem(props: ChatListItemProps) {
                     }}
                 >
                     <Stack direction="row" spacing={1.5}>
-                        <AvatarWithStatus online={sender.online} src={sender.avatar} />
+                        {isGroup ? (
+                            <Avatar
+                                src={existingChat?.avatar || 'path/to/default-group-avatar.jpg'}
+                                sx={{
+                                    width: { xs: 32, sm: 48 },
+                                    height: { xs: 32, sm: 48 },
+                                }}
+                            />
+                        ) : (
+                            <AvatarWithStatus
+                                online={sender?.online}
+                                src={sender?.avatar}
+                                sx={{
+                                    width: { xs: 32, sm: 48 },
+                                    height: { xs: 32, sm: 48 },
+                                }}
+                            />
+                        )}
+
                         <Box sx={{ flex: 1 }}>
-                            <Typography level="title-sm">{sender.name}</Typography> {/* Отображение имени */}
-                            <Typography
-                                level="body-sm"
-                                sx={{ color: 'text.secondary' }}
-                            >
-                                @{sender.username}
-                            </Typography> {/* Отображение username */}
+                            <Typography level="body-md" fontSize={{ xs: 'sm', sm: 'md' }}>
+                                {isGroup ? (
+                                    existingChat?.name || 'Group Chat'
+                                ) : (
+                                    `${sender?.realname || 'No Name'} (${sender?.username || 'No Username'})`
+                                )}
+                            </Typography>
+                            {hasMessages && lastMessage && (
+                                <Typography
+                                    level="body-sm"
+                                    sx={{
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: '2',
+                                        WebkitBoxOrient: 'vertical',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        color: 'text.secondary',
+                                        marginTop: '3px',
+                                    }}
+                                >
+                                    {lastMessage.attachment ? (
+                                        <i>{lastMessage.attachment.fileName}</i>
+                                    ) : (
+                                        lastMessage.content
+                                    )}
+                                </Typography>
+                            )}
+                            {!hasMessages && (
+                                <Typography level="body-sm">
+                                    No messages
+                                </Typography>
+                            )}
                         </Box>
-                        {hasMessages && (
+                        {hasMessages && lastMessage && (
                             <Box
                                 sx={{
                                     lineHeight: 1.5,
                                     textAlign: 'right',
                                 }}
                             >
-                                {messages[0].unread && (
+                                {lastMessage.unread && (
                                     <CircleIcon sx={{ fontSize: 12 }} color="primary" />
                                 )}
                                 <Typography
@@ -68,25 +139,11 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     display={{ xs: 'none', md: 'block' }}
                                     noWrap
                                 >
-                                    5 mins ago
+                                    {new Date(lastMessage.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                                 </Typography>
                             </Box>
                         )}
                     </Stack>
-                    {hasMessages && (
-                        <Typography
-                            level="body-sm"
-                            sx={{
-                                display: '-webkit-box',
-                                WebkitLineClamp: '2',
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                            }}
-                        >
-                            {messages[0].content}
-                        </Typography>
-                    )}
                 </ListItemButton>
             </ListItem>
             <ListDivider sx={{ margin: 0 }} />
