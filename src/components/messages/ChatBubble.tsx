@@ -27,7 +27,7 @@ type ChatBubbleProps = MessageProps & {
 
 type DecodedToken = JwtPayload & { id?: number };
 
-// Функция для проверки, является ли файл изображением
+
 const isImageFile = (fileName: string) => {
     const imageExtensions = ['jpg', 'jpeg', 'png', 'gif'];
     const fileExtension = fileName.split('.').pop()?.toLowerCase();

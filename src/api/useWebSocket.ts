@@ -1,30 +1,44 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { updateUserStatus } from './api';
 import {jwtDecode} from 'jwt-decode';
 
 const WS_URL = process.env.WS_URL || 'ws://localhost:4005';
 const RECONNECT_INTERVAL = 3000;
-const HEARTBEAT_INTERVAL = 10 * 1000;
+const HEARTBEAT_INTERVAL = 120000;
 
 export const useWebSocket = (onMessage: (message: any) => void) => {
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
     const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
+    const [isConnected, setIsConnected] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
-    const sendHeartbeat = () => {
+    const sendHeartbeat = useCallback(() => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify({ type: 'heartbeat' }));
             console.log('Heartbeat sent');
-        } else {
-            console.warn('WebSocket is not open. Skipping heartbeat.');
         }
-    };
+    }, []);
 
-    const connectWebSocket = () => {
+    const updateStatusIfChanged = useCallback(
+        async (isOnline: boolean) => {
+            try {
+                if (currentUserId !== null) {
+                    console.log(`Updating status to ${isOnline ? 'online' : 'offline'}`);
+                    await updateUserStatus(currentUserId, isOnline, localStorage.getItem('token') || '');
+                }
+            } catch (error) {
+                console.error(`Failed to update user status to ${isOnline ? 'online' : 'offline'}`, error);
+            }
+        },
+        [currentUserId]
+    );
+
+    const connectWebSocket = useCallback(() => {
+        if (isConnected) return;
+
         const token = localStorage.getItem('token');
-
         if (!token) {
             toast.error('Authorization token is missing');
             return;
@@ -33,8 +47,9 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
         const ws = new WebSocket(`${WS_URL.replace(/^http/, 'ws')}/ws?token=${token}`);
         wsRef.current = ws;
 
-        ws.onopen = async () => {
+        ws.onopen = () => {
             console.log('WebSocket connection opened');
+            setIsConnected(true); // Фиксируем состояние соединения
 
             if (reconnectTimeout.current) {
                 clearTimeout(reconnectTimeout.current);
@@ -45,15 +60,7 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
                 heartbeatInterval.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
             }
 
-            if (token && currentUserId !== null) {
-                console.log('Attempting to update user status to online', { currentUserId, token });
-                try {
-                    await updateUserStatus(currentUserId, true, token);
-                    console.log('User status updated to online');
-                } catch (error) {
-                    console.error('Failed to update user status:', error);
-                }
-            }
+            updateStatusIfChanged(true); // Устанавливаем статус "онлайн" при подключении
         };
 
         ws.onmessage = (event) => {
@@ -62,6 +69,7 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
 
             switch (message.type) {
                 case 'newMessage':
+                case 'editMessage':
                     onMessage(message);
                     break;
                 case 'userAdded':
@@ -82,45 +90,31 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
             console.error('WebSocket error:', error);
         };
 
-        ws.onclose = async (event) => {
+        ws.onclose = (event) => {
             console.error('WebSocket connection closed with code', event.code, 'reason:', event.reason);
-
+            setIsConnected(false); // Сбрасываем статус соединения
             if (heartbeatInterval.current) {
                 clearInterval(heartbeatInterval.current);
                 heartbeatInterval.current = null;
             }
 
-            if (token && currentUserId !== null) {
-                try {
-                    await updateUserStatus(currentUserId, false, token);
-                    console.log('User status updated to offline');
-                } catch (error) {
-                    console.error('Failed to update user status:', error);
-                }
-            }
-
+            updateStatusIfChanged(false); // Устанавливаем статус "оффлайн" при отключении
             wsRef.current = null;
             handleReconnection();
         };
-    };
+    }, [onMessage, sendHeartbeat, updateStatusIfChanged, isConnected]);
 
-    const handleReconnection = () => {
-        if (reconnectTimeout.current) {
-            return;
+    // Попытка переподключения при разрыве соединения
+    const handleReconnection = useCallback(() => {
+        if (!reconnectTimeout.current) {
+            reconnectTimeout.current = setTimeout(() => {
+                console.log('Attempting to reconnect WebSocket...');
+                connectWebSocket();
+            }, RECONNECT_INTERVAL);
         }
+    }, [connectWebSocket]);
 
-        reconnectTimeout.current = setTimeout(() => {
-            console.log('Attempting to reconnect WebSocket...');
-
-            if (heartbeatInterval.current) {
-                clearInterval(heartbeatInterval.current);
-                heartbeatInterval.current = null;
-            }
-
-            connectWebSocket();
-        }, RECONNECT_INTERVAL);
-    };
-
+    // Инициализация WebSocket при наличии токена
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -134,11 +128,12 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
         }
     }, []);
 
+    // Подключение WebSocket при наличии пользователя
     useEffect(() => {
-        if (currentUserId !== null) {
+        if (currentUserId !== null && !isConnected) {
             connectWebSocket();
         }
-    }, [currentUserId, onMessage]);
+    }, [currentUserId, connectWebSocket, isConnected]);
 
     return wsRef.current;
 };

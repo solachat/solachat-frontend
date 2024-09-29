@@ -87,7 +87,6 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
 
 export const sendMessage = async (chatId: number, formData: FormData, token: string) => {
     try {
-        console.log('FormData being sent:', Array.from(formData.entries())); // Логирование содержимого FormData
         const response = await axios.post(
             `${API_URL}/api/messages/${chatId}`,
             formData,

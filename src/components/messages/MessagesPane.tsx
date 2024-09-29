@@ -116,9 +116,6 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
         ? undefined
         : chat?.users?.find((user) => user.id !== currentUserId);
 
-    console.log('chat.isGroup:', chat?.isGroup);
-    console.log('chat.groupAvatar:', chat?.groupAvatar);
-
     return (
         <Sheet
             sx={{
@@ -225,18 +222,18 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
             {chat && (
                 <MessageInput
                     chatId={Number(chat?.id ?? 0)}
-                    textAreaValue={textAreaValue}
-                    setTextAreaValue={setTextAreaValue}
+                    textAreaValue={textAreaValue} // Передача textAreaValue
+                    setTextAreaValue={setTextAreaValue} // Передача функции для изменения состояния
                     onSubmit={() => {
                         const newMessage: MessageProps = {
                             id: (chatMessages.length + 1).toString(),
                             user: chat?.users?.find((user) => user.id === currentUserId)!,
                             userId: currentUserId!,
-                            content: textAreaValue,
+                            content: textAreaValue, // Использование textAreaValue для содержания нового сообщения
                             createdAt: new Date().toISOString(),
                         };
                         handleNewMessage(newMessage);
-                        setTextAreaValue('');
+                        setTextAreaValue(''); // Сброс текстового поля после отправки
                         setEditingMessageId(null);
                     }}
                     editingMessage={

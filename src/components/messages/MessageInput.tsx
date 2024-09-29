@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Editor, EditorState, getDefaultKeyBinding } from 'draft-js';
+import { Editor, EditorState, getDefaultKeyBinding, ContentState, SelectionState } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import Box from '@mui/joy/Box';
 import FormControl from '@mui/joy/FormControl';
@@ -10,9 +10,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import FileUploadModal from './FileUploadModal';
 import { sendMessage, editMessage } from '../../api/api';
-import { useRef, useState } from "react";
-import CloseIcon from "@mui/icons-material/Close";
-import EditIcon from "@mui/icons-material/Edit";
+import { useRef, useState, useCallback, useEffect } from 'react';
+import CloseIcon from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
+import { useTranslation } from 'react-i18next';
 
 export type UploadedFileData = {
     file: File;
@@ -23,11 +24,12 @@ export type MessageInputProps = {
     textAreaValue: string;
     setTextAreaValue: (value: string) => void;
     onSubmit: (newMessage: any) => void;
-    editingMessage?: { id: number | null, content: string | null } | null;
-    setEditingMessage: (message: { id: number | null, content: string | null } | null) => void;
+    editingMessage?: { id: number | null; content: string | null } | null;
+    setEditingMessage: (message: { id: number | null; content: string | null } | null) => void;
 };
 
 export default function MessageInput(props: MessageInputProps) {
+    const { t } = useTranslation();
     const { setTextAreaValue, chatId, textAreaValue, editingMessage, setEditingMessage } = props;
 
     const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
@@ -35,47 +37,80 @@ export default function MessageInput(props: MessageInputProps) {
     const [isFileUploadOpen, setFileUploadOpen] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
 
-    // Обработчик изменения редактора
-    const handleEditorChange = (newState: EditorState) => {
+    const saveCursorPosition = (editorState: EditorState) => {
+        const selectionState = editorState.getSelection();
+        return {
+            anchorOffset: selectionState.getAnchorOffset(),
+            focusOffset: selectionState.getFocusOffset(),
+        };
+    };
+
+    const restoreCursorPosition = (editorState: EditorState, position: { anchorOffset: number; focusOffset: number }) => {
+        const selectionState = editorState.getSelection().merge({
+            anchorOffset: position.anchorOffset,
+            focusOffset: position.focusOffset,
+        }) as SelectionState;
+
+        return EditorState.forceSelection(editorState, selectionState);
+    };
+
+    useEffect(() => {
+        const cursorPosition = saveCursorPosition(editorState);
+        const contentState = editorState.getCurrentContent(); // Получаем ContentState
+        let newState = EditorState.push(editorState, contentState, 'change-block-data'); // Передаем ContentState
+        newState = restoreCursorPosition(newState, cursorPosition);
         setEditorState(newState);
+    }, [textAreaValue]);
+
+    const handleEditorChange = (newState: EditorState) => {
         const currentContent = newState.getCurrentContent().getPlainText();
-        console.log('Editor content:', currentContent); // Логирование содержимого редактора
-        setTextAreaValue(currentContent); // Обновляем состояние с текстом
+        if (currentContent !== textAreaValue) {
+            setTextAreaValue(currentContent);
+        }
+        setEditorState(newState);
     };
 
     const keyBindingFn = (e: React.KeyboardEvent): string | null => {
         if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
             handleClick();
             return 'submit-message';
         }
         return getDefaultKeyBinding(e);
     };
 
-    const handleClick = async () => {
-        if (textAreaValue.trim() !== '' || uploadedFiles.length > 0) {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.error('Authorization token is missing');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('content', textAreaValue);
-            uploadedFiles.forEach((fileData, index) => {
-                formData.append('file', fileData.file);
-            });
-
-            try {
-                await sendMessage(chatId, formData, token);
-                setTextAreaValue('');
-                setEditorState(EditorState.createEmpty());
-                setUploadedFiles([]);
-            } catch (error) {
-                console.error('Error sending message:', error);
-            }
+    const handleClick = useCallback(async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('Authorization token is missing');
+            return;
         }
-    };
 
+        try {
+            let startTime = performance.now();
+
+            if (editingMessage && editingMessage.id) {
+                await editMessage(editingMessage.id, textAreaValue, token);
+                setEditingMessage(null);
+            } else {
+                const formData = new FormData();
+                formData.append('content', textAreaValue);
+                uploadedFiles.forEach((fileData) => {
+                    formData.append('file', fileData.file);
+                });
+
+                await sendMessage(chatId, formData, token);
+            }
+
+            console.log(`Message sent in: ${(performance.now() - startTime).toFixed(2)} ms`);
+
+            setTextAreaValue('');
+            setEditorState(EditorState.createEmpty());
+            setUploadedFiles([]);
+        } catch (error) {
+            console.error('Error sending or editing message:', error);
+        }
+    }, [textAreaValue, uploadedFiles, editingMessage, chatId]);
 
     const handleFileSelect = (file: File) => {
         setUploadedFiles((prevFiles) => [...prevFiles, { file }]);
@@ -128,10 +163,7 @@ export default function MessageInput(props: MessageInputProps) {
                                     Редактирование <br /> {editingMessage.content}
                                 </Typography>
                             </Box>
-                            <IconButton
-                                size="sm"
-                                onClick={() => setEditingMessage(null)}
-                            >
+                            <IconButton size="sm" onClick={() => setEditingMessage(null)}>
                                 <CloseIcon />
                             </IconButton>
                         </Stack>
@@ -179,7 +211,7 @@ export default function MessageInput(props: MessageInputProps) {
                                     editorState={editorState}
                                     keyBindingFn={keyBindingFn}
                                     onChange={handleEditorChange}
-                                    placeholder="Write a message..."
+                                    placeholder={t('writeMessage')}
                                     ref={editorRef}
                                     spellCheck={true}
                                     stripPastedStyles={true}
