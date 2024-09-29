@@ -105,7 +105,6 @@ export const sendMessage = async (chatId: number, formData: FormData, token: str
 };
 
 
-
 export const updateUserStatus = async (userId: number, isOnline: boolean, token: string) => {
     if (!token) {
         throw new Error('Authorization token is missing');

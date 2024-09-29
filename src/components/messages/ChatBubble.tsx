@@ -52,8 +52,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const [videoSrc, setVideoSrc] = useState<string | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ mouseX: number; mouseY: number } | null>(null);
     const [currentVideoTime, setCurrentVideoTime] = useState(0);
-    const [currentVolume, setCurrentVolume] = useState(1); // Состояние для громкости
-    const [isMuted, setIsMuted] = useState(false); // Состояние для статуса "Отключен звук"
+    const [currentVolume, setCurrentVolume] = useState(1);
+    const [isMuted, setIsMuted] = useState(false);
 
     const messageVideoRef = useRef<HTMLVideoElement>(null);
     const modalVideoRef = useRef<HTMLVideoElement>(null);
@@ -65,6 +65,16 @@ export default function ChatBubble(props: ChatBubbleProps) {
         currentUserId = decodedToken.id || 0;
     }
 
+    // Получение URL вложения
+    const getAttachmentUrl = () => {
+        if (!attachment) return '';
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+        return `${baseUrl}/${attachment.filePath.replace(/\\/g, '/')}?cache-control=max-age=3600`;
+    };
+
+    const isImage = isImageFile(attachment?.fileName || '');
+    const isVideo = isVideoFile(attachment?.fileName || '');
+
     const handleImageClick = () => {
         setImageSrc(getAttachmentUrl());
         setIsImageOpen(true);
@@ -73,9 +83,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const handleVideoClick = () => {
         setVideoSrc(getAttachmentUrl());
         if (messageVideoRef.current) {
-            setCurrentVideoTime(messageVideoRef.current.currentTime); // Сохранение времени текущего воспроизведения
-            setCurrentVolume(messageVideoRef.current.volume); // Сохранение текущей громкости
-            setIsMuted(messageVideoRef.current.muted); // Сохранение статуса звука (вкл/выкл)
+            setCurrentVideoTime(messageVideoRef.current.currentTime);
+            setCurrentVolume(messageVideoRef.current.volume);
+            setIsMuted(messageVideoRef.current.muted);
         }
         setIsVideoOpen(true);
     };
@@ -97,15 +107,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
         console.log('Forwarding:', content);
     };
 
-    const getAttachmentUrl = () => {
-        if (!attachment) return '';
-        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
-        return `${baseUrl}/${attachment.filePath.replace(/\\/g, '/')}?cache-control=max-age=3600`;
-    };
-
-    const isImage = isImageFile(attachment?.fileName || '');
-    const isVideo = isVideoFile(attachment?.fileName || '');
-
     const handleContextMenu = (event: React.MouseEvent<HTMLElement>) => {
         event.preventDefault();
         setAnchorPosition({
@@ -119,7 +120,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
         setAnchorPosition(null);
     };
 
-    // Синхронизация времени, громкости и статуса звука между видео в сообщении, модальным окном и при переходе в полный экран
     const syncVideoWithModal = () => {
         if (modalVideoRef.current) {
             modalVideoRef.current.currentTime = currentVideoTime;
@@ -129,7 +129,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
         }
     };
 
-    // Обновляем время и громкость в зависимости от изменений в одном из видео
     const updateVideoState = (event: React.SyntheticEvent<HTMLVideoElement, Event>) => {
         const video = event.currentTarget;
         setCurrentVideoTime(video.currentTime);
@@ -139,7 +138,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
 
     useEffect(() => {
         if (isVideoOpen && modalVideoRef.current) {
-            // Синхронизация времени, громкости и статуса звука при открытии модального видео
             modalVideoRef.current.currentTime = currentVideoTime;
             modalVideoRef.current.volume = currentVolume;
             modalVideoRef.current.muted = isMuted;
@@ -217,7 +215,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 maxWidth: '700px',
                                 maxHeight: '500px',
                                 objectFit: 'contain',
-                                borderRadius: 0, // Убираем border-radius для сообщения
+                                borderRadius: 0,
                             }}
                             controls
                             onTimeUpdate={updateVideoState}
@@ -247,7 +245,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 maxWidth: '700px',
                                 maxHeight: '500px',
                                 objectFit: 'contain',
-                                borderRadius: 0, // Убираем border-radius для сообщения
+                                borderRadius: 0,
                             }}
                         />
                     </Box>
@@ -350,7 +348,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 maxHeight: '100%',
                                 objectFit: 'contain',
                                 transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
-                                borderRadius: '12px', // Оставляем border-radius для модального окна
+                                borderRadius: '12px',
                             }}
                         />
                     </Box>
@@ -379,7 +377,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             style={{
                                 maxWidth: '100%',
                                 maxHeight: '100%',
-                                borderRadius: '12px', // Оставляем border-radius для модального окна
+                                borderRadius: '12px',
                             }}
                             controls
                             onPlay={syncVideoWithModal}

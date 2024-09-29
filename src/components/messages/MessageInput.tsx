@@ -56,8 +56,8 @@ export default function MessageInput(props: MessageInputProps) {
 
     useEffect(() => {
         const cursorPosition = saveCursorPosition(editorState);
-        const contentState = editorState.getCurrentContent(); // Получаем ContentState
-        let newState = EditorState.push(editorState, contentState, 'change-block-data'); // Передаем ContentState
+        const contentState = editorState.getCurrentContent();
+        let newState = EditorState.push(editorState, contentState, 'change-block-data');
         newState = restoreCursorPosition(newState, cursorPosition);
         setEditorState(newState);
     }, [textAreaValue]);
