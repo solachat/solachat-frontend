@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Box from '@mui/joy/Box';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
@@ -11,13 +11,11 @@ import { IconButton } from '@mui/joy';
 import ContextMenu from './ContextMenu';
 import { useTranslation } from 'react-i18next';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
-import VideoPlayer from '../core/VideoPlayer';
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
     onEditMessage: (messageId: number, content: string) => void;
     messageCreatorId: number;
-    previousMessage?: MessageProps | null;
     user: {
         avatar: string;
         username: string;
@@ -27,14 +25,12 @@ type ChatBubbleProps = MessageProps & {
 
 type DecodedToken = JwtPayload & { id?: number };
 
-
 const isImageFile = (fileName: string) => {
     const imageExtensions = ['jpg', 'jpeg', 'png', 'gif'];
     const fileExtension = fileName.split('.').pop()?.toLowerCase();
     return imageExtensions.includes(fileExtension || '');
 };
 
-// Функция для проверки, является ли файл видеофайлом
 const isVideoFile = (fileName: string) => {
     const videoExtensions = ['mp4', 'webm', 'ogg'];
     const fileExtension = fileName.split('.').pop()?.toLowerCase();
@@ -43,7 +39,7 @@ const isVideoFile = (fileName: string) => {
 
 export default function ChatBubble(props: ChatBubbleProps) {
     const { t } = useTranslation();
-    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, previousMessage, user, isGroupChat } = props;
+    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat } = props;
     const isSent = variant === 'sent';
     const formattedTime = new Date(createdAt).toLocaleTimeString([], {
         hour: '2-digit',
@@ -51,8 +47,16 @@ export default function ChatBubble(props: ChatBubbleProps) {
     });
 
     const [isImageOpen, setIsImageOpen] = useState(false);
+    const [isVideoOpen, setIsVideoOpen] = useState(false);
     const [imageSrc, setImageSrc] = useState<string | null>(null);
+    const [videoSrc, setVideoSrc] = useState<string | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ mouseX: number; mouseY: number } | null>(null);
+    const [currentVideoTime, setCurrentVideoTime] = useState(0);
+    const [currentVolume, setCurrentVolume] = useState(1); // Состояние для громкости
+    const [isMuted, setIsMuted] = useState(false); // Состояние для статуса "Отключен звук"
+
+    const messageVideoRef = useRef<HTMLVideoElement>(null);
+    const modalVideoRef = useRef<HTMLVideoElement>(null);
 
     const token = localStorage.getItem('token');
     let currentUserId: number | null = null;
@@ -66,9 +70,23 @@ export default function ChatBubble(props: ChatBubbleProps) {
         setIsImageOpen(true);
     };
 
+    const handleVideoClick = () => {
+        setVideoSrc(getAttachmentUrl());
+        if (messageVideoRef.current) {
+            setCurrentVideoTime(messageVideoRef.current.currentTime); // Сохранение времени текущего воспроизведения
+            setCurrentVolume(messageVideoRef.current.volume); // Сохранение текущей громкости
+            setIsMuted(messageVideoRef.current.muted); // Сохранение статуса звука (вкл/выкл)
+        }
+        setIsVideoOpen(true);
+    };
+
     const handleClose = () => {
         setIsImageOpen(false);
-        setTimeout(() => setImageSrc(null), 300);
+        setIsVideoOpen(false);
+        setTimeout(() => {
+            setImageSrc(null);
+            setVideoSrc(null);
+        }, 300);
     };
 
     const handleCopy = () => {
@@ -81,9 +99,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
 
     const getAttachmentUrl = () => {
         if (!attachment) return '';
-
         const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
-        return `${baseUrl}/${attachment.filePath.replace('.enc', '')}`;
+        return `${baseUrl}/${attachment.filePath.replace(/\\/g, '/')}?cache-control=max-age=3600`;
     };
 
     const isImage = isImageFile(attachment?.fileName || '');
@@ -102,6 +119,33 @@ export default function ChatBubble(props: ChatBubbleProps) {
         setAnchorPosition(null);
     };
 
+    // Синхронизация времени, громкости и статуса звука между видео в сообщении, модальным окном и при переходе в полный экран
+    const syncVideoWithModal = () => {
+        if (modalVideoRef.current) {
+            modalVideoRef.current.currentTime = currentVideoTime;
+            modalVideoRef.current.volume = currentVolume;
+            modalVideoRef.current.muted = isMuted;
+            modalVideoRef.current.play();
+        }
+    };
+
+    // Обновляем время и громкость в зависимости от изменений в одном из видео
+    const updateVideoState = (event: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+        const video = event.currentTarget;
+        setCurrentVideoTime(video.currentTime);
+        setCurrentVolume(video.volume);
+        setIsMuted(video.muted);
+    };
+
+    useEffect(() => {
+        if (isVideoOpen && modalVideoRef.current) {
+            // Синхронизация времени, громкости и статуса звука при открытии модального видео
+            modalVideoRef.current.currentTime = currentVideoTime;
+            modalVideoRef.current.volume = currentVolume;
+            modalVideoRef.current.muted = isMuted;
+        }
+    }, [isVideoOpen, currentVideoTime, currentVolume, isMuted]);
+
     return (
         <Box
             component="div"
@@ -111,12 +155,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 mb: { xs: 1, sm: 1 },
                 px: 1,
                 width: '45%',
-                flexDirection: 'column', // Вертикальное выравнивание
+                flexDirection: 'column',
                 alignItems: isSent ? 'flex-end' : 'flex-start',
             }}
             onContextMenu={handleContextMenu}
         >
-            {/* Показать аватар и имя пользователя только для полученных сообщений в групповых чатах */}
             {isGroupChat && !isSent && (
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <img
@@ -124,9 +167,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         alt="avatar"
                         style={{ width: '30px', height: '30px', borderRadius: '50%', marginRight: '8px' }}
                     />
-                    <Typography>
-                        {user.username}
-                    </Typography>
+                    <Typography>{user.username}</Typography>
                 </Box>
             )}
 
@@ -136,12 +177,12 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 sx={{
                     maxWidth: isEdited ? '75%' : '70%',
                     minWidth: 'fit-content',
-                    padding: !isImage ? { xs: '6px 10px', sm: '8px 14px' } : 0,
+                    padding: !isImage && !isVideo ? { xs: '6px 10px', sm: '8px 14px' } : 0,
                     borderRadius: '18px',
                     borderBottomLeftRadius: isSent ? '18px' : '0px',
                     borderBottomRightRadius: isSent ? '0px' : '18px',
-                    background: isImage && !content ? 'transparent' : (isSent ? 'linear-gradient(135deg, #76baff, #4778e2)' : 'var(--joy-palette-background-level2)'),
-                    boxShadow: isImage ? 'none' : '0 2px 10px rgba(0, 0, 0, 0.15)',
+                    background: (isImage || isVideo) && !content ? 'transparent' : (isSent ? 'linear-gradient(135deg, #76baff, #4778e2)' : 'var(--joy-palette-background-level2)'),
+                    boxShadow: isImage || isVideo ? 'none' : '0 2px 10px rgba(0, 0, 0, 0.15)',
                     wordWrap: 'break-word',
                     overflowWrap: 'break-word',
                     whiteSpace: 'pre-wrap',
@@ -154,12 +195,37 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     position: 'relative',
                 }}
             >
-                {/* Обработка видеофайлов */}
+                {/* Отображение видеофайлов без border-radius для сообщения */}
                 {isVideo && (
-                    <VideoPlayer src={getAttachmentUrl()} fileName={attachment?.fileName || 'Video'} />
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            maxWidth: '100%',
+                            cursor: 'pointer',
+                            overflow: 'hidden',
+                            mb: content ? 2 : 0,
+                        }}
+                        onClick={handleVideoClick}
+                    >
+                        <video
+                            ref={messageVideoRef}
+                            src={getAttachmentUrl()}
+                            style={{
+                                width: '100%',
+                                maxWidth: '700px',
+                                maxHeight: '500px',
+                                objectFit: 'contain',
+                                borderRadius: 0, // Убираем border-radius для сообщения
+                            }}
+                            controls
+                            onTimeUpdate={updateVideoState}
+                            onVolumeChange={updateVideoState}
+                        />
+                    </Box>
                 )}
 
-                {/* Обработка изображений */}
                 {isImage && !isVideo && (
                     <Box
                         sx={{
@@ -180,22 +246,19 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 width: '100%',
                                 maxWidth: '700px',
                                 maxHeight: '500px',
-                                borderRadius: '12px',
                                 objectFit: 'contain',
+                                borderRadius: 0, // Убираем border-radius для сообщения
                             }}
                         />
                     </Box>
                 )}
 
-                {/* Текст сообщения */}
                 {content && (
                     <Typography
                         sx={{
                             fontSize: { xs: '14px', sm: '14px' },
                             lineHeight: 1.6,
-                            color: isSent
-                                ? 'var(--joy-palette-common-white)'
-                                : 'var(--joy-palette-text-primary)',
+                            color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-primary)',
                             marginLeft: isImage || isVideo ? '12px' : '0px',
                             marginBottom: isImage || isVideo ? '8px' : '4px',
                             textAlign: 'left',
@@ -211,7 +274,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </Typography>
                 )}
 
-                {/* Время сообщения */}
                 <Stack
                     direction="row"
                     spacing={1}
@@ -243,7 +305,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </Typography>
                 </Stack>
 
-                {/* Обработка файлов, отличных от изображений и видео */}
                 {!isImage && !isVideo && attachment && (
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
@@ -263,7 +324,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </Stack>
                 )}
 
-                {/* Просмотр изображения в полном размере */}
                 {isImageOpen && imageSrc && (
                     <Box
                         sx={{
@@ -279,8 +339,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             zIndex: 999,
                             cursor: 'pointer',
                             transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
-                            transform: isImageOpen ? 'scale(1)' : 'scale(0.95)',
-                            opacity: isImageOpen ? 1 : 0,
                         }}
                         onClick={handleClose}
                     >
@@ -292,9 +350,41 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 maxHeight: '100%',
                                 objectFit: 'contain',
                                 transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
-                                transform: isImageOpen ? 'scale(1)' : 'scale(0.95)',
-                                opacity: isImageOpen ? 1 : 0,
+                                borderRadius: '12px', // Оставляем border-radius для модального окна
                             }}
+                        />
+                    </Box>
+                )}
+
+                {isVideoOpen && videoSrc && (
+                    <Box
+                        sx={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 999,
+                            cursor: 'pointer',
+                        }}
+                        onClick={handleClose}
+                    >
+                        <video
+                            ref={modalVideoRef}
+                            src={videoSrc}
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                borderRadius: '12px', // Оставляем border-radius для модального окна
+                            }}
+                            controls
+                            onPlay={syncVideoWithModal}
+                            onTimeUpdate={updateVideoState}
+                            onVolumeChange={updateVideoState}
                         />
                     </Box>
                 )}
