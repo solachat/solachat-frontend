@@ -87,6 +87,7 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
 
 export const sendMessage = async (chatId: number, formData: FormData, token: string) => {
     try {
+        console.time('Message Sending');
         const response = await axios.post(
             `${API_URL}/api/messages/${chatId}`,
             formData,
@@ -97,13 +98,13 @@ export const sendMessage = async (chatId: number, formData: FormData, token: str
                 },
             }
         );
+        console.timeEnd('Message Sending');
         return response.data;
     } catch (error) {
         console.error('Error sending message:', error);
         throw new Error('Could not send message');
     }
 };
-
 
 export const updateUserStatus = async (userId: number, isOnline: boolean, token: string) => {
     if (!token) {
@@ -131,30 +132,6 @@ export const updateUserStatus = async (userId: number, isOnline: boolean, token:
     }
 };
 
-export const uploadFileToChat = async (chatId: number, formData: FormData, token: string) => {
-    try {
-        formData.append('chatId', chatId.toString());
-
-        console.log('ChatId:', chatId);
-        const response = await axios.post(
-            `${API_URL}/api/messages/${chatId}/upload`,
-            formData,
-            {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data',
-                },
-            }
-        );
-        toast.success('File uploaded successfully!');
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading file:', error);
-        toast.error('Failed to upload file');
-        throw error;
-    }
-};
-
 export const deleteChat = async (chatId: number, token: string) => {
     try {
         const response = await fetch(`${API_URL}/api/chats/${chatId}`, {
@@ -178,7 +155,6 @@ export const deleteChat = async (chatId: number, token: string) => {
         throw new Error('Could not delete chat');
     }
 };
-
 
 export const editMessage = async (messageId: number, content: string, token: string) => {
     try {
@@ -341,7 +317,24 @@ export const updateChatSettings = async (chatId: number, groupName?: string, ava
     }
 };
 
+export const deleteMessage = async (messageId: number) => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('Authorization token is missing');
 
+        const response = await axios.delete(`${API_URL}/api/messages/messages/${messageId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting message:', error);
+        toast.error('Failed to delete message');
+        throw new Error('Could not delete message');
+    }
+};
 
 //
 // console.log('Отправляемые данные:', {

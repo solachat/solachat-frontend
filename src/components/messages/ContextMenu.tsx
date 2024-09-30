@@ -4,6 +4,7 @@ import MenuItem from '@mui/material/MenuItem';
 import EditIcon from '@mui/icons-material/Edit';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ForwardIcon from '@mui/icons-material/Send';
+import DeleteIcon from '@mui/icons-material/Delete'; // Импортируем иконку удаления
 import { styled } from '@mui/material/styles';
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -30,10 +31,11 @@ type ContextMenuProps = {
     onEdit: () => void;
     onCopy: () => void;
     onForward: () => void;
+    onDelete: () => void; // Добавляем обработчик для удаления
     onClose: () => void;
     open: boolean;
-    currentUserId: number; // Текущий пользователь
-    messageCreatorId: number; // Создатель сообщения
+    currentUserId: number;
+    messageCreatorId: number;
 };
 
 export default function ContextMenu({
@@ -41,6 +43,7 @@ export default function ContextMenu({
                                         onEdit,
                                         onCopy,
                                         onForward,
+                                        onDelete,
                                         onClose,
                                         open,
                                         currentUserId,
@@ -54,10 +57,16 @@ export default function ContextMenu({
             onClose={onClose}
         >
             {currentUserId === messageCreatorId && (
-                <StyledMenuItem onClick={() => { onEdit(); onClose(); }}>
-                    <EditIcon sx={{ marginRight: 1 }} />
-                    Edit
-                </StyledMenuItem>
+                <>
+                    <StyledMenuItem onClick={() => { onEdit(); onClose(); }}>
+                        <EditIcon sx={{ marginRight: 1 }} />
+                        Edit
+                    </StyledMenuItem>
+                    <StyledMenuItem onClick={() => { onDelete(); onClose(); }}>
+                        <DeleteIcon sx={{ marginRight: 1 }} />
+                        Delete
+                    </StyledMenuItem>
+                </>
             )}
             <StyledMenuItem onClick={() => { onCopy(); onClose(); }}>
                 <ContentCopyIcon sx={{ marginRight: 1 }} />

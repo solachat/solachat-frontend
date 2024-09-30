@@ -11,7 +11,7 @@ import { JwtPayload } from 'jsonwebtoken';
 import { jwtDecode } from 'jwt-decode';
 import { useWebSocket } from '../../api/useWebSocket';
 import {Helmet} from "react-helmet-async";
-import Box from "@mui/joy/Box";  // Импортируем WebSocket хук
+import Box from "@mui/joy/Box";
 
 export default function MyProfile() {
     const [chats, setChats] = React.useState<ChatProps[]>([]);
@@ -22,7 +22,6 @@ export default function MyProfile() {
     const [searchParams] = useSearchParams();
     const { t } = useTranslation();
 
-    // Получаем текущего пользователя по токену
     const getCurrentUserFromToken = (): UserProps | null => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -46,20 +45,17 @@ export default function MyProfile() {
         }
     };
 
-    // Функция обновления последнего сообщения в списке чатов
     const updateLastMessageInChatList = (newMessage: any) => {
         setChats((prevChats) =>
             prevChats.map((chat) =>
                 chat.id === newMessage.chatId
-                    ? { ...chat, lastMessage: newMessage }
+                    ? { ...chat, newMessage: newMessage }
                     : chat
             )
         );
     };
 
-    // Функция добавления нового чата
     const addNewChat = (chatId: number) => {
-        // Предположим, что для нового чата нужно запросить его с сервера
         fetchChatsFromServer(currentUser!.id, localStorage.getItem('token')!).then((fetchedChats: ChatProps[]) => {
             const newChat = fetchedChats.find((chat: ChatProps) => chat.id === chatId);
             if (newChat) {
@@ -68,7 +64,6 @@ export default function MyProfile() {
         });
     };
 
-    // Функция удаления пользователя из чата
     const removeUserFromChat = (chatId: number, userId: number) => {
         setChats((prevChats) =>
             prevChats.map((chat) =>
@@ -79,7 +74,6 @@ export default function MyProfile() {
         );
     };
 
-    // Функция изменения роли пользователя в чате
     const updateRoleInChat = (chatId: number, userId: number, newRole: string) => {
         setChats((prevChats) =>
             prevChats.map((chat) =>
@@ -95,7 +89,6 @@ export default function MyProfile() {
         );
     };
 
-    // Обработка событий WebSocket
     const handleWebSocketMessage = (message: any) => {
         switch (message.type) {
             case 'newMessage':
@@ -115,7 +108,7 @@ export default function MyProfile() {
         }
     };
 
-    useWebSocket(handleWebSocketMessage); // Используем хук WebSocket
+    useWebSocket(handleWebSocketMessage);
 
     React.useEffect(() => {
         const user = getCurrentUserFromToken();

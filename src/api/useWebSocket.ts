@@ -72,6 +72,14 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
                 case 'editMessage':
                     onMessage(message);
                     break;
+                case 'deleteMessage':
+                    console.log(`Message with ID ${message.messageId} deleted from chat ${message.chatId}`);
+                    onMessage({
+                        type: 'deleteMessage',
+                        messageId: message.messageId,
+                        chatId: message.chatId,
+                    });
+                    break;
                 case 'userAdded':
                     toast.info(`User with ID ${message.userId} added to chat ${message.chatId}`);
                     break;
@@ -85,6 +93,7 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
                     console.warn('Unknown message type:', message.type);
             }
         };
+
 
         ws.onerror = (error) => {
             console.error('WebSocket error:', error);

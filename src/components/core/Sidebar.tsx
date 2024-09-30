@@ -21,6 +21,8 @@ import CallRoundedIcon from '@mui/icons-material/CallRounded';
 import VideoLibraryRoundedIcon from '@mui/icons-material/VideoLibraryRounded';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {UserProps} from "./types";
+import {ColorSchemeToggle} from "./ColorSchemeToggle";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 interface DecodedToken {
     username: string;
@@ -272,7 +274,6 @@ export default function Sidebar() {
                 </Box>
             </Sheet>
 
-            {/* Модальное окно создания группы */}
             <GroupChatModal
                 open={isGroupModalOpen}
                 onClose={handleCloseGroupModal}

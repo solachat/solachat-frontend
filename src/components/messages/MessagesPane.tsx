@@ -95,6 +95,12 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
         );
     };
 
+    const handleDeleteMessageInList = (messageId: number) => {
+        setChatMessages((prevMessages) =>
+            prevMessages.filter((msg) => Number(msg.id) !== messageId)
+        );
+    };
+
     useWebSocket((message) => {
         if (message.type === 'newMessage') {
             if (message.message.chatId === chat?.id) {
@@ -104,6 +110,12 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
             }
         } else if (message.type === 'editMessage') {
             handleEditMessageInList(message.message);
+        } else if (message.type === 'deleteMessage') {
+            if (message.chatId === chat?.id) {
+                handleDeleteMessageInList(message.messageId);
+            } else {
+                console.log(`Received delete event for chat ID ${message.chatId}, but current chat ID is ${chat?.id}. Ignoring.`);
+            }
         }
     });
 
@@ -222,18 +234,18 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
             {chat && (
                 <MessageInput
                     chatId={Number(chat?.id ?? 0)}
-                    textAreaValue={textAreaValue} // Передача textAreaValue
-                    setTextAreaValue={setTextAreaValue} // Передача функции для изменения состояния
+                    textAreaValue={textAreaValue}
+                    setTextAreaValue={setTextAreaValue}
                     onSubmit={() => {
                         const newMessage: MessageProps = {
                             id: (chatMessages.length + 1).toString(),
                             user: chat?.users?.find((user) => user.id === currentUserId)!,
                             userId: currentUserId!,
-                            content: textAreaValue, // Использование textAreaValue для содержания нового сообщения
+                            content: textAreaValue,
                             createdAt: new Date().toISOString(),
                         };
                         handleNewMessage(newMessage);
-                        setTextAreaValue(''); // Сброс текстового поля после отправки
+                        setTextAreaValue('');
                         setEditingMessageId(null);
                     }}
                     editingMessage={

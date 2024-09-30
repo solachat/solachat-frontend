@@ -11,6 +11,7 @@ import { IconButton } from '@mui/joy';
 import ContextMenu from './ContextMenu';
 import { useTranslation } from 'react-i18next';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
+import {deleteMessage} from "../../api/api";
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
@@ -65,7 +66,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
         currentUserId = decodedToken.id || 0;
     }
 
-    // Получение URL вложения
     const getAttachmentUrl = () => {
         if (!attachment) return '';
         const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
@@ -119,6 +119,16 @@ export default function ChatBubble(props: ChatBubbleProps) {
         onEditMessage(Number(id), content);
         setAnchorPosition(null);
     };
+
+    const handleDelete = async () => {
+        try {
+            await deleteMessage(Number(id));
+            console.log('Message deleted');
+        } catch (error) {
+            console.error('Failed to delete message:', error);
+        }
+    };
+
 
     const syncVideoWithModal = () => {
         if (modalVideoRef.current) {
@@ -388,7 +398,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 )}
             </Sheet>
 
-            {/* Контекстное меню */}
             <ContextMenu
                 anchorPosition={
                     anchorPosition !== null ? { top: anchorPosition.mouseY, left: anchorPosition.mouseX } : undefined
@@ -398,6 +407,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 onEdit={handleEdit}
                 onCopy={handleCopy}
                 onForward={handleForward}
+                onDelete={handleDelete}
                 currentUserId={currentUserId ?? 0}
                 messageCreatorId={messageCreatorId}
             />

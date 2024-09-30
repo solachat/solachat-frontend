@@ -12,6 +12,7 @@ import LanguageSwitcher from '../core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
 import { CssVarsProvider } from '@mui/joy/styles';
 import Sidebar from '../core/Sidebar';
+import CircularProgress from '@mui/joy/CircularProgress';
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -148,7 +149,12 @@ export default function ChatsPane(props: ChatsPaneProps) {
                     ) : (
                         <>
                             {loadingChats ? (
-                                <Typography>Loading chats...</Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', mt: 2 }}>
+                                    <CircularProgress color="primary" />
+                                    <Typography fontSize="lg" sx={{ mt: 2, color: 'text.secondary' }}>
+                                        {t('Loading chats...')}
+                                    </Typography>
+                                </Box>
                             ) : (
                                 chats.length > 0 ? (
                                     <List>
