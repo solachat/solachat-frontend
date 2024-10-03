@@ -73,21 +73,27 @@ export default function ChatListItem(props: ChatListItemProps) {
                     <Stack direction="row" spacing={1.5}>
                         {isGroup ? (
                             <Avatar
-                                src={existingChat?.avatar || 'path/to/default-group-avatar.jpg'}
+                                src={existingChat?.avatar ? existingChat.avatar : sender?.avatar || 'path/to/default-group-avatar.jpg'}
+                                alt={sender?.realname}
                                 sx={{
                                     width: { xs: 32, sm: 48 },
                                     height: { xs: 32, sm: 48 },
                                 }}
                             />
+
                         ) : (
                             <AvatarWithStatus
                                 online={sender?.online}
-                                src={sender?.avatar}
+                                src={sender?.avatar || undefined}
+                                alt={sender?.realname}
                                 sx={{
                                     width: { xs: 32, sm: 48 },
                                     height: { xs: 32, sm: 48 },
+                                    fontSize: { xs: 16, sm: 24 },
                                 }}
-                            />
+                            >
+                                {(!sender?.avatar && sender?.realname) ? sender.realname[0].toUpperCase() : null}
+                            </AvatarWithStatus>
                         )}
 
                         <Box sx={{ flex: 1 }}>

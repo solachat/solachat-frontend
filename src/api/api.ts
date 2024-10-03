@@ -336,6 +336,119 @@ export const deleteMessage = async (messageId: number) => {
     }
 };
 
+export const initiateCall = async (fromUserId: number, toUserId: number, token: string) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/calls/initiate`,
+            {
+                fromUserId,
+                toUserId,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        console.log('Call initiated successfully:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error initiating call:', error);
+        toast.error('Failed to initiate call');
+        throw new Error('Could not initiate call');
+    }
+};
+
+export const answerCall = async (callId: number, userId: number, token: string) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/calls/answer`,
+            {
+                callId,
+                userId,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        console.log('Call answered successfully:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error answering call:', error);
+        toast.error('Failed to answer call');
+        throw new Error('Could not answer call');
+    }
+};
+
+export const rejectCall = async (callId: number, userId: number, token: string) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/calls/reject`,
+            {
+                callId,
+                userId,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        console.log('Call rejected successfully:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error rejecting call:', error);
+        toast.error('Failed to reject call');
+        throw new Error('Could not reject call');
+    }
+};
+
+export const endCall = async (callId: number, token: string) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/calls/end`,
+            { callId },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        console.log('Call ended successfully:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error ending call:', error);
+        toast.error('Failed to end call');
+        throw new Error('Could not end call');
+    }
+};
+
+export const initiateGroupCall = async (fromUserId: number, participantUserIds: number[], token: string) => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/calls/group/initiate`,
+            {
+                fromUserId,
+                participantUserIds,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        console.log('Group call initiated successfully:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error initiating group call:', error);
+        toast.error('Failed to initiate group call');
+        throw new Error('Could not initiate group call');
+    }
+};
+
+
 //
 // console.log('Отправляемые данные:', {
 //     groupName,
