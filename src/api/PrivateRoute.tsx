@@ -14,11 +14,14 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
             const decodedToken: any = jwtDecode(token);
 
             const currentTime = Date.now() / 1000;
+
+            // Проверка срока действия токена (если меньше текущего времени)
             if (decodedToken.exp < currentTime) {
                 localStorage.removeItem('token');
                 return <Navigate to="/login" />;
             }
 
+            // Если токен еще активен
             return element;
         } catch (error) {
             console.error('Ошибка декодирования токена:', error);
@@ -26,6 +29,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ element }) => {
         }
     }
 
+    // Если токена нет
     return <Navigate to="/login" />;
 };
 

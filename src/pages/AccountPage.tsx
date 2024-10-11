@@ -70,6 +70,7 @@ export default function AccountPage() {
         rating: 0,
         lastLogin: '',
         avatar: '',
+        online: false,
     });
 
     React.useEffect(() => {
@@ -262,13 +263,13 @@ export default function AccountPage() {
                                         maxWidth: 120,
                                         borderRadius: '50%',
                                         overflow: 'hidden',
-                                        cursor: isOwner ? 'pointer' : 'default', // Курсор меняется только для владельца
+                                        cursor: isOwner ? 'pointer' : 'default',
                                         transition: '0.3s ease',
                                         '&:hover img': {
-                                            filter: isOwner ? 'brightness(0.7)' : 'none', // Эффект наводки только для владельца
+                                            filter: isOwner ? 'brightness(0.7)' : 'none',
                                         },
                                     }}
-                                    onClick={() => isOwner && setShowAvatarModal(true)} // Открытие модалки только для владельца
+                                    onClick={() => isOwner && setShowAvatarModal(true)}
                                 >
                                     <img src={profileData.avatar || defaultAvatarUrl} loading="lazy" alt="Avatar" />
                                 </AspectRatio>
@@ -280,9 +281,11 @@ export default function AccountPage() {
                                     <Typography sx={{ color: 'text.secondary', mt: 0 }}>
                                         {t('ratinguser')}
                                     </Typography>
-                                    <Typography sx={{ color: 'text.secondary', mt: 1 }}>
+                                    <Typography sx={{ color: 'text.secondary', mt: 1, visibility: profileData.online ? 'hidden' : 'visible' }}>
                                         {t('lastLogin')}: {new Date(profileData.lastLogin).toLocaleString()}
                                     </Typography>
+
+
                                 </Box>
                             </Stack>
                             <Stack spacing={2} sx={{ flexGrow: 1, width: '100%' }}>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Box, Button, Typography, IconButton, CircularProgress, Alert } from '@mui/joy';
+import { Modal, Box, Button, Typography, IconButton, CircularProgress, Alert, AspectRatio } from '@mui/joy';
 import { Upload as UploadIcon, Close as CloseIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
@@ -15,6 +15,7 @@ export default function AvatarUploadModal({ open, onClose, onSuccess }: AvatarUp
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
     const handleUpload = async () => {
@@ -32,18 +33,12 @@ export default function AvatarUploadModal({ open, onClose, onSuccess }: AvatarUp
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-                onUploadProgress: (progressEvent) => {
-                    if (progressEvent.total) {
-                        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    } else {
-                    }
-                },
             });
 
             const avatarUrl = response.data.avatar;
             setLoading(false);
             onSuccess(avatarUrl);
-            onClose();
+            handleClose(); // Сбрасываем состояние после успешной загрузки
         } catch (error: any) {
             setLoading(false);
             setError(t('uploadFailed'));
@@ -53,14 +48,27 @@ export default function AvatarUploadModal({ open, onClose, onSuccess }: AvatarUp
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = event.target.files?.[0];
-        setFile(selectedFile || null);
+        if (selectedFile) {
+            setFile(selectedFile);
+            setPreviewUrl(URL.createObjectURL(selectedFile)); // Создание ссылки для предпросмотра
+        } else {
+            setFile(null);
+            setPreviewUrl(null);
+        }
         setError(null);
+    };
+
+    const handleClose = () => {
+        setFile(null); // Сбрасываем выбранный файл
+        setPreviewUrl(null); // Сбрасываем предпросмотр
+        setError(null); // Сбрасываем ошибку
+        onClose(); // Закрываем модальное окно
     };
 
     return (
         <Modal
             open={open}
-            onClose={onClose}
+            onClose={handleClose} // Используем новую функцию для сброса и закрытия
             sx={{
                 animation: 'fadeIn 0.5s',
                 '@keyframes fadeIn': {
@@ -90,7 +98,7 @@ export default function AvatarUploadModal({ open, onClose, onSuccess }: AvatarUp
             >
                 <IconButton
                     sx={{ position: 'absolute', top: 8, right: 8 }}
-                    onClick={onClose}
+                    onClick={handleClose}
                 >
                     <CloseIcon />
                 </IconButton>
@@ -112,6 +120,12 @@ export default function AvatarUploadModal({ open, onClose, onSuccess }: AvatarUp
                         }}
                     />
                 </Box>
+
+                {previewUrl && (
+                    <AspectRatio ratio="1" sx={{ width: 150, mb: 2, borderRadius: '50%' }}>
+                        <img src={previewUrl} alt="Avatar Preview" style={{ borderRadius: '50%' }} />
+                    </AspectRatio>
+                )}
 
                 {error && (
                     <Alert color="danger" sx={{ mb: 2 }}>
