@@ -34,8 +34,8 @@ export default function MyProfile() {
             return {
                 id: decodedToken.id,
                 username: decodedToken.username,
-                realname: 'User Realname',
-                avatar: '',
+                realname: decodedToken.realname,
+                avatar: decodedToken.avatar,
                 online: true,
                 role: 'member',
             };

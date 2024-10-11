@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import MessagesMenu from './MessagesMenu';
 import GroupInfoModal from '../group/GroupInfoModal';
 import { jwtDecode } from 'jwt-decode';
-import CallModal from './CallModal'; // Импортируем компонент CallModal
+import CallModal from './CallModal';
 
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
@@ -49,9 +49,9 @@ export default function MessagesPaneHeader({
                                            }: MessagesPaneHeaderProps) {
     const { t, i18n } = useTranslation();
     const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
-    const [isCallModalOpen, setIsCallModalOpen] = React.useState(false); // Состояние для модального окна звонка
+    const [isCallModalOpen, setIsCallModalOpen] = React.useState(false);
     const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
-    const [ws, setWs] = React.useState<WebSocket | null>(null); // WebSocket соединение
+    const [ws, setWs] = React.useState<WebSocket | null>(null);
 
     React.useEffect(() => {
         const token = localStorage.getItem('token');
@@ -60,7 +60,6 @@ export default function MessagesPaneHeader({
             setCurrentUserId(decodedToken.id);
         }
 
-        // Открытие WebSocket соединения при инициализации компонента
         const websocket = new WebSocket('ws://localhost:4005/ws');
         websocket.onopen = () => {
             console.log('WebSocket connected');
@@ -75,12 +74,19 @@ export default function MessagesPaneHeader({
         setWs(websocket);
 
         return () => {
-            websocket.close(); // Закрываем WebSocket при размонтировании компонента
+            websocket.close();
         };
     }, []);
 
     const userToken = localStorage.getItem('token');
-    const receiverId = sender?.id; // Получаем ID получателя для звонка
+    const receiverId = sender?.id;
+
+    // Функция для перехода на страницу профиля
+    const handleProfileClick = () => {
+        if (sender?.username) {
+            window.location.href = `/account?username=${sender.username}`;
+        }
+    };
 
     return (
         <>
@@ -107,11 +113,15 @@ export default function MessagesPaneHeader({
                     >
                         <ArrowBackIosNewRoundedIcon />
                     </IconButton>
+
                     <Avatar
                         size="lg"
                         src={isGroup ? groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
                         alt={isGroup ? chatName : sender?.realname}
+                        onClick={handleProfileClick}
+                        sx={{ cursor: 'pointer' }}
                     />
+
                     <div>
                         <Typography
                             fontWeight="lg"
@@ -134,7 +144,8 @@ export default function MessagesPaneHeader({
                                     </Chip>
                                 ) : undefined
                             }
-                            sx={{ fontWeight: 'lg', fontSize: 'lg' }}
+                            sx={{ fontWeight: 'lg', fontSize: 'lg', cursor: 'pointer' }}
+                            onClick={handleProfileClick}
                         >
                             {isGroup ? chatName : sender?.realname}
                         </Typography>
@@ -147,43 +158,20 @@ export default function MessagesPaneHeader({
                         {!isGroup && <Typography level="body-sm">{sender?.username}</Typography>}
                     </div>
                 </Stack>
-                <Stack spacing={1} direction="row" alignItems="center">
-                    <Button
-                        startDecorator={<PhoneInTalkRoundedIcon />}
-                        color="neutral"
-                        variant="outlined"
+
+                <Stack direction="row" spacing={1} alignItems="center">
+                    {/* Кнопка звонка слева от MessagesMenu */}
+                    <IconButton
                         size="sm"
-                        sx={{
-                            display: { xs: 'none', md: 'inline-flex' },
-                        }}
-                        onClick={() => setIsCallModalOpen(true)} // Открываем модальное окно при нажатии
+                        onClick={() => setIsCallModalOpen(true)}  // Открываем модал звонка
                     >
-                        {t('call')}
-                    </Button>
-                    {isGroup ? (
-                        <Button
-                            color="neutral"
-                            variant="outlined"
-                            size="sm"
-                            sx={{ display: { xs: 'none', md: 'inline-flex' } }}
-                            onClick={() => setIsGroupModalOpen(true)}
-                        >
-                            {t('Information')}
-                        </Button>
-                    ) : (
-                        <Button
-                            color="neutral"
-                            variant="outlined"
-                            size="sm"
-                            sx={{ display: { xs: 'none', md: 'inline-flex' } }}
-                            onClick={() => (window.location.href = `/account?username=${sender?.username}`)}
-                        >
-                            {t('viewprofile')}
-                        </Button>
-                    )}
+                        <PhoneInTalkRoundedIcon />
+                    </IconButton>
+
                     <MessagesMenu chatId={chatId} token={userToken || ''} onDeleteChat={() => console.log('Chat deleted')} />
                 </Stack>
             </Stack>
+
             {isGroup && currentUserId !== null && (
                 <GroupInfoModal
                     open={isGroupModalOpen}
@@ -196,15 +184,15 @@ export default function MessagesPaneHeader({
                     token={userToken || ''}
                 />
             )}
-            {/* Модальное окно для звонка */}
+
             {sender && ws && (
                 <CallModal
-                    open={isCallModalOpen}
+                    open={isCallModalOpen}  // Контролируем открытие модала звонка
                     onClose={() => setIsCallModalOpen(false)}
                     sender={sender}
-                    receiverId={receiverId!} // передаем ID получателя
+                    receiverId={receiverId!}
                     isGroup={isGroup}
-                    ws={ws} // Передаем WebSocket соединение
+                    ws={ws}
                 />
             )}
         </>

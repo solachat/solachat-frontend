@@ -167,6 +167,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                                 setSelectedChat={setSelectedChat}
                                                 currentUserId={currentUser.id}
                                                 chats={chats}
+                                                selectedChatId={selectedChatId}
                                                 isGroup={chat.isGroup}
                                             />
                                         ))}

@@ -1,14 +1,13 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import Menu from '@mui/joy/Menu';
 import MenuItem from '@mui/joy/MenuItem';
 import IconButton from '@mui/joy/IconButton';
 import LanguageIcon from '@mui/icons-material/Language';
 import Box from '@mui/joy/Box';
-import {t} from "i18next";
 
 export const LanguageSwitcher = () => {
-    const {i18n} = useTranslation();
+    const { i18n } = useTranslation();
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -26,7 +25,7 @@ export const LanguageSwitcher = () => {
     };
 
     return (
-        <Box sx={{display: 'flex', justifyContent: 'flex-end'}}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <IconButton
                 onClick={handleMenuOpen}
                 aria-label="change language"
@@ -34,7 +33,7 @@ export const LanguageSwitcher = () => {
                 aria-haspopup="true"
                 size="sm"
                 variant="outlined">
-                <LanguageIcon/>
+                <LanguageIcon />
             </IconButton>
             <Menu
                 id="language-menu"
@@ -42,9 +41,11 @@ export const LanguageSwitcher = () => {
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
             >
-                <MenuItem onClick={() => handleLanguageChange('en')}>English</MenuItem>
-                <MenuItem onClick={() => handleLanguageChange('ru')}>Русский</MenuItem>
-                <MenuItem onClick={() => handleLanguageChange('ch')}>中国人</MenuItem>
+                {[
+                    <MenuItem key="en" onClick={() => handleLanguageChange('en')}>English</MenuItem>,
+                    <MenuItem key="ru" onClick={() => handleLanguageChange('ru')}>Русский</MenuItem>,
+                    <MenuItem key="ch" onClick={() => handleLanguageChange('ch')}>中国人</MenuItem>
+                ]}
             </Menu>
         </Box>
     );

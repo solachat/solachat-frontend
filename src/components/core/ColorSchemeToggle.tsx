@@ -2,7 +2,6 @@ import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import IconButton, { IconButtonProps } from "@mui/joy/IconButton";
 import { useColorScheme } from "@mui/joy/styles";
-import NightlightIcon from '@mui/icons-material/Nightlight';
 import React from "react";
 import Typography from "@mui/joy/Typography";
 import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
