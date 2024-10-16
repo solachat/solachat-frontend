@@ -1,41 +1,48 @@
 import * as React from 'react';
 import { Modal, Box, Button, Stack, IconButton, Typography, Avatar, Input, CircularProgress } from '@mui/joy';
 import CloseIcon from '@mui/icons-material/Close';
-import { UserProps } from '../core/types'; // Импорт типа пользователя
-import { useTranslation } from 'react-i18next'; // Для перевода
-import SearchIcon from '@mui/icons-material/Search'; // Иконка поиска
-import Chip from '@mui/material/Chip'; // Используем Chip из MUI Material
-import { addUsersToGroupChat } from '../../api/api'; // Импорт API для добавления пользователей
+import { UserProps } from '../core/types';
+import { useTranslation } from 'react-i18next';
+import SearchIcon from '@mui/icons-material/Search';
+import Chip from '@mui/material/Chip';
+import { addUsersToGroupChat } from '../../api/api';
+import { debounce } from 'lodash';
 
 type AddUserModalProps = {
     open: boolean;
     onClose: () => void;
     chatId: number;
     token: string;
-    searchUsers: (searchTerm: string) => Promise<UserProps[]>; // Функция для поиска пользователей
+    searchUsers: (searchTerm: string) => Promise<UserProps[]>;
 };
 
 export default function AddUserModal({ open, onClose, chatId, token, searchUsers }: AddUserModalProps) {
     const [searchTerm, setSearchTerm] = React.useState('');
     const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
     const [selectedUsers, setSelectedUsers] = React.useState<UserProps[]>([]);
-    const [loading, setLoading] = React.useState(false); // Для индикации загрузки
-    const [addingUsers, setAddingUsers] = React.useState(false); // Для индикации добавления пользователей
+    const [loading, setLoading] = React.useState(false);
+    const [addingUsers, setAddingUsers] = React.useState(false);
     const { t } = useTranslation();
 
-    // Поиск пользователей
-    const handleSearch = async () => {
-        if (searchTerm.trim()) {
-            setLoading(true);
-            const results = await searchUsers(searchTerm); // Используем переданную функцию поиска
-            setSearchResults(results);
-            setLoading(false);
-        } else {
-            setSearchResults([]);
-        }
+    const debouncedSearch = React.useCallback(
+        debounce(async (searchTerm: string) => {
+            if (searchTerm.trim()) {
+                setLoading(true);
+                const results = await searchUsers(searchTerm);
+                setSearchResults(results);
+                setLoading(false);
+            } else {
+                setSearchResults([]);
+            }
+        }, 300),
+        []
+    );
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+        debouncedSearch(e.target.value);
     };
 
-    // Добавление/удаление пользователя в выбранные
     const toggleUserSelection = (user: UserProps) => {
         if (selectedUsers.some((u) => u.id === user.id)) {
             setSelectedUsers((prev) => prev.filter((u) => u.id !== user.id));
@@ -44,23 +51,21 @@ export default function AddUserModal({ open, onClose, chatId, token, searchUsers
         }
     };
 
-    // Удаление выбранного пользователя
     const removeSelectedUser = (userId: number) => {
         setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
     };
 
-    // Добавление выбранных пользователей в группу
     const handleAddUsers = async () => {
         setAddingUsers(true);
         const userIds = selectedUsers.map(user => user.id);
         try {
-            await addUsersToGroupChat(chatId, userIds, token); // Используем API для добавления пользователей
+            await addUsersToGroupChat(chatId, userIds, token);
             setSelectedUsers([]);
             setSearchTerm('');
             setSearchResults([]);
             onClose();
         } catch (error) {
-            console.error('Error adding users:', error);
+            console.error('Ошибка при добавлении пользователей:', error);
         } finally {
             setAddingUsers(false);
         }
@@ -93,10 +98,9 @@ export default function AddUserModal({ open, onClose, chatId, token, searchUsers
                     <CloseIcon />
                 </IconButton>
                 <Typography textAlign="center" mb={2}>
-                    {t('Add Participants')}
+                    {t('Добавить участников')}
                 </Typography>
                 <Stack spacing={2}>
-                    {/* Выбранные пользователи */}
                     <Stack direction="row" flexWrap="wrap" spacing={1}>
                         {selectedUsers.map((user) => (
                             <Chip
@@ -110,17 +114,14 @@ export default function AddUserModal({ open, onClose, chatId, token, searchUsers
                         ))}
                     </Stack>
 
-                    {/* Поле ввода с иконкой поиска */}
                     <Input
                         startDecorator={<SearchIcon />}
-                        placeholder={t('Search Users')}
+                        placeholder={t('Поиск пользователей')}
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyUp={handleSearch}
+                        onChange={handleSearchChange}
                         sx={{ padding: '8px', borderRadius: 'md', backgroundColor: 'background.surface' }}
                     />
 
-                    {/* Результаты поиска */}
                     <Stack sx={{ maxHeight: '200px', overflowY: 'auto', marginTop: 2 }}>
                         {loading ? (
                             <Stack justifyContent="center" alignItems="center">
@@ -151,9 +152,8 @@ export default function AddUserModal({ open, onClose, chatId, token, searchUsers
                         )}
                     </Stack>
 
-                    {/* Кнопка добавления пользователей */}
                     <Button onClick={handleAddUsers} variant="solid" disabled={!selectedUsers.length || addingUsers}>
-                        {addingUsers ? <CircularProgress /> : t('Add')}
+                        {addingUsers ? <CircularProgress /> : t('Добавить')}
                     </Button>
                 </Stack>
             </Box>

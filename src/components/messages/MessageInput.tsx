@@ -86,6 +86,12 @@ export default function MessageInput(props: MessageInputProps) {
             return;
         }
 
+        // Проверяем, что сообщение не пустое и нет файлов
+        if (textAreaValue.trim() === '' && uploadedFiles.length === 0) {
+            console.warn('Cannot send an empty message');
+            return;  // Не отправляем пустое сообщение
+        }
+
         try {
             let startTime = performance.now();
 

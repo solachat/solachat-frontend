@@ -81,9 +81,13 @@ export default function MessagesPaneHeader({
     const userToken = localStorage.getItem('token');
     const receiverId = sender?.id;
 
-    // Функция для перехода на страницу профиля
-    const handleProfileClick = () => {
-        if (sender?.username) {
+    // Функция для обработки клика
+    const handleAvatarClick = () => {
+        if (isGroup) {
+            // Открываем модалку группы, если это групповой чат
+            setIsGroupModalOpen(true);
+        } else if (sender?.username) {
+            // Переход на страницу профиля, если это личный чат
             window.location.href = `/account?username=${sender.username}`;
         }
     };
@@ -118,7 +122,7 @@ export default function MessagesPaneHeader({
                         size="lg"
                         src={isGroup ? groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
                         alt={isGroup ? chatName : sender?.realname}
-                        onClick={handleProfileClick}
+                        onClick={handleAvatarClick}  // Открытие профиля/модалки группы
                         sx={{ cursor: 'pointer' }}
                     />
 
@@ -145,7 +149,7 @@ export default function MessagesPaneHeader({
                                 ) : undefined
                             }
                             sx={{ fontWeight: 'lg', fontSize: 'lg', cursor: 'pointer' }}
-                            onClick={handleProfileClick}
+                            onClick={handleAvatarClick}  // Открытие профиля/модалки группы
                         >
                             {isGroup ? chatName : sender?.realname}
                         </Typography>

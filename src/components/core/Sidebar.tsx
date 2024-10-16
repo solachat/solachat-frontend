@@ -1,5 +1,4 @@
 import * as React from 'react';
-import GlobalStyles from '@mui/joy/GlobalStyles';
 import Avatar from '@mui/joy/Avatar';
 import Box from '@mui/joy/Box';
 import Divider from '@mui/joy/Divider';
@@ -13,7 +12,6 @@ import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
 import GroupChatModal from '../group/GroupChatModal';
 
-// Импорт иконок
 import QuestionAnswerRoundedIcon from '@mui/icons-material/QuestionAnswerRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
 import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
@@ -21,8 +19,6 @@ import CallRoundedIcon from '@mui/icons-material/CallRounded';
 import VideoLibraryRoundedIcon from '@mui/icons-material/VideoLibraryRounded';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {UserProps} from "./types";
-import {ColorSchemeToggle} from "./ColorSchemeToggle";
-import LanguageSwitcher from "./LanguageSwitcher";
 
 interface DecodedToken {
     username: string;
