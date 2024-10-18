@@ -11,6 +11,7 @@ import HeroLeft02 from '../components/home/HeroLeft02';
 import HeroLeft03 from '../components/home/HeroLeft03';
 import Navbar from "../components/home/Navbar";
 import {Header} from '../components/core/ColorSchemeToggle';
+import Footer from "../components/home/Footer";
 
 
 export default function HomePage() {
@@ -41,6 +42,7 @@ export default function HomePage() {
                     <HeroLeft03 />
                 </Box>
             </Box>
+            <Footer/>
         </CssVarsProvider>
     );
 }

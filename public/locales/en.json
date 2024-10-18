@@ -121,7 +121,8 @@
     "title": "Under Construction",
     "subtitle": "This page is not ready yet",
     "description": "We are working on this section, and it will be available soon.",
-    "button": "Go back to the homepage"
+    "button": "Go back to the homepage",
+    "lastUpdated": "Last updated"
   },
   "phantomWalletRequired": "Phantom wallet required!",
   "phantomConnected": "Connected Phantom",
@@ -160,5 +161,14 @@
   "addParticipant": "Add Participant",
   "enterUsername": "Enter username",
   "add": "Add",
-  "image": "Image"
+  "image": "Image",
+  "footer": {
+    "companyName": "SolaCoin",
+    "companySlogan": "The digital currency of the future",
+    "about": "About Us",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "support": "Support",
+    "rightsReserved": "All rights reserved"
+  }
 }

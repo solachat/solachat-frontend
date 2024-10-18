@@ -11,13 +11,15 @@ import MyMessages from './components/messages/MyMessages';
 import NotFoundPage from './pages/NotFoundPage';
 import UnderConstruction from './pages/UnderConstruction';
 import PrivateRoute from './api/PrivateRoute';
-import MainPage from './pages/MainPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import HomePage from './pages/HomePage';
+import AccessDeniedPage from './pages/AccessDeniedPage';
 
 const underDevelopmentRoutes = [
     '/connect/telegram',
     '/connect/google',
+    '/operations'
 ];
 
 const App: React.FC = () => {
@@ -34,14 +36,17 @@ const App: React.FC = () => {
                         <Route path="/contacts" element={<ContactsPage />} />
                         <Route path="/chat" element={<PrivateRoute element={<MyMessages />} />} />
                         <Route path="/chatOrLogin" element={
-                            <PrivateRoute element={<Navigate to={localStorage.getItem('jwt') ? '/chat' : '/login'} />} />
+                            localStorage.getItem('token') ? <Navigate to="/chat" /> : <Navigate to="/access-denied" />
                         } />
+
                         {underDevelopmentRoutes.map((route) => (
-                            <Route path={route} element={<Navigate to="/new-feature" />} key={route} />
+                            <Route path={route} element={<UnderConstruction />} key={route} />
                         ))}
+
+                        <Route path="/access-denied" element={<AccessDeniedPage />} />
                         <Route path="*" element={<NotFoundPage />} />
                         <Route path="/new-feature" element={<UnderConstruction />} />
-                        <Route path="/main" element={<MainPage />} />
+                        <Route path="/main" element={<HomePage />} />
                     </Routes>
                 </Router>
                 <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} />
