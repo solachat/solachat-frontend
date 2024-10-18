@@ -1,5 +1,5 @@
 {
-  "name": "pepe2025",
+  "name": "frontend-solacoin",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -83,7 +83,12 @@
     "@types/draft-js": "^0.11.18",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/jwt-decode": "^2.2.1",
-    "framer-motion": "^11.5.4",
-    "lodash": "^4.17.21"
+    "@types/lodash": "^4.17.10",
+    "@types/react-virtualized": "^9.21.30",
+    "@types/react-window": "^1.8.8",
+    "framer-motion": "^11.9.0",
+    "lodash": "^4.17.21",
+    "react-virtualized": "^9.22.5",
+    "react-window": "^1.8.10"
   }
 }
