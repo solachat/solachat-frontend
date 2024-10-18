@@ -5,12 +5,12 @@ import MessagesPane from './MessagesPane';
 import ChatsPane from './ChatsPane';
 import { ChatProps, UserProps } from '../core/types';
 import { fetchChatsFromServer } from '../../api/api';
-import {CircularProgress, Typography} from '@mui/joy';
+import { CircularProgress, Typography } from '@mui/joy';
 import { useTranslation } from 'react-i18next';
 import { JwtPayload } from 'jsonwebtoken';
 import { jwtDecode } from 'jwt-decode';
 import { useWebSocket } from '../../api/useWebSocket';
-import {Helmet} from "react-helmet-async";
+import PageTitle from './PageTitle';
 import Box from "@mui/joy/Box";
 
 export default function MyProfile() {
@@ -34,8 +34,8 @@ export default function MyProfile() {
             return {
                 id: decodedToken.id,
                 username: decodedToken.username,
-                realname: 'User Realname',
-                avatar: '',
+                realname: decodedToken.realname,
+                avatar: decodedToken.avatar,
                 online: true,
                 role: 'member',
             };
@@ -156,9 +156,16 @@ export default function MyProfile() {
 
     return (
         <>
-            <Helmet>
-                <title>Messenger</title>
-            </Helmet>
+            <PageTitle
+                title={selectedChat
+                    ? (selectedChat.isGroup
+                            ? selectedChat.name ?? 'Unnamed Group'
+                            : selectedChat.users.find(user => user.id !== currentUser?.id)?.realname ?? 'Unnamed User'
+                    )
+                    : 'Messenger'}
+            />
+
+
             <Sheet
                 sx={{
                     flex: 1,
@@ -204,7 +211,7 @@ export default function MyProfile() {
                                     members={selectedChat?.users || []}
                                 />
                             ) : (
-                                <MessagesPane chat={null}/>
+                                <MessagesPane chat={null} />
                             )}
                         </Sheet>
                     </>

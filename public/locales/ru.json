@@ -148,7 +148,8 @@
     "title": "Страница в разработке",
     "subtitle": "Эта страница еще не готова",
     "description": "Мы работаем над этим разделом, и он скоро будет доступен.",
-    "button": "Вернуться на главную"
+    "button": "Вернуться на главную",
+    "lastUpdated": "Последнее обновление"
   },
   "phantomWalletRequired": "Подключите Phantom Wallet!",
   "phantomConnected": "Подключен Phantom",
@@ -187,6 +188,7 @@
   "Create a new user": "Создать нового пользователя",
   "Owner": "Владелец",
   "member": "Участник",
+  "Member": "Участник",
   "Admin": "Администратор",
   "Notifications": "Уведомления",
   "Saved Messages": "Сообщения в избранном",
@@ -213,5 +215,15 @@
   "online": "в сети",
   "addParticipant": "Добавить участника",
   "enterUsername": "Введите имя пользователя",
-  "add": "Добавить"
+  "add": "Добавить",
+  "image": "Фотография",
+  "footer": {
+    "companyName": "SolaCoin",
+    "companySlogan": "Цифровая валюта будущего",
+    "about": "О нас",
+    "terms": "Условия использования",
+    "privacy": "Политика конфиденциальности",
+    "support": "Поддержка",
+    "rightsReserved": "Все права защищены"
+  }
 }

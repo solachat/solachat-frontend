@@ -35,7 +35,7 @@ export default function MessagesMenu({ chatId, token, onDeleteChat }: MessagesMe
             await deleteChat(chatId, token);
             onDeleteChat();
             // Можно убрать window.location.reload, если вы не хотите перезагружать страницу
-            navigate('/');
+            window.location.reload();
         } catch (error) {
             console.error('Failed to delete chat:', error);
             toast.error('Failed to delete chat');
@@ -78,9 +78,11 @@ export default function MessagesMenu({ chatId, token, onDeleteChat }: MessagesMe
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
-                <MenuItem onClick={handleDeleteChat}>
-                    Delete Chat
-                </MenuItem>
+                {[
+                    <MenuItem key="delete-chat" onClick={handleDeleteChat}>
+                        Delete Chat
+                    </MenuItem>
+                ]}
             </Menu>
         </>
     );

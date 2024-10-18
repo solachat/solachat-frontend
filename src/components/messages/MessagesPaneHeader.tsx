@@ -10,10 +10,11 @@ import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRound
 import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
 import { UserProps } from '../core/types';
 import { toggleMessagesPane } from '../../utils/utils';
-import { useTranslation } from "react-i18next";
+import { useTranslation } from 'react-i18next';
 import MessagesMenu from './MessagesMenu';
 import GroupInfoModal from '../group/GroupInfoModal';
 import { jwtDecode } from 'jwt-decode';
+import CallModal from './CallModal';
 
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
@@ -38,10 +39,19 @@ const getMemberLabel = (count: number, locale: string = 'en') => {
     }
 };
 
-export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, groupAvatar, members = [] }: MessagesPaneHeaderProps) {
+export default function MessagesPaneHeader({
+                                               sender,
+                                               chatId,
+                                               isGroup,
+                                               chatName,
+                                               groupAvatar,
+                                               members = [],
+                                           }: MessagesPaneHeaderProps) {
     const { t, i18n } = useTranslation();
-    const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
+    const [isCallModalOpen, setIsCallModalOpen] = React.useState(false);
     const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
+    const [ws, setWs] = React.useState<WebSocket | null>(null);
 
     React.useEffect(() => {
         const token = localStorage.getItem('token');
@@ -49,9 +59,38 @@ export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, 
             const decodedToken: { id: number } = jwtDecode(token);
             setCurrentUserId(decodedToken.id);
         }
+
+        const websocket = new WebSocket('ws://localhost:4005/ws');
+        websocket.onopen = () => {
+            console.log('WebSocket connected');
+        };
+        websocket.onclose = () => {
+            console.log('WebSocket disconnected');
+        };
+        websocket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        setWs(websocket);
+
+        return () => {
+            websocket.close();
+        };
     }, []);
 
     const userToken = localStorage.getItem('token');
+    const receiverId = sender?.id;
+
+    // Функция для обработки клика
+    const handleAvatarClick = () => {
+        if (isGroup) {
+            // Открываем модалку группы, если это групповой чат
+            setIsGroupModalOpen(true);
+        } else if (sender?.username) {
+            // Переход на страницу профиля, если это личный чат
+            window.location.href = `/account?username=${sender.username}`;
+        }
+    };
 
     return (
         <>
@@ -66,11 +105,7 @@ export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, 
                     backgroundColor: 'background.body',
                 }}
             >
-                <Stack
-                    direction="row"
-                    spacing={{ xs: 1, md: 2 }}
-                    sx={{ alignItems: 'center' }}
-                >
+                <Stack direction="row" spacing={{ xs: 1, md: 2 }} sx={{ alignItems: 'center' }}>
                     <IconButton
                         variant="plain"
                         color="neutral"
@@ -82,11 +117,15 @@ export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, 
                     >
                         <ArrowBackIosNewRoundedIcon />
                     </IconButton>
+
                     <Avatar
                         size="lg"
                         src={isGroup ? groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
                         alt={isGroup ? chatName : sender?.realname}
+                        onClick={handleAvatarClick}
+                        sx={{ cursor: 'pointer' }}
                     />
+
                     <div>
                         <Typography
                             fontWeight="lg"
@@ -102,16 +141,15 @@ export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, 
                                         sx={{
                                             borderRadius: 'sm',
                                         }}
-                                        startDecorator={
-                                            <CircleIcon sx={{ fontSize: 8 }} color="success" />
-                                        }
+                                        startDecorator={<CircleIcon sx={{ fontSize: 8 }} color="success" />}
                                         slotProps={{ root: { component: 'span' } }}
                                     >
                                         Online
                                     </Chip>
                                 ) : undefined
                             }
-                            sx={{ fontWeight: 'lg', fontSize: 'lg' }}
+                            sx={{ fontWeight: 'lg', fontSize: 'lg', cursor: 'pointer' }}
+                            onClick={handleAvatarClick}
                         >
                             {isGroup ? chatName : sender?.realname}
                         </Typography>
@@ -124,56 +162,40 @@ export default function MessagesPaneHeader({ sender, chatId, isGroup, chatName, 
                         {!isGroup && <Typography level="body-sm">{sender?.username}</Typography>}
                     </div>
                 </Stack>
-                <Stack spacing={1} direction="row" alignItems="center">
-                    <Button
-                        startDecorator={<PhoneInTalkRoundedIcon />}
-                        color="neutral"
-                        variant="outlined"
+
+                <Stack direction="row" spacing={1} alignItems="center">
+                    <IconButton
                         size="sm"
-                        sx={{
-                            display: { xs: 'none', md: 'inline-flex' },
-                        }}
+                        onClick={() => setIsCallModalOpen(true)}
                     >
-                        {t('call')}
-                    </Button>
-                    {isGroup ? (
-                        <Button
-                            color="neutral"
-                            variant="outlined"
-                            size="sm"
-                            sx={{ display: { xs: 'none', md: 'inline-flex' } }}
-                            onClick={() => setIsModalOpen(true)}
-                        >
-                            {t('Information')}
-                        </Button>
-                    ) : (
-                        <Button
-                            color="neutral"
-                            variant="outlined"
-                            size="sm"
-                            sx={{ display: { xs: 'none', md: 'inline-flex' } }}
-                            onClick={() => window.location.href = `/account?username=${sender?.username}`}
-                        >
-                            {t('viewprofile')}
-                        </Button>
-                    )}
-                    <MessagesMenu
-                        chatId={chatId}
-                        token={userToken || ''}
-                        onDeleteChat={() => console.log("Chat deleted")}
-                    />
+                        <PhoneInTalkRoundedIcon />
+                    </IconButton>
+
+                    <MessagesMenu chatId={chatId} token={userToken || ''} onDeleteChat={() => console.log('Chat deleted')} />
                 </Stack>
             </Stack>
+
             {isGroup && currentUserId !== null && (
                 <GroupInfoModal
-                    open={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
+                    open={isGroupModalOpen}
+                    onClose={() => setIsGroupModalOpen(false)}
                     groupName={chatName || 'Group'}
                     groupAvatar={groupAvatar || ''}
                     users={members}
                     currentUserId={currentUserId}
                     chatId={chatId}
                     token={userToken || ''}
+                />
+            )}
+
+            {sender && ws && (
+                <CallModal
+                    open={isCallModalOpen}  // Контролируем открытие модала звонка
+                    onClose={() => setIsCallModalOpen(false)}
+                    sender={sender}
+                    receiverId={receiverId!}
+                    isGroup={isGroup}
+                    ws={ws}
                 />
             )}
         </>

@@ -37,7 +37,7 @@ export default function HeroLeft03() {
                     </Typography>
                 </div>
             </Card>
-            <a href="https://apps.apple.com/us/app/telegram-messenger/id686449807" style={{ textDecoration: 'none' }}>
+            <a href="https://apps.apple.com/us/app/metamask-blockchain-wallet/id1438144202" style={{ textDecoration: 'none' }}>
                 <Button size="lg">{t('heroLeft07.downloadApp')}</Button>
             </a>
             <Typography

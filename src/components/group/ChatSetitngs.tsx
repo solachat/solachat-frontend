@@ -15,11 +15,9 @@ export default function ChatSettings({ chatId, currentGroupName, currentAvatar, 
     const [avatar, setAvatar] = useState<File | null>(null);
 
     const handleUpdateSettings = async () => {
-        // Проверяем, были ли изменения
         const isNameChanged = groupName.trim() !== currentGroupName.trim();
         const isAvatarChanged = avatar !== null;
 
-        // Если ничего не изменилось, просто выходим
         if (!isNameChanged && !isAvatarChanged) {
             console.log('No changes made.');
             return;
@@ -56,7 +54,7 @@ export default function ChatSettings({ chatId, currentGroupName, currentAvatar, 
                     <Avatar
                         src={avatar ? URL.createObjectURL(avatar) : currentAvatar}
                         sx={{ width: 64, height: 64, cursor: 'pointer' }}
-                        onClick={() => document.getElementById('avatar-input')?.click()} // Обработчик клика
+                        onClick={() => document.getElementById('avatar-input')?.click()}
                     />
                     <Stack sx={{ flex: 1 }}>
                         <Typography>Название группы</Typography>

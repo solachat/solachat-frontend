@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Editor, EditorState, getDefaultKeyBinding, ContentState, SelectionState } from 'draft-js';
+import { Editor, EditorState, getDefaultKeyBinding, SelectionState } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import Box from '@mui/joy/Box';
 import FormControl from '@mui/joy/FormControl';
@@ -84,6 +84,12 @@ export default function MessageInput(props: MessageInputProps) {
         if (!token) {
             console.error('Authorization token is missing');
             return;
+        }
+
+        // Проверяем, что сообщение не пустое и нет файлов
+        if (textAreaValue.trim() === '' && uploadedFiles.length === 0) {
+            console.warn('Cannot send an empty message');
+            return;  // Не отправляем пустое сообщение
         }
 
         try {
@@ -221,16 +227,21 @@ export default function MessageInput(props: MessageInputProps) {
 
                         <IconButton
                             size="sm"
-                            color="primary"
+                            color={textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 'primary' : 'neutral'}  // Изменение цвета в зависимости от состояния
                             onClick={handleClick}
                             sx={{
                                 ml: 1,
-                                opacity: textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 1 : 0,
-                                transition: 'opacity 0.1s ease',
+                                opacity: 1,  // Кнопка всегда видима
+                                transition: 'color 0.3s ease',  // Плавная анимация цвета
+                                '&:hover': {
+                                    color: textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 'primary.dark' : 'neutral.main',  // Цвет при наведении
+                                },
                             }}
                         >
                             <SendRoundedIcon />
                         </IconButton>
+
+
                     </Stack>
                 </Stack>
             </FormControl>

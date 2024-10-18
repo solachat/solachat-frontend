@@ -7,7 +7,7 @@ const WS_URL = process.env.WS_URL || 'ws://localhost:4005';
 const RECONNECT_INTERVAL = 3000;
 const HEARTBEAT_INTERVAL = 120000;
 
-export const useWebSocket = (onMessage: (message: any) => void) => {
+export const useWebSocket = (onMessage: (message: any) => void, dependencies: any[] = []) => {
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
     const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
@@ -49,7 +49,7 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
 
         ws.onopen = () => {
             console.log('WebSocket connection opened');
-            setIsConnected(true); // Фиксируем состояние соединения
+            setIsConnected(true);
 
             if (reconnectTimeout.current) {
                 clearTimeout(reconnectTimeout.current);
@@ -60,7 +60,7 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
                 heartbeatInterval.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
             }
 
-            updateStatusIfChanged(true); // Устанавливаем статус "онлайн" при подключении
+            updateStatusIfChanged(true);
         };
 
         ws.onmessage = (event) => {
@@ -73,27 +73,16 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
                     onMessage(message);
                     break;
                 case 'deleteMessage':
-                    console.log(`Message with ID ${message.messageId} deleted from chat ${message.chatId}`);
                     onMessage({
                         type: 'deleteMessage',
                         messageId: message.messageId,
                         chatId: message.chatId,
                     });
                     break;
-                case 'userAdded':
-                    toast.info(`User with ID ${message.userId} added to chat ${message.chatId}`);
-                    break;
-                case 'userRemoved':
-                    toast.info(`User with ID ${message.userId} removed from chat ${message.chatId}`);
-                    break;
-                case 'roleChange':
-                    toast.info(`User with ID ${message.userId} assigned role ${message.newRole}`);
-                    break;
                 default:
                     console.warn('Unknown message type:', message.type);
             }
         };
-
 
         ws.onerror = (error) => {
             console.error('WebSocket error:', error);
@@ -101,19 +90,18 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
 
         ws.onclose = (event) => {
             console.error('WebSocket connection closed with code', event.code, 'reason:', event.reason);
-            setIsConnected(false); // Сбрасываем статус соединения
+            setIsConnected(false);
             if (heartbeatInterval.current) {
                 clearInterval(heartbeatInterval.current);
                 heartbeatInterval.current = null;
             }
 
-            updateStatusIfChanged(false); // Устанавливаем статус "оффлайн" при отключении
+            updateStatusIfChanged(false);
             wsRef.current = null;
             handleReconnection();
         };
     }, [onMessage, sendHeartbeat, updateStatusIfChanged, isConnected]);
 
-    // Попытка переподключения при разрыве соединения
     const handleReconnection = useCallback(() => {
         if (!reconnectTimeout.current) {
             reconnectTimeout.current = setTimeout(() => {
@@ -123,7 +111,6 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
         }
     }, [connectWebSocket]);
 
-    // Инициализация WebSocket при наличии токена
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -137,12 +124,12 @@ export const useWebSocket = (onMessage: (message: any) => void) => {
         }
     }, []);
 
-    // Подключение WebSocket при наличии пользователя
     useEffect(() => {
         if (currentUserId !== null && !isConnected) {
             connectWebSocket();
         }
-    }, [currentUserId, connectWebSocket, isConnected]);
+    }, [currentUserId, connectWebSocket, isConnected, ...dependencies]);  // Зависимости добавляются здесь
 
     return wsRef.current;
 };
+

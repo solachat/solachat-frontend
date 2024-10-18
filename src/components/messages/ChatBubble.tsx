@@ -6,12 +6,17 @@ import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
 import DownloadIcon from '@mui/icons-material/Download';
-import { MessageProps } from '../core/types';
-import { IconButton } from '@mui/joy';
-import ContextMenu from './ContextMenu';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import { IconButton, Slider } from '@mui/joy';
 import { useTranslation } from 'react-i18next';
-import { jwtDecode, JwtPayload } from 'jwt-decode';
-import {deleteMessage} from "../../api/api";
+import { deleteMessage } from '../../api/api';
+import ContextMenu from './ContextMenu';
+import { MessageProps } from '../core/types';
+import {jwtDecode} from "jwt-decode";
+import {JwtPayload} from "jsonwebtoken";
+
+type DecodedToken = JwtPayload & { id?: number };
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
@@ -23,8 +28,6 @@ type ChatBubbleProps = MessageProps & {
     };
     isGroupChat: boolean;
 };
-
-type DecodedToken = JwtPayload & { id?: number };
 
 const isImageFile = (fileName: string) => {
     const imageExtensions = ['jpg', 'jpeg', 'png', 'gif'];
@@ -38,17 +41,24 @@ const isVideoFile = (fileName: string) => {
     return videoExtensions.includes(fileExtension || '');
 };
 
+const isAudioFile = (fileName: string) => {
+    const audioExtensions = ['mp3'];
+    const fileExtension = fileName.split('.').pop()?.toLowerCase();
+    return audioExtensions.includes(fileExtension || '');
+};
+
 export default function ChatBubble(props: ChatBubbleProps) {
     const { t } = useTranslation();
     const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat } = props;
     const isSent = variant === 'sent';
-    const formattedTime = new Date(createdAt).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    const formattedTime = new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const [isImageOpen, setIsImageOpen] = useState(false);
     const [isVideoOpen, setIsVideoOpen] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentAudioTime, setCurrentAudioTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const [volume, setVolume] = useState(1);
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [videoSrc, setVideoSrc] = useState<string | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ mouseX: number; mouseY: number } | null>(null);
@@ -58,13 +68,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
 
     const messageVideoRef = useRef<HTMLVideoElement>(null);
     const modalVideoRef = useRef<HTMLVideoElement>(null);
-
-    const token = localStorage.getItem('token');
-    let currentUserId: number | null = null;
-    if (token) {
-        const decodedToken: DecodedToken = jwtDecode(token);
-        currentUserId = decodedToken.id || 0;
-    }
+    const audioRef = useRef<HTMLAudioElement>(null);
 
     const getAttachmentUrl = () => {
         if (!attachment) return '';
@@ -74,6 +78,32 @@ export default function ChatBubble(props: ChatBubbleProps) {
 
     const isImage = isImageFile(attachment?.fileName || '');
     const isVideo = isVideoFile(attachment?.fileName || '');
+    const isAudio = isAudioFile(attachment?.fileName || '');
+
+    const handlePlayPause = () => {
+        if (!audioRef.current) return;
+        if (isPlaying) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.play();
+        }
+        setIsPlaying(!isPlaying);
+    };
+
+    const handleAudioTimeUpdate = () => {
+        if (audioRef.current) {
+            setCurrentAudioTime(audioRef.current.currentTime);
+            setDuration(audioRef.current.duration || 0);
+        }
+    };
+
+    const handleVolumeChange = (event: Event, newValue: number | number[]) => {
+        const newVolume = Array.isArray(newValue) ? newValue[0] : newValue;
+        setVolume(newVolume);
+        if (audioRef.current) {
+            audioRef.current.volume = newVolume;
+        }
+    };
 
     const handleImageClick = () => {
         setImageSrc(getAttachmentUrl());
@@ -97,6 +127,15 @@ export default function ChatBubble(props: ChatBubbleProps) {
             setImageSrc(null);
             setVideoSrc(null);
         }, 300);
+    };
+
+    const syncVideoWithModal = () => {
+        if (modalVideoRef.current) {
+            modalVideoRef.current.currentTime = currentVideoTime;
+            modalVideoRef.current.volume = currentVolume;
+            modalVideoRef.current.muted = isMuted;
+            modalVideoRef.current.play();
+        }
     };
 
     const handleCopy = () => {
@@ -129,30 +168,35 @@ export default function ChatBubble(props: ChatBubbleProps) {
         }
     };
 
-
-    const syncVideoWithModal = () => {
-        if (modalVideoRef.current) {
-            modalVideoRef.current.currentTime = currentVideoTime;
-            modalVideoRef.current.volume = currentVolume;
-            modalVideoRef.current.muted = isMuted;
-            modalVideoRef.current.play();
-        }
-    };
-
     const updateVideoState = (event: React.SyntheticEvent<HTMLVideoElement, Event>) => {
         const video = event.currentTarget;
-        setCurrentVideoTime(video.currentTime);
-        setCurrentVolume(video.volume);
-        setIsMuted(video.muted);
+        if (video.currentTime !== currentVideoTime) {
+            setCurrentVideoTime(video.currentTime);
+        }
+        if (video.volume !== currentVolume) {
+            setCurrentVolume(video.volume);
+        }
+        if (video.muted !== isMuted) {
+            setIsMuted(video.muted);
+        }
     };
 
     useEffect(() => {
         if (isVideoOpen && modalVideoRef.current) {
-            modalVideoRef.current.currentTime = currentVideoTime;
-            modalVideoRef.current.volume = currentVolume;
-            modalVideoRef.current.muted = isMuted;
+            modalVideoRef.current.addEventListener('loadedmetadata', syncVideoWithModal);
+            return () => {
+                modalVideoRef.current?.removeEventListener('loadedmetadata', syncVideoWithModal);
+            };
         }
-    }, [isVideoOpen, currentVideoTime, currentVolume, isMuted]);
+    }, [isVideoOpen]);
+
+    const token = localStorage.getItem('token');
+    let currentUserId: number | null = null;
+
+    if (token) {
+        const decodedToken: DecodedToken = jwtDecode(token);
+        currentUserId = decodedToken.id || 0;
+    }
 
     return (
         <Box
@@ -162,7 +206,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 justifyContent: isSent ? 'flex-end' : 'flex-start',
                 mb: { xs: 1, sm: 1 },
                 px: 1,
-                width: '45%',
+                width: { xs: '90%', sm: '70%', md: '55%' },
                 flexDirection: 'column',
                 alignItems: isSent ? 'flex-end' : 'flex-start',
             }}
@@ -185,12 +229,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 sx={{
                     maxWidth: isEdited ? '75%' : '70%',
                     minWidth: 'fit-content',
-                    padding: !isImage && !isVideo ? { xs: '6px 10px', sm: '8px 14px' } : 0,
-                    borderRadius: '18px',
+                    padding: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 10px' } : 0,
+                    borderRadius: '12px',
                     borderBottomLeftRadius: isSent ? '18px' : '0px',
                     borderBottomRightRadius: isSent ? '0px' : '18px',
-                    background: (isImage || isVideo) && !content ? 'transparent' : (isSent ? 'linear-gradient(135deg, #76baff, #4778e2)' : 'var(--joy-palette-background-level2)'),
-                    boxShadow: isImage || isVideo ? 'none' : '0 2px 10px rgba(0, 0, 0, 0.15)',
+                    background: (isImage || isVideo || isAudio) && !content ? 'transparent' : (isSent ? 'linear-gradient(135deg, #76baff, #4778e2)' : 'var(--joy-palette-background-level2)'),
                     wordWrap: 'break-word',
                     overflowWrap: 'break-word',
                     whiteSpace: 'pre-wrap',
@@ -198,12 +241,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     fontSize: '14px',
                     lineHeight: '18px',
                     '@media (max-width: 600px)': {
-                        maxWidth: '90%',
+                        maxWidth: '85%',
                     },
-                    position: 'relative',
                 }}
             >
-                {/* Отображение видеофайлов без border-radius для сообщения */}
+
                 {isVideo && (
                     <Box
                         sx={{
@@ -215,7 +257,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             overflow: 'hidden',
                             mb: content ? 2 : 0,
                         }}
-                        onClick={handleVideoClick}
                     >
                         <video
                             ref={messageVideoRef}
@@ -231,6 +272,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             onTimeUpdate={updateVideoState}
                             onVolumeChange={updateVideoState}
                         />
+
                     </Box>
                 )}
 
@@ -261,14 +303,50 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </Box>
                 )}
 
+                {isAudio && !isVideo && (
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={handlePlayPause}>
+                            {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+                        </IconButton>
+                        <audio
+                            ref={audioRef}
+                            src={getAttachmentUrl()}
+                            onTimeUpdate={handleAudioTimeUpdate}
+                            hidden
+                        />
+                        <Slider
+                            value={currentAudioTime}
+                            max={duration}
+                            step={0.1}
+                            onChange={(event, newValue) => {
+                                if (audioRef.current) {
+                                    audioRef.current.currentTime = newValue as number;
+                                }
+                                setCurrentAudioTime(newValue as number);
+                            }}
+                            sx={{ flexGrow: 1, mx: 2 }}
+                        />
+                        <Typography>{Math.floor(currentAudioTime)}/{Math.floor(duration)}s</Typography>
+                        <Box sx={{ ml: 2, width: '100px' }}>
+                            <Slider
+                                value={volume}
+                                step={0.01}
+                                min={0}
+                                max={1}
+                                onChange={handleVolumeChange}
+                            />
+                        </Box>
+                    </Box>
+                )}
+
                 {content && (
                     <Typography
                         sx={{
                             fontSize: { xs: '14px', sm: '14px' },
                             lineHeight: 1.6,
                             color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-primary)',
-                            marginLeft: isImage || isVideo ? '12px' : '0px',
-                            marginBottom: isImage || isVideo ? '8px' : '4px',
+                            marginLeft: isImage || isVideo || isAudio ? '12px' : '0px',
+                            marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',
                             textAlign: 'left',
                             transition: 'color 0.3s ease',
                             maxWidth: '100%',
@@ -313,7 +391,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </Typography>
                 </Stack>
 
-                {!isImage && !isVideo && attachment && (
+                {!isImage && !isVideo && !isAudio && attachment && (
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
                         <Typography sx={{ fontSize: 'sm' }}>{attachment.fileName}</Typography>
@@ -346,7 +424,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             justifyContent: 'center',
                             zIndex: 999,
                             cursor: 'pointer',
-                            transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
                         }}
                         onClick={handleClose}
                     >
@@ -357,7 +434,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 maxWidth: '100%',
                                 maxHeight: '100%',
                                 objectFit: 'contain',
-                                transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
                                 borderRadius: '12px',
                             }}
                         />
