@@ -86,9 +86,6 @@ export default function MyProfile() {
                     <LanguageSwitcher/>
                     <ColorSchemeToggle/>
                 </div>
-                <div style={{width: '270px'}}>
-                    <Sidebar/>
-                </div>
             </header>
             <Sheet
                 sx={{

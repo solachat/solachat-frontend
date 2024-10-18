@@ -11,6 +11,7 @@ import Sheet from '@mui/joy/Sheet';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
 import GroupChatModal from '../group/GroupChatModal';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 import QuestionAnswerRoundedIcon from '@mui/icons-material/QuestionAnswerRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
@@ -174,6 +175,15 @@ export default function Sidebar() {
                                 <CallRoundedIcon />
                                 <ListItemContent>
                                     <Typography level="title-sm">{t('Call')}</Typography>
+                                </ListItemContent>
+                            </ListItemButton>
+                        </ListItem>
+
+                        <ListItem>
+                            <ListItemButton>
+                                <AutoAwesomeIcon />
+                                <ListItemContent>
+                                    <Typography level="title-sm">{t('GPT')}</Typography>
                                 </ListItemContent>
                             </ListItemButton>
                         </ListItem>

@@ -13,6 +13,10 @@ import { useTranslation } from 'react-i18next';
 import { deleteMessage } from '../../api/api';
 import ContextMenu from './ContextMenu';
 import { MessageProps } from '../core/types';
+import {jwtDecode} from "jwt-decode";
+import {JwtPayload} from "jsonwebtoken";
+
+type DecodedToken = JwtPayload & { id?: number };
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
@@ -186,6 +190,14 @@ export default function ChatBubble(props: ChatBubbleProps) {
         }
     }, [isVideoOpen]);
 
+    const token = localStorage.getItem('token');
+    let currentUserId: number | null = null;
+
+    if (token) {
+        const decodedToken: DecodedToken = jwtDecode(token);
+        currentUserId = decodedToken.id || 0;
+    }
+
     return (
         <Box
             component="div"
@@ -233,6 +245,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     },
                 }}
             >
+
                 {isVideo && (
                     <Box
                         sx={{
@@ -471,7 +484,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 onCopy={handleCopy}
                 onForward={handleForward}
                 onDelete={handleDelete}
-                currentUserId={0}
+                currentUserId={currentUserId ?? 0}
                 messageCreatorId={messageCreatorId}
             />
         </Box>

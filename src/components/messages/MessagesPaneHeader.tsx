@@ -122,7 +122,7 @@ export default function MessagesPaneHeader({
                         size="lg"
                         src={isGroup ? groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
                         alt={isGroup ? chatName : sender?.realname}
-                        onClick={handleAvatarClick}  // Открытие профиля/модалки группы
+                        onClick={handleAvatarClick}
                         sx={{ cursor: 'pointer' }}
                     />
 
@@ -149,7 +149,7 @@ export default function MessagesPaneHeader({
                                 ) : undefined
                             }
                             sx={{ fontWeight: 'lg', fontSize: 'lg', cursor: 'pointer' }}
-                            onClick={handleAvatarClick}  // Открытие профиля/модалки группы
+                            onClick={handleAvatarClick}
                         >
                             {isGroup ? chatName : sender?.realname}
                         </Typography>
@@ -164,10 +164,9 @@ export default function MessagesPaneHeader({
                 </Stack>
 
                 <Stack direction="row" spacing={1} alignItems="center">
-                    {/* Кнопка звонка слева от MessagesMenu */}
                     <IconButton
                         size="sm"
-                        onClick={() => setIsCallModalOpen(true)}  // Открываем модал звонка
+                        onClick={() => setIsCallModalOpen(true)}
                     >
                         <PhoneInTalkRoundedIcon />
                     </IconButton>

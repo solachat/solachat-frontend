@@ -7,11 +7,11 @@ import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
 import CircleIcon from '@mui/icons-material/Circle';
 import AvatarWithStatus from './AvatarWithStatus';
-import Avatar from '@mui/joy/Avatar'; // Импортируем компонент Avatar
 import { ChatProps, MessageProps, UserProps } from '../core/types';
 import { createPrivateChat } from '../../api/api';
 import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
+import {t} from "i18next";
 
 type ChatListItemProps = ListItemButtonProps & {
     id: string;
@@ -23,6 +23,22 @@ type ChatListItemProps = ListItemButtonProps & {
     currentUserId: number;
     chats: ChatProps[];
     isGroup?: boolean;
+};
+
+const isImage = (fileName: string) => {
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+    const fileExtension = fileName.split('.').pop()?.toLowerCase();
+    return imageExtensions.includes(fileExtension || '');
+};
+
+const isVideo = (fileName: string) => {
+    const videoExtensions = ['mp4', 'mov', 'avi', 'mkv'];
+    const fileExtension = fileName.split('.').pop()?.toLowerCase();
+    return videoExtensions.includes(fileExtension || '');
+};
+
+const fixFilePath = (filePath: string) => {
+    return filePath.replace(/\\/g, '/');
 };
 
 export default function ChatListItem(props: ChatListItemProps) {
@@ -39,14 +55,14 @@ export default function ChatListItem(props: ChatListItemProps) {
     const handleClick = async () => {
         if (existingChat) {
             setSelectedChat(existingChat);
-            navigate(`/chat/#${existingChat.id}`);
+            navigate(`/chat/#-${existingChat.id}`);
         } else if (sender) {
             const token = localStorage.getItem('token');
             const newChat = await createPrivateChat(currentUserId, sender.id, token || '');
             if (newChat) {
                 toast.success('Chat created successfully!');
                 setSelectedChat({ ...newChat, users: [sender, { id: currentUserId }] });
-                navigate(`/chat/#${newChat.id}`);
+                navigate(`/chat/#-${newChat.id}`);
             } else {
                 toast.error('Failed to create chat.');
             }
@@ -72,7 +88,8 @@ export default function ChatListItem(props: ChatListItemProps) {
                 >
                     <Stack direction="row" spacing={1.5}>
                         {isGroup ? (
-                            <Avatar
+                            <AvatarWithStatus
+                                online={sender?.online}
                                 src={existingChat?.avatar ? existingChat.avatar : sender?.avatar || 'path/to/default-group-avatar.jpg'}
                                 alt={sender?.realname}
                                 sx={{
@@ -80,7 +97,6 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     height: { xs: 32, sm: 48 },
                                 }}
                             />
-
                         ) : (
                             <AvatarWithStatus
                                 online={sender?.online}
@@ -117,7 +133,25 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         marginTop: '3px',
                                     }}
                                 >
-                                    {lastMessage.attachment ? (
+                                    {lastMessage.attachment && isImage(lastMessage.attachment.fileName) ? (
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <img
+                                                src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath)}`}
+                                                alt="attachment preview"
+                                                style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                            />
+                                            <span>{t('image')}</span>
+                                        </Box>
+                                    ) : lastMessage.attachment && isVideo(lastMessage.attachment.fileName) ? (
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <img
+                                                src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath.replace('.mp4', '-thumbnail.jpg'))}`}
+                                                alt="video preview"
+                                                style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                            />
+                                            <span>{lastMessage.attachment.fileName}</span>
+                                        </Box>
+                                    ) : lastMessage.attachment ? (
                                         <i>{lastMessage.attachment.fileName}</i>
                                     ) : (
                                         lastMessage.content

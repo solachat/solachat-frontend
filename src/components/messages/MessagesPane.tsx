@@ -52,12 +52,17 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
 
     useEffect(() => {
         if (chat) {
+            console.log(`Switched to chat with ID: ${chat.id}`);
+            console.log('Chat messages:', chat.messages);
+
             setChatMessages(chat.messages || []);
             scrollToBottom();
         } else {
+            console.log('No chat selected, clearing messages.');
             setChatMessages([]);
         }
     }, [chat]);
+
 
     useEffect(() => {
         scrollToBottom();
@@ -102,22 +107,33 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     };
 
     useWebSocket((message) => {
+        console.log('Received WebSocket message:', message);
+        console.log('Current chat ID:', chat?.id);
+
         if (message.type === 'newMessage') {
             if (message.message.chatId === chat?.id) {
+                console.log(`Adding message for current chat ID: ${chat?.id}`);
                 handleNewMessage(message.message);
             } else {
-                console.log(`Received message for chat ID ${message.message.chatId}, but current chat ID is ${chat?.id}. Ignoring.`);
+                console.log(`Message for different chat (message.chatId=${message.message.chatId}, current chat ID=${chat?.id})`);
             }
         } else if (message.type === 'editMessage') {
-            handleEditMessageInList(message.message);
+            if (message.message.chatId === chat?.id) {
+                console.log(`Editing message for current chat ID: ${chat?.id}`);
+                handleEditMessageInList(message.message);
+            } else {
+                console.log(`Ignoring editMessage for chat ID ${message.message.chatId}`);
+            }
         } else if (message.type === 'deleteMessage') {
             if (message.chatId === chat?.id) {
+                console.log(`Deleting message for current chat ID: ${chat?.id}`);
                 handleDeleteMessageInList(message.messageId);
             } else {
-                console.log(`Received delete event for chat ID ${message.chatId}, but current chat ID is ${chat?.id}. Ignoring.`);
+                console.log(`Ignoring deleteMessage for chat ID ${message.chatId}`);
             }
         }
-    });
+    }, [chat?.id, currentUserId]);
+
 
     const handleEditMessage = (messageId: number, content: string) => {
         setEditingMessageId(messageId);
