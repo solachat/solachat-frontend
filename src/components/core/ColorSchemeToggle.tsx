@@ -55,7 +55,7 @@ export function Header({ sx, ...props }: HeaderProps) {
                 <IconButton variant="soft" color="primary" size="sm">
                     <BadgeRoundedIcon />
                 </IconButton>
-                <Typography component="h1">2025</Typography>
+                <Typography component="h1">SolaCoin</Typography>
             </Box>
             <Box sx={{ gap: 2, display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
                 <ColorSchemeToggle />

@@ -19,7 +19,11 @@ import AccessDeniedPage from './pages/AccessDeniedPage';
 const underDevelopmentRoutes = [
     '/connect/telegram',
     '/connect/google',
-    '/operations'
+    '/operations',
+    '/about',
+    '/terms',
+    '/privacy',
+    '/support'
 ];
 
 const App: React.FC = () => {
