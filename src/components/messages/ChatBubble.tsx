@@ -15,6 +15,7 @@ import ContextMenu from './ContextMenu';
 import { MessageProps } from '../core/types';
 import {jwtDecode} from "jwt-decode";
 import {JwtPayload} from "jsonwebtoken";
+import CustomAudioPlayer from '../core/CustomAudioPlayer';
 
 type DecodedToken = JwtPayload & { id?: number };
 
@@ -46,6 +47,39 @@ const isAudioFile = (fileName: string) => {
     const fileExtension = fileName.split('.').pop()?.toLowerCase();
     return audioExtensions.includes(fileExtension || '');
 };
+
+const isLink = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return urlRegex.test(text);
+};
+
+const renderMessageContent = (text: string) => {
+    const parts = text.split(/(https?:\/\/[^\s]+)/g);
+    return parts.map((part, index) => {
+        if (isLink(part)) {
+            return (
+                <a
+                    href={part}
+                    key={index}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                    onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                >
+                    {part}
+                </a>
+            );
+        }
+        return <span key={index}>{part}</span>;
+    });
+};
+
+
 
 export default function ChatBubble(props: ChatBubbleProps) {
     const { t } = useTranslation();
@@ -304,39 +338,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 )}
 
                 {isAudio && !isVideo && (
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={handlePlayPause}>
-                            {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-                        </IconButton>
-                        <audio
-                            ref={audioRef}
-                            src={getAttachmentUrl()}
-                            onTimeUpdate={handleAudioTimeUpdate}
-                            hidden
-                        />
-                        <Slider
-                            value={currentAudioTime}
-                            max={duration}
-                            step={0.1}
-                            onChange={(event, newValue) => {
-                                if (audioRef.current) {
-                                    audioRef.current.currentTime = newValue as number;
-                                }
-                                setCurrentAudioTime(newValue as number);
-                            }}
-                            sx={{ flexGrow: 1, mx: 2 }}
-                        />
-                        <Typography>{Math.floor(currentAudioTime)}/{Math.floor(duration)}s</Typography>
-                        <Box sx={{ ml: 2, width: '100px' }}>
-                            <Slider
-                                value={volume}
-                                step={0.01}
-                                min={0}
-                                max={1}
-                                onChange={handleVolumeChange}
-                            />
-                        </Box>
-                    </Box>
+                    <CustomAudioPlayer audioSrc={getAttachmentUrl()} isSent={isSent} />
                 )}
 
                 {content && (
@@ -356,8 +358,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             paddingRight: isEdited ? '100px' : '40px',
                         }}
                     >
-                        {content}
+                        {renderMessageContent(content)}
                     </Typography>
+
                 )}
 
                 <Stack

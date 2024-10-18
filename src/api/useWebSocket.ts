@@ -36,7 +36,7 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
     );
 
     const connectWebSocket = useCallback(() => {
-        if (isConnected) return;
+        if (isConnected || wsRef.current) return;
 
         const token = localStorage.getItem('token');
         if (!token) {
@@ -128,7 +128,7 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
         if (currentUserId !== null && !isConnected) {
             connectWebSocket();
         }
-    }, [currentUserId, connectWebSocket, isConnected, ...dependencies]);  // Зависимости добавляются здесь
+    }, [currentUserId, connectWebSocket, isConnected, ...dependencies]);
 
     return wsRef.current;
 };

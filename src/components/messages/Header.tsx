@@ -25,17 +25,13 @@ export default function Header({ title, onSidebarToggle }: HeaderProps) {
                 p={2}
                 sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
             >
-                {/* Кнопка для открытия Sidebar на всех экранах */}
                 <IconButton onClick={onSidebarToggle}>
                     <MenuIcon />
                 </IconButton>
 
-                {/* Заголовок */}
                 <Typography component="h1" fontWeight="lg" sx={{ flexGrow: 1, textAlign: { xs: 'center', md: 'left' } }}>
                     {title}
                 </Typography>
-
-                {/* Переключатель языка и темы */}
                 <Box sx={{ display: 'flex', gap: 1 }}>
                     <LanguageSwitcher />
                     <ColorSchemeToggle />

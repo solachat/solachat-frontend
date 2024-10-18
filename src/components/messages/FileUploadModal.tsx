@@ -29,7 +29,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ onFileSelect, open, h
 
     const handleFileSelectClick = () => {
         if (selectedFile) {
-            onFileSelect(selectedFile); // Отправляем файл в родительский компонент (MessageInput)
+            onFileSelect(selectedFile);
             setSelectedFile(null);
             setPreview(null);
             handleClose();
