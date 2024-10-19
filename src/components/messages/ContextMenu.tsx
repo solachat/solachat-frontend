@@ -4,8 +4,9 @@ import MenuItem from '@mui/material/MenuItem';
 import EditIcon from '@mui/icons-material/Edit';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ForwardIcon from '@mui/icons-material/Send';
-import DeleteIcon from '@mui/icons-material/Delete'; // Импортируем иконку удаления
+import DeleteIcon from '@mui/icons-material/Delete';
 import { styled } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next'; // Импортируем хук
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
     '&:hover': {
@@ -31,7 +32,7 @@ type ContextMenuProps = {
     onEdit: () => void;
     onCopy: () => void;
     onForward: () => void;
-    onDelete: () => void; // Добавляем обработчик для удаления
+    onDelete: () => void;
     onClose: () => void;
     open: boolean;
     currentUserId: number;
@@ -49,6 +50,8 @@ export default function ContextMenu({
                                         currentUserId,
                                         messageCreatorId,
                                     }: ContextMenuProps) {
+    const { t } = useTranslation(); // Используем хук для перевода
+
     return (
         <StyledMenu
             anchorReference="anchorPosition"
@@ -60,21 +63,21 @@ export default function ContextMenu({
                 <>
                     <StyledMenuItem onClick={() => { onEdit(); onClose(); }}>
                         <EditIcon sx={{ marginRight: 1 }} />
-                        Edit
+                        {t('edit')}
                     </StyledMenuItem>
                     <StyledMenuItem onClick={() => { onDelete(); onClose(); }}>
                         <DeleteIcon sx={{ marginRight: 1 }} />
-                        Delete
+                        {t('delete')}
                     </StyledMenuItem>
                 </>
             )}
             <StyledMenuItem onClick={() => { onCopy(); onClose(); }}>
                 <ContentCopyIcon sx={{ marginRight: 1 }} />
-                Copy
+                {t('copy')}
             </StyledMenuItem>
             <StyledMenuItem onClick={() => { onForward(); onClose(); }}>
                 <ForwardIcon sx={{ marginRight: 1 }} />
-                Forward
+                {t('forward')}
             </StyledMenuItem>
         </StyledMenu>
     );

@@ -12,6 +12,7 @@ import { createPrivateChat } from '../../api/api';
 import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
 import {t} from "i18next";
+import Avatar from '@mui/joy/Avatar';
 
 type ChatListItemProps = ListItemButtonProps & {
     id: string;
@@ -55,19 +56,24 @@ export default function ChatListItem(props: ChatListItemProps) {
     const handleClick = async () => {
         if (existingChat) {
             setSelectedChat(existingChat);
-            navigate(`/chat/#-${existingChat.id}`);
+            if (isGroup) {
+                navigate(`/chat/#-${existingChat.id}`);
+            } else {
+                navigate(`/chat/#${existingChat.id}`);
+            }
         } else if (sender) {
             const token = localStorage.getItem('token');
             const newChat = await createPrivateChat(currentUserId, sender.id, token || '');
             if (newChat) {
                 toast.success('Chat created successfully!');
                 setSelectedChat({ ...newChat, users: [sender, { id: currentUserId }] });
-                navigate(`/chat/#-${newChat.id}`);
+                navigate(`/chat/#${newChat.id}`);
             } else {
                 toast.error('Failed to create chat.');
             }
         }
     };
+
 
     if (!sender && !isGroup) {
         return null;
@@ -88,10 +94,9 @@ export default function ChatListItem(props: ChatListItemProps) {
                 >
                     <Stack direction="row" spacing={1.5}>
                         {isGroup ? (
-                            <AvatarWithStatus
-                                online={sender?.online}
-                                src={existingChat?.avatar ? existingChat.avatar : sender?.avatar || 'path/to/default-group-avatar.jpg'}
-                                alt={sender?.realname}
+                            <Avatar
+                                src={existingChat?.avatar ? existingChat.avatar : 'path/to/default-group-avatar.jpg'}
+                                alt={existingChat?.name || 'Group Chat'}
                                 sx={{
                                     width: { xs: 32, sm: 48 },
                                     height: { xs: 32, sm: 48 },
@@ -129,8 +134,11 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         WebkitBoxOrient: 'vertical',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
                                         color: 'text.secondary',
                                         marginTop: '3px',
+                                        maxWidth: '300px',
+                                        width: '100%'
                                     }}
                                 >
                                     {lastMessage.attachment && isImage(lastMessage.attachment.fileName) ? (

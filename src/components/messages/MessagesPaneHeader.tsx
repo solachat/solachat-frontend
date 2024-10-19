@@ -1,10 +1,9 @@
 import * as React from 'react';
 import Avatar from '@mui/joy/Avatar';
-import Button from '@mui/joy/Button';
-import Chip from '@mui/joy/Chip';
 import IconButton from '@mui/joy/IconButton';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
+import Chip from '@mui/joy/Chip';
 import CircleIcon from '@mui/icons-material/Circle';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
@@ -13,8 +12,8 @@ import { toggleMessagesPane } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import MessagesMenu from './MessagesMenu';
 import GroupInfoModal from '../group/GroupInfoModal';
-import { jwtDecode } from 'jwt-decode';
 import CallModal from './CallModal';
+import {jwtDecode} from 'jwt-decode';
 
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
@@ -25,20 +24,6 @@ type MessagesPaneHeaderProps = {
     members?: UserProps[];
 };
 
-const getMemberLabel = (count: number, locale: string = 'en') => {
-    if (locale === 'ru') {
-        if (count % 10 === 1 && count % 100 !== 11) {
-            return 'участник';
-        } else if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) {
-            return 'участника';
-        } else {
-            return 'участников';
-        }
-    } else {
-        return count === 1 ? 'member' : 'members';
-    }
-};
-
 export default function MessagesPaneHeader({
                                                sender,
                                                chatId,
@@ -47,7 +32,7 @@ export default function MessagesPaneHeader({
                                                groupAvatar,
                                                members = [],
                                            }: MessagesPaneHeaderProps) {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
     const [isCallModalOpen, setIsCallModalOpen] = React.useState(false);
     const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
@@ -61,38 +46,29 @@ export default function MessagesPaneHeader({
         }
 
         const websocket = new WebSocket('ws://localhost:4005/ws');
-        websocket.onopen = () => {
-            console.log('WebSocket connected');
-        };
-        websocket.onclose = () => {
-            console.log('WebSocket disconnected');
-        };
-        websocket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
+        websocket.onopen = () => console.log('WebSocket connected');
+        websocket.onclose = () => console.log('WebSocket disconnected');
+        websocket.onerror = (error) => console.error('WebSocket error:', error);
 
         setWs(websocket);
 
-        return () => {
-            websocket.close();
-        };
+        return () => websocket.close();
     }, []);
 
-    const userToken = localStorage.getItem('token');
-    const receiverId = sender?.id;
 
-    // Функция для обработки клика
+    const receiverId = !isGroup && sender && currentUserId !== null && sender.id !== currentUserId
+        ? sender.id
+        : null;
+
     const handleAvatarClick = () => {
         if (isGroup) {
-            // Открываем модалку группы, если это групповой чат
             setIsGroupModalOpen(true);
         } else if (sender?.username) {
-            // Переход на страницу профиля, если это личный чат
             window.location.href = `/account?username=${sender.username}`;
         }
     };
 
-    return (
+    return sender ? (
         <>
             <Stack
                 direction="row"
@@ -113,7 +89,7 @@ export default function MessagesPaneHeader({
                         sx={{
                             display: { xs: 'inline-flex', sm: 'none' },
                         }}
-                        onClick={() => toggleMessagesPane()}
+                        onClick={toggleMessagesPane}
                     >
                         <ArrowBackIosNewRoundedIcon />
                     </IconButton>
@@ -138,11 +114,8 @@ export default function MessagesPaneHeader({
                                         variant="outlined"
                                         size="sm"
                                         color="neutral"
-                                        sx={{
-                                            borderRadius: 'sm',
-                                        }}
+                                        sx={{ borderRadius: 'sm' }}
                                         startDecorator={<CircleIcon sx={{ fontSize: 8 }} color="success" />}
-                                        slotProps={{ root: { component: 'span' } }}
                                     >
                                         Online
                                     </Chip>
@@ -156,7 +129,7 @@ export default function MessagesPaneHeader({
 
                         {isGroup && (
                             <Typography level="body-sm">
-                                {members.length} {getMemberLabel(members.length, i18n.language)}
+                                {members.length} {members.length === 1 ? 'member' : 'members'}
                             </Typography>
                         )}
                         {!isGroup && <Typography level="body-sm">{sender?.username}</Typography>}
@@ -164,14 +137,13 @@ export default function MessagesPaneHeader({
                 </Stack>
 
                 <Stack direction="row" spacing={1} alignItems="center">
-                    <IconButton
-                        size="sm"
-                        onClick={() => setIsCallModalOpen(true)}
-                    >
-                        <PhoneInTalkRoundedIcon />
-                    </IconButton>
+                    {receiverId && (
+                        <IconButton size="sm" onClick={() => setIsCallModalOpen(true)}>
+                            <PhoneInTalkRoundedIcon />
+                        </IconButton>
+                    )}
 
-                    <MessagesMenu chatId={chatId} token={userToken || ''} onDeleteChat={() => console.log('Chat deleted')} />
+                    <MessagesMenu chatId={chatId} token={localStorage.getItem('token') || ''} onDeleteChat={() => console.log('Chat deleted')} />
                 </Stack>
             </Stack>
 
@@ -184,20 +156,21 @@ export default function MessagesPaneHeader({
                     users={members}
                     currentUserId={currentUserId}
                     chatId={chatId}
-                    token={userToken || ''}
+                    token={localStorage.getItem('token') || ''}
                 />
             )}
 
-            {sender && ws && (
+            {sender && ws && receiverId && (
                 <CallModal
-                    open={isCallModalOpen}  // Контролируем открытие модала звонка
+                    open={isCallModalOpen}
                     onClose={() => setIsCallModalOpen(false)}
                     sender={sender}
-                    receiverId={receiverId!}
+                    receiverId={receiverId}
                     isGroup={isGroup}
                     ws={ws}
+                    currentUserId={currentUserId}
                 />
             )}
         </>
-    );
+    ) : null;
 }

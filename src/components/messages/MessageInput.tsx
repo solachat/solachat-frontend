@@ -148,12 +148,11 @@ export default function MessageInput(props: MessageInputProps) {
                             justifyContent="space-between"
                             sx={{
                                 width: '100%',
-                                height: '40px',
+                                height: 'auto',
                                 padding: '8px',
                                 borderRadius: '4px',
                                 marginBottom: '8px',
                                 mr: '1px',
-                                overflow: 'hidden',
                             }}
                         >
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -165,15 +164,26 @@ export default function MessageInput(props: MessageInputProps) {
                                         fontSize: '1.50rem',
                                     }}
                                 />
-                                <Typography>
-                                    Редактирование <br /> {editingMessage.content}
-                                </Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    <Typography>{t('Editing')}</Typography>
+                                    <Typography
+                                        sx={{
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            maxWidth: '1000px',
+                                        }}
+                                    >
+                                        {editingMessage.content}
+                                    </Typography>
+                                </Box>
                             </Box>
                             <IconButton size="sm" onClick={() => setEditingMessage(null)}>
                                 <CloseIcon />
                             </IconButton>
                         </Stack>
                     )}
+
 
                     <Stack
                         direction="row"

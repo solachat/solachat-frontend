@@ -14,7 +14,6 @@ export const searchUsers = async (searchTerm: string) => {
     }
 };
 
-
 export const createPrivateChat = async (currentUserId: number, userId: number, token: string) => {
     try {
         console.log("Creating chat between:", currentUserId, "and", userId);
@@ -336,92 +335,43 @@ export const deleteMessage = async (messageId: number) => {
     }
 };
 
-export const initiateCall = async (fromUserId: number, toUserId: number, token: string) => {
+export const initiateCall = async (fromUserId: number | null, toUserId: number | null) => {
     try {
-        const response = await axios.post(
-            `${API_URL}/api/calls/initiate`,
-            {
-                fromUserId,
-                toUserId,
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-        console.log('Call initiated successfully:', response.data);
+        const response = await axios.post(`${API_URL}/api/calls/initiate`, {
+            fromUserId,
+            toUserId,
+        });
         return response.data;
     } catch (error) {
         console.error('Error initiating call:', error);
-        toast.error('Failed to initiate call');
-        throw new Error('Could not initiate call');
+        throw error;
     }
 };
 
-export const answerCall = async (callId: number, userId: number, token: string) => {
+export const endCall = async (fromUserId: number | null, toUserId: number | null) => {
     try {
-        const response = await axios.post(
-            `${API_URL}/api/calls/answer`,
-            {
-                callId,
-                userId,
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-        console.log('Call answered successfully:', response.data);
+        const response = await axios.post(`${API_URL}/api/calls/reject`, {
+            fromUserId,
+            toUserId,
+        });
         return response.data;
     } catch (error) {
-        console.error('Error answering call:', error);
-        toast.error('Failed to answer call');
-        throw new Error('Could not answer call');
+        console.error('Error cancelling call:', error);
+        throw error;
     }
 };
 
-export const rejectCall = async (callId: number, userId: number, token: string) => {
+// Принятие звонка
+export const acceptCall = async (fromUserId: number | null, toUserId: number | null) => {
     try {
-        const response = await axios.post(
-            `${API_URL}/api/calls/reject`,
-            {
-                callId,
-                userId,
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-        console.log('Call rejected successfully:', response.data);
+        const response = await axios.post(`${API_URL}/api/calls/answer`, {
+            fromUserId,
+            toUserId,
+        });
         return response.data;
     } catch (error) {
-        console.error('Error rejecting call:', error);
-        toast.error('Failed to reject call');
-        throw new Error('Could not reject call');
-    }
-};
-
-export const endCall = async (callId: number, token: string) => {
-    try {
-        const response = await axios.post(
-            `${API_URL}/api/calls/end`,
-            { callId },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-        console.log('Call ended successfully:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error ending call:', error);
-        toast.error('Failed to end call');
-        throw new Error('Could not end call');
+        console.error('Error accepting call:', error);
+        throw error;
     }
 };
 
@@ -447,11 +397,3 @@ export const initiateGroupCall = async (fromUserId: number, participantUserIds: 
         throw new Error('Could not initiate group call');
     }
 };
-
-
-//
-// console.log('Отправляемые данные:', {
-//     groupName,
-//     avatar,
-//     selectedUsers: selectedUserIds,
-// });

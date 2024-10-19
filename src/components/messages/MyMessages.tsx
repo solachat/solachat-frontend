@@ -146,8 +146,7 @@ export default function MyProfile() {
                             setError('Chat not found by URL');
                         }
                     } else {
-                        setSelectedChat(fetchedChats[0]);
-                        navigate(`/chat/#-${fetchedChats[0].id}`);
+                        console.log('No chat selected by default, and no changes to URL.');
                     }
                 } else {
                     setChats([]);
@@ -162,6 +161,8 @@ export default function MyProfile() {
 
         loadChats();
     }, [currentUser, searchParams, navigate]);
+
+
 
     return (
         <>

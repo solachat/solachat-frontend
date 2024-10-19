@@ -122,17 +122,19 @@ export default function ChatsPane(props: ChatsPaneProps) {
 
                     {searchResults.length > 0 ? (
                         <List>
-                            {searchResults.map((user) => (
-                                <ChatListItem
-                                    key={user.id.toString()}
-                                    id={user.id.toString()}
-                                    sender={user}
-                                    messages={[]}
-                                    setSelectedChat={setSelectedChat}
-                                    currentUserId={currentUser.id}
-                                    chats={chats}
-                                />
-                            ))}
+                            {searchResults
+                                .filter((user) => user.id !== currentUser.id)  // Фильтрация текущего пользователя
+                                .map((user) => (
+                                    <ChatListItem
+                                        key={user.id.toString()}
+                                        id={user.id.toString()}
+                                        sender={user}
+                                        messages={[]}
+                                        setSelectedChat={setSelectedChat}
+                                        currentUserId={currentUser.id}
+                                        chats={chats}
+                                    />
+                                ))}
                         </List>
                     ) : (
                         <>

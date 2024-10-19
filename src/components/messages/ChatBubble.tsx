@@ -351,8 +351,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',
                             textAlign: 'left',
                             transition: 'color 0.3s ease',
-                            maxWidth: '100%',
+                            maxWidth: '480px',
                             wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
                             whiteSpace: 'pre-wrap',
                             display: 'inline-block',
                             paddingRight: isEdited ? '100px' : '40px',
@@ -360,8 +361,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     >
                         {renderMessageContent(content)}
                     </Typography>
-
                 )}
+
 
                 <Stack
                     direction="row"

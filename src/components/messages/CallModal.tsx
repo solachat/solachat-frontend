@@ -11,20 +11,21 @@ type CallModalProps = {
     open: boolean;
     onClose: () => void;
     sender: UserProps;
-    receiverId: number;
+    receiverId: number | null;
     isGroup?: boolean;
-    ws: WebSocket | null;
+    currentUserId: number | null;
+    ws: WebSocket | null; // Добавляем WebSocket в пропсы
 };
 
-export default function CallModal({ open, onClose, sender, receiverId, isGroup, ws }: CallModalProps) {
-    const [isWaiting, setIsWaiting] = useState(false); // Ожидание ответа
-    const [isCallActive, setIsCallActive] = useState(false); // Статус активного звонка
-    const ringToneRef = useRef<HTMLAudioElement | null>(null); // Ссылка на аудиофайл звонка
+export default function CallModal({ open, onClose, sender, receiverId, isGroup, currentUserId, ws }: CallModalProps) {
+    const [isWaiting, setIsWaiting] = useState(false);
+    const [isCallActive, setIsCallActive] = useState(false);
+    const ringToneRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
         ringToneRef.current = new Audio('/sounds/ringtone.mp3');
-        ringToneRef.current.loop = true; // Звук будет повторяться
-        ringToneRef.current.volume = 0.2; // Устанавливаем громкость звука на 20%
+        ringToneRef.current.loop = true;
+        ringToneRef.current.volume = 0.2;
 
         return () => {
             ringToneRef.current?.pause();
@@ -32,56 +33,55 @@ export default function CallModal({ open, onClose, sender, receiverId, isGroup, 
         };
     }, []);
 
-    const handleCallClick = () => {
+    const handleCallClick = async () => {
         if (ws && ws.readyState === WebSocket.OPEN) {
             const callMessage = {
                 type: 'callOffer',
-                fromUserId: sender.id,
+                fromUserId: currentUserId,
                 toUserId: receiverId,
                 isGroupCall: !!isGroup,
             };
+
+            console.log('Call message:', callMessage);
             ws.send(JSON.stringify(callMessage));
-            console.log('Call offer sent:', callMessage);
             setIsWaiting(true);
-            ringToneRef.current?.play(); // Воспроизводим звук звонка
+            ringToneRef.current?.play();
         } else {
             console.error('WebSocket connection is not open.');
         }
     };
 
-    const handleEndCall = () => {
-        // Логика завершения звонка
+    const handleEndCall = async () => {
         if (ws && ws.readyState === WebSocket.OPEN) {
             const cancelMessage = {
                 type: 'callCancel',
-                fromUserId: sender.id,
+                fromUserId: currentUserId,
                 toUserId: receiverId,
             };
             ws.send(JSON.stringify(cancelMessage));
             console.log('Call cancelled:', cancelMessage);
         }
+
         setIsCallActive(false);
         setIsWaiting(false);
-        ringToneRef.current?.pause(); // Останавливаем звук звонка
-        onClose(); // Закрываем модалку
-    };
-
-    const handleAcceptCall = () => {
-        setIsCallActive(true);
-        setIsWaiting(false);
-        ringToneRef.current?.pause(); // Останавливаем звук, если звонок принят
+        ringToneRef.current?.pause();
+        onClose();
     };
 
     useEffect(() => {
         if (ws) {
             ws.onmessage = (event) => {
                 const message = JSON.parse(event.data);
-                if (message.type === 'callAccepted' && message.toUserId === sender.id) {
-                    handleAcceptCall();
+
+                if (message.type === 'callAccepted' && message.toUserId === currentUserId) {
+                    console.log('Call accepted:', message);
+                    setIsCallActive(true);
+                    setIsWaiting(false);
+                    ringToneRef.current?.pause();
                 }
             };
         }
-    }, [ws]);
+    }, [ws, currentUserId]);
 
     return (
         <Modal open={open} onClose={handleEndCall} aria-labelledby="call-modal-title">
@@ -101,8 +101,8 @@ export default function CallModal({ open, onClose, sender, receiverId, isGroup, 
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    minHeight: '300px', // Минимальная высота для вытягивания окна
-                    justifyContent: 'space-between', // Распределяем контент по вертикали
+                    minHeight: '300px',
+                    justifyContent: 'space-between',
                 }}
             >
                 <Avatar
@@ -123,7 +123,7 @@ export default function CallModal({ open, onClose, sender, receiverId, isGroup, 
                         : <>Если вы хотите начать видеозвонок,<br />нажмите на значок камеры.</>}
                 </Typography>
 
-                <Box sx={{ flexGrow: 1 }} /> {/* Для создания отступа между контентом и иконками */}
+                <Box sx={{ flexGrow: 1 }} />
 
                 {isWaiting && !isCallActive ? (
                     <Stack direction="row" spacing={4} justifyContent="center" alignItems="center" sx={{ marginBottom: 0 }}>

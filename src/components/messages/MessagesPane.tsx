@@ -33,9 +33,13 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const chatIdRef = useRef<number | null>(null);
+    const [initialLoad, setInitialLoad] = useState(true);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const scrollToBottom = (smooth: boolean = true) => {
+        const container = messagesContainerRef.current;
+        if (container) {
+            container.scrollTop = container.scrollHeight; // Прокрутка к началу
+        }
     };
 
     const handleScroll = () => {
@@ -55,8 +59,11 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     }, []);
 
     useEffect(() => {
+            scrollToBottom();
+    }, [chatMessages]);
+
+    useEffect(() => {
         if (chat) {
-            console.log(`Switching to chat ID: ${chat.id}`);
             chatIdRef.current = chat.id;
 
             setAllChatMessages((prev) => {
@@ -66,23 +73,20 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                 };
                 return updatedMessages;
             });
-            
+
             setChatMessages((prev) => {
                 const existingMessages = allChatMessages[chat.id] || chat.messages || [];
                 return [...existingMessages];
             });
 
-            scrollToBottom();
+            scrollToBottom(false);
+            setInitialLoad(false);
         } else {
             console.log('No chat selected, clearing messages.');
             setChatMessages([]);
             chatIdRef.current = null;
         }
     }, [chat]);
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [chatMessages]);
 
     useEffect(() => {
         const container = messagesContainerRef.current;
@@ -106,7 +110,6 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
             return prev;
         });
 
-        // Если текущее окно чата совпадает с сообщением
         if (newMessage.chatId === chatIdRef.current) {
             setChatMessages((prevMessages) => {
                 const exists = prevMessages.some((message) => message.id === newMessage.id);
@@ -208,7 +211,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                 sx={{
                     flex: 1,
                     display: 'flex',
-                    flexDirection: 'column',
+                    flexDirection: 'column-reverse',
                     px: 2,
                     py: { xs: 1, sm: 3 },
                     overflowY: 'auto',
@@ -261,7 +264,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                             color: 'text.secondary',
                         }}
                     >
-                        {t('nomessages')}
+                        {t('')}
                     </Typography>
                 )}
             </Box>
@@ -278,7 +281,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                             backgroundColor: 'primary.dark',
                         },
                     }}
-                    onClick={scrollToBottom}
+                    onClick={() => scrollToBottom()}
                 >
                     <ArrowDownwardIcon />
                 </IconButton>
