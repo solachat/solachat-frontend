@@ -44,6 +44,7 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
             return;
         }
 
+
         const ws = new WebSocket(`${WS_URL.replace(/^http/, 'ws')}/ws?token=${token}`);
         wsRef.current = ws;
 
@@ -63,6 +64,10 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
             updateStatusIfChanged(true);
         };
 
+        console.log('Connecting to WebSocket at:', WS_URL);
+        console.log('WebSocket state:', wsRef.current.readyState);
+
+
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
             console.log('Received WebSocket message:', message);
@@ -77,6 +82,30 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                         type: 'deleteMessage',
                         messageId: message.messageId,
                         chatId: message.chatId,
+                    });
+                    break;
+                case 'callOffer':
+                    console.log('Incoming call offer:', message);
+                    onMessage({
+                        type: 'callOffer',
+                        fromUserId: message.fromUserId,
+                        callId: message.callId,
+                    });
+                    break;
+                case 'callAccepted':
+                    console.log('Call accepted:', message);
+                    onMessage({
+                        type: 'callAccepted',
+                        fromUserId: message.fromUserId,
+                        toUserId: message.toUserId,
+                    });
+                    break;
+                case 'callRejected':
+                    console.log('Call rejected:', message);
+                    onMessage({
+                        type: 'callRejected',
+                        fromUserId: message.fromUserId,
+                        toUserId: message.toUserId,
                     });
                     break;
                 default:

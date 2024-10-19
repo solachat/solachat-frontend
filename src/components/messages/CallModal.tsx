@@ -6,6 +6,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import MicOffRoundedIcon from '@mui/icons-material/MicOffRounded';
 import { UserProps } from '../core/types';
 import { useEffect, useRef, useState } from "react";
+import { initiateCall, endCall } from '../../api/api';
 
 type CallModalProps = {
     open: boolean;
@@ -14,10 +15,10 @@ type CallModalProps = {
     receiverId: number | null;
     isGroup?: boolean;
     currentUserId: number | null;
-    ws: WebSocket | null; // Добавляем WebSocket в пропсы
+    ws: WebSocket | null;
 };
 
-export default function CallModal({ open, onClose, sender, receiverId, isGroup, currentUserId, ws }: CallModalProps) {
+export default function CallModal({ open, onClose, sender, receiverId, isGroup, currentUserId }: CallModalProps) {
     const [isWaiting, setIsWaiting] = useState(false);
     const [isCallActive, setIsCallActive] = useState(false);
     const ringToneRef = useRef<HTMLAudioElement | null>(null);
@@ -34,32 +35,22 @@ export default function CallModal({ open, onClose, sender, receiverId, isGroup, 
     }, []);
 
     const handleCallClick = async () => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            const callMessage = {
-                type: 'callOffer',
-                fromUserId: currentUserId,
-                toUserId: receiverId,
-                isGroupCall: !!isGroup,
-            };
-
-            console.log('Call message:', callMessage);
-            ws.send(JSON.stringify(callMessage));
+        try {
+            const response = await initiateCall(currentUserId, receiverId); // Вызываем API для звонка
+            console.log('Call initiated:', response);
             setIsWaiting(true);
             ringToneRef.current?.play();
-        } else {
-            console.error('WebSocket connection is not open.');
+        } catch (error) {
+            console.error('Failed to initiate call:', error);
         }
     };
 
     const handleEndCall = async () => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            const cancelMessage = {
-                type: 'callCancel',
-                fromUserId: currentUserId,
-                toUserId: receiverId,
-            };
-            ws.send(JSON.stringify(cancelMessage));
-            console.log('Call cancelled:', cancelMessage);
+        try {
+            const response = await endCall(currentUserId, receiverId); // Вызываем API для завершения звонка
+            console.log('Call ended:', response);
+        } catch (error) {
+            console.error('Failed to end call:', error);
         }
 
         setIsCallActive(false);
@@ -67,21 +58,6 @@ export default function CallModal({ open, onClose, sender, receiverId, isGroup, 
         ringToneRef.current?.pause();
         onClose();
     };
-
-    useEffect(() => {
-        if (ws) {
-            ws.onmessage = (event) => {
-                const message = JSON.parse(event.data);
-
-                if (message.type === 'callAccepted' && message.toUserId === currentUserId) {
-                    console.log('Call accepted:', message);
-                    setIsCallActive(true);
-                    setIsWaiting(false);
-                    ringToneRef.current?.pause();
-                }
-            };
-        }
-    }, [ws, currentUserId]);
 
     return (
         <Modal open={open} onClose={handleEndCall} aria-labelledby="call-modal-title">
