@@ -12,6 +12,7 @@ import { jwtDecode } from 'jwt-decode';
 import { useWebSocket } from '../../api/useWebSocket';
 import PageTitle from './PageTitle';
 import Box from "@mui/joy/Box";
+import { useNavigate } from 'react-router-dom';
 
 export default function MyProfile() {
     const [chats, setChats] = React.useState<ChatProps[]>([]);
@@ -21,6 +22,7 @@ export default function MyProfile() {
     const [currentUser, setCurrentUser] = React.useState<UserProps | null>(null);
     const [searchParams] = useSearchParams();
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     const getCurrentUserFromToken = (): UserProps | null => {
         const token = localStorage.getItem('token');
@@ -129,6 +131,7 @@ export default function MyProfile() {
                     setError('Authorization token is missing');
                     return;
                 }
+
                 const fetchedChats = await fetchChatsFromServer(currentUser.id, token);
                 if (Array.isArray(fetchedChats) && fetchedChats.length > 0) {
                     setChats(fetchedChats);
@@ -136,9 +139,15 @@ export default function MyProfile() {
                     const chatIdFromUrl = searchParams.get('id');
                     if (chatIdFromUrl) {
                         const chatFromUrl = fetchedChats.find(chat => chat.id === Number(chatIdFromUrl));
-                        setSelectedChat(chatFromUrl || fetchedChats[0]);
+                        if (chatFromUrl) {
+                            setSelectedChat(chatFromUrl);
+                        } else {
+                            console.error('Chat not found by URL');
+                            setError('Chat not found by URL');
+                        }
                     } else {
                         setSelectedChat(fetchedChats[0]);
+                        navigate(`/chat/#-${fetchedChats[0].id}`);
                     }
                 } else {
                     setChats([]);
@@ -152,7 +161,10 @@ export default function MyProfile() {
         };
 
         loadChats();
-    }, [currentUser, searchParams]);
+    }, [currentUser, searchParams, navigate]);
+
+
+
 
     return (
         <>
@@ -186,6 +198,7 @@ export default function MyProfile() {
                             selectedChatId={selectedChat ? String(selectedChat.id) : ''}
                             setSelectedChat={(chat: ChatProps) => {
                                 setSelectedChat(chat);
+                                navigate(`/chat/#-${chat.id}`);
                             }}
                             currentUser={currentUser}
                         />

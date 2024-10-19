@@ -43,6 +43,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
 
                 const chatsFromServer = await fetchChatsFromServer(currentUser.id, token);
                 setChats(chatsFromServer || []);
+
                 setLoadingChats(false);
             } catch (error) {
                 console.error('Error fetching chats:', error);
@@ -62,19 +63,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
         } else {
             setSearchResults([]);
         }
-    };
-
-    const handleCreateGroupClick = () => {
-        setIsGroupModalOpen(true);
-    };
-
-    const handleCloseGroupModal = () => {
-        setIsGroupModalOpen(false);
-    };
-
-    const handleCreateGroup = (groupName: string) => {
-        console.log('Group created with name:', groupName);
-        setIsGroupModalOpen(false);
     };
 
     return (

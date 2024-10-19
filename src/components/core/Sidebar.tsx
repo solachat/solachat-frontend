@@ -12,6 +12,7 @@ import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
 import GroupChatModal from '../group/GroupChatModal';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { useNavigate } from 'react-router-dom';
 
 import QuestionAnswerRoundedIcon from '@mui/icons-material/QuestionAnswerRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
@@ -62,6 +63,7 @@ export default function Sidebar() {
     const [userData, setUserData] = React.useState<{ username: string; avatar: string } | null>(null);
     const { t } = useTranslation();
     const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
+    const navigate = useNavigate();
 
     React.useEffect(() => {
         const token = localStorage.getItem('token');
@@ -82,6 +84,11 @@ export default function Sidebar() {
 
     if (!userData) {
         return null;
+    }
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/login');
     }
 
     const handleCreateGroupClick = () => {
@@ -271,6 +278,11 @@ export default function Sidebar() {
                                     <ListItem>
                                         <ListItemButton component="a" href="/register">
                                             {t('Create a new user')}
+                                        </ListItemButton>
+                                    </ListItem>
+                                    <ListItem>
+                                        <ListItemButton onClick={handleLogout}>
+                                            {t('Logout')}
                                         </ListItemButton>
                                     </ListItem>
                                 </List>

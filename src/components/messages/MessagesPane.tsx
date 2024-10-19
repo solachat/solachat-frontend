@@ -26,9 +26,11 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
     const [isFarFromBottom, setIsFarFromBottom] = useState<boolean>(false);
+    const [chatId, setChatId] = useState<number | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
+    const chatIdRef = useRef<number | null>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -52,14 +54,16 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
 
     useEffect(() => {
         if (chat) {
+            console.log(`Before setting chatId, chat: ${chat.id}, messages:`, chat.messages);
+            chatIdRef.current = chat.id;
             console.log(`Switched to chat with ID: ${chat.id}`);
-            console.log('Chat messages:', chat.messages);
 
             setChatMessages(chat.messages || []);
             scrollToBottom();
         } else {
             console.log('No chat selected, clearing messages.');
             setChatMessages([]);
+            chatIdRef.current = null;
         }
     }, [chat]);
 
@@ -107,32 +111,35 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     };
 
     useWebSocket((message) => {
+        const currentChatId = chatIdRef.current; // Используем ref для chatId
+        if (!currentChatId) return;
+
         console.log('Received WebSocket message:', message);
-        console.log('Current chat ID:', chat?.id);
+        console.log('Current chat ID:', currentChatId);
 
         if (message.type === 'newMessage') {
-            if (message.message.chatId === chat?.id) {
-                console.log(`Adding message for current chat ID: ${chat?.id}`);
+            if (message.message.chatId === currentChatId) {
+                console.log(`Adding message for current chat ID: ${currentChatId}`);
                 handleNewMessage(message.message);
             } else {
-                console.log(`Message for different chat (message.chatId=${message.message.chatId}, current chat ID=${chat?.id})`);
+                console.log(`Message for different chat (message.chatId=${message.message.chatId}, current chat ID=${currentChatId})`);
             }
         } else if (message.type === 'editMessage') {
-            if (message.message.chatId === chat?.id) {
-                console.log(`Editing message for current chat ID: ${chat?.id}`);
+            if (message.message.chatId === currentChatId) {
+                console.log(`Editing message for current chat ID: ${currentChatId}`);
                 handleEditMessageInList(message.message);
             } else {
                 console.log(`Ignoring editMessage for chat ID ${message.message.chatId}`);
             }
         } else if (message.type === 'deleteMessage') {
-            if (message.chatId === chat?.id) {
-                console.log(`Deleting message for current chat ID: ${chat?.id}`);
+            if (message.chatId === currentChatId) {
+                console.log(`Deleting message for current chat ID: ${currentChatId}`);
                 handleDeleteMessageInList(message.messageId);
             } else {
                 console.log(`Ignoring deleteMessage for chat ID ${message.chatId}`);
             }
         }
-    }, [chat?.id, currentUserId]);
+    }, [currentUserId]);
 
 
     const handleEditMessage = (messageId: number, content: string) => {
