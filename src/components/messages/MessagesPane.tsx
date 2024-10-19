@@ -27,6 +27,8 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
     const [isFarFromBottom, setIsFarFromBottom] = useState<boolean>(false);
     const [chatId, setChatId] = useState<number | null>(null);
+    const [allChatMessages, setAllChatMessages] = useState<{ [key: number]: MessageProps[] }>({});
+
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -54,11 +56,22 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
 
     useEffect(() => {
         if (chat) {
-            console.log(`Before setting chatId, chat: ${chat.id}, messages:`, chat.messages);
+            console.log(`Switching to chat ID: ${chat.id}`);
             chatIdRef.current = chat.id;
-            console.log(`Switched to chat with ID: ${chat.id}`);
 
-            setChatMessages(chat.messages || []);
+            setAllChatMessages((prev) => {
+                const updatedMessages = {
+                    ...prev,
+                    [chat.id]: prev[chat.id] ? [...prev[chat.id]] : chat.messages || [],
+                };
+                return updatedMessages;
+            });
+            
+            setChatMessages((prev) => {
+                const existingMessages = allChatMessages[chat.id] || chat.messages || [];
+                return [...existingMessages];
+            });
+
             scrollToBottom();
         } else {
             console.log('No chat selected, clearing messages.');
@@ -66,7 +79,6 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
             chatIdRef.current = null;
         }
     }, [chat]);
-
 
     useEffect(() => {
         scrollToBottom();
@@ -81,14 +93,31 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     }, []);
 
     const handleNewMessage = (newMessage: MessageProps) => {
-        setChatMessages((prevMessages) => {
-            const exists = prevMessages.some((message) => message.id === newMessage.id);
+        setAllChatMessages((prev) => {
+            const chatId = newMessage.chatId;
+            const chatMessages = prev[chatId] || [];
+            const exists = chatMessages.some((message) => message.id === newMessage.id);
             if (!exists) {
-                return [...prevMessages, newMessage];
+                return {
+                    ...prev,
+                    [chatId]: [...chatMessages, newMessage],
+                };
             }
-            return prevMessages;
+            return prev;
         });
+
+        // Если текущее окно чата совпадает с сообщением
+        if (newMessage.chatId === chatIdRef.current) {
+            setChatMessages((prevMessages) => {
+                const exists = prevMessages.some((message) => message.id === newMessage.id);
+                if (!exists) {
+                    return [...prevMessages, newMessage];
+                }
+                return prevMessages;
+            });
+        }
     };
+
 
     const handleEditMessageInList = (updatedMessage: MessageProps) => {
         setChatMessages((prevMessages) =>
@@ -111,7 +140,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     };
 
     useWebSocket((message) => {
-        const currentChatId = chatIdRef.current; // Используем ref для chatId
+        const currentChatId = chatIdRef.current;
         if (!currentChatId) return;
 
         console.log('Received WebSocket message:', message);
@@ -203,6 +232,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                                 >
                                     <ChatBubble
                                         id={message.id}
+                                        chatId={message.chatId}
                                         userId={message.userId}
                                         variant={isCurrentUser ? 'sent' : 'received'}
                                         user={message.user}
@@ -264,6 +294,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                             id: (chatMessages.length + 1).toString(),
                             user: chat?.users?.find((user) => user.id === currentUserId)!,
                             userId: currentUserId!,
+                            chatId: chat?.id!,
                             content: textAreaValue,
                             createdAt: new Date().toISOString(),
                         };

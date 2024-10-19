@@ -14,6 +14,7 @@ export type MessageProps = {
     unread?: boolean;
     user: UserProps;
     userId: number;
+    chatId: number;
     attachment?: {
         fileName: string;
         filePath: string;

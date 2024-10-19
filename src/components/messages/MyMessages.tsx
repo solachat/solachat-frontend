@@ -163,9 +163,6 @@ export default function MyProfile() {
         loadChats();
     }, [currentUser, searchParams, navigate]);
 
-
-
-
     return (
         <>
             <PageTitle
