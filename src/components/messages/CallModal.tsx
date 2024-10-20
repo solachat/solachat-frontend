@@ -41,20 +41,26 @@ export default function CallModal({
                                       incomingCall = false,
                                       ws,
                                       callId,
-                                      status
+                                      status,
                                   }: CallModalProps) {
     const [isWaiting, setIsWaiting] = useState(false);
     const [isCallActive, setIsCallActive] = useState(false);
+    const [localStream, setLocalStream] = useState<MediaStream | null>(null); // Локальный поток
+    const peerConnectionRef = useRef<RTCPeerConnection | null>(null); // WebRTC соединение
     const ringToneRef = useRef<HTMLAudioElement | null>(null);
+    const remoteAudioRef = useRef<HTMLAudioElement | null>(null); // Аудио для другой стороны
+
+    // Конфигурация для WebRTC соединения
+    const configuration = {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' }, // STUN сервер
+        ],
+    };
 
     useEffect(() => {
         ringToneRef.current = new Audio('/sounds/ringtone.mp3');
         ringToneRef.current.loop = true;
         ringToneRef.current.volume = 0.2;
-
-        // if (status === 'incoming' && open && receiver.id === currentUserId) {
-        //     ringToneRef.current?.play();
-        // }
 
         return () => {
             ringToneRef.current?.pause();
@@ -95,18 +101,69 @@ export default function CallModal({
             ringToneRef.current?.pause();
 
             if (ws && ws.readyState === WebSocket.OPEN) {
+                // Отправляем сообщение о принятии звонка
                 ws.send(JSON.stringify({
                     type: 'callAnswer',
                     fromUserId: sender.id,
                     toUserId: currentUserId,
                     callId: callId,
                 }));
+
+                // Создаем WebRTC соединение
+                const peerConnection = new RTCPeerConnection(configuration);
+                peerConnectionRef.current = peerConnection;
+
+                // Получаем доступ к микрофону
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                setLocalStream(stream);
+
+                // Добавляем локальные треки в peer connection
+                stream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, stream);
+                });
+
+                // Ожидаем получение offer от звонящего через WebSocket
+                ws.onmessage = async (message) => {
+                    const data = JSON.parse(message.data);
+
+                    if (data.type === 'offer') {
+                        // Устанавливаем remoteDescription на основе offer
+                        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+
+                        // Создаем answer и отправляем его звонящему
+                        const answer = await peerConnection.createAnswer();
+                        await peerConnection.setLocalDescription(answer);
+
+                        ws.send(JSON.stringify({
+                            type: 'answer',
+                            answer: peerConnection.localDescription,
+                        }));
+                    } else if (data.type === 'ice-candidate') {
+                        // Добавляем полученные ICE кандидаты
+                        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                    }
+                };
+
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        ws.send(JSON.stringify({
+                            type: 'ice-candidate',
+                            candidate: event.candidate,
+                        }));
+                    }
+                };
+
+                // Когда получаем трек от другой стороны
+                peerConnection.ontrack = (event) => {
+                    if (remoteAudioRef.current) {
+                        remoteAudioRef.current.srcObject = event.streams[0];
+                    }
+                };
             }
         } catch (error) {
             console.error('Failed to accept call:', error);
         }
     };
-
 
     return (
         <Modal open={open} onClose={handleEndCall} aria-labelledby="call-modal-title">
@@ -215,6 +272,8 @@ export default function CallModal({
                         </Stack>
                     </Stack>
                 )}
+                {/* Аудио для другой стороны */}
+                <audio ref={remoteAudioRef} autoPlay playsInline />
             </Box>
         </Modal>
     );
