@@ -93,9 +93,10 @@ export default function CallModal({
             console.log('Call accepted:', response);
             setIsCallActive(true);
             ringToneRef.current?.pause();
+
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({
-                    type: 'callAccepted',
+                    type: 'callAnswer',
                     fromUserId: sender.id,
                     toUserId: currentUserId,
                     callId: callId,
@@ -105,6 +106,7 @@ export default function CallModal({
             console.error('Failed to accept call:', error);
         }
     };
+
 
     return (
         <Modal open={open} onClose={handleEndCall} aria-labelledby="call-modal-title">
