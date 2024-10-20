@@ -27,6 +27,8 @@ type CallModalProps = {
     currentUserId: number | null;
     ws: WebSocket | null;
     incomingCall?: boolean;
+    callId: number | null;
+    status: 'incoming' | 'outgoing' | 'accepted' | 'rejected';
 };
 
 export default function CallModal({
@@ -37,6 +39,9 @@ export default function CallModal({
                                       isGroup,
                                       currentUserId,
                                       incomingCall = false,
+                                      ws,
+                                      callId,
+                                      status
                                   }: CallModalProps) {
     const [isWaiting, setIsWaiting] = useState(false);
     const [isCallActive, setIsCallActive] = useState(false);
@@ -47,15 +52,15 @@ export default function CallModal({
         ringToneRef.current.loop = true;
         ringToneRef.current.volume = 0.2;
 
-        if (incomingCall && open && receiver.id === currentUserId) {
-            ringToneRef.current?.play();
-        }
+        // if (status === 'incoming' && open && receiver.id === currentUserId) {
+        //     ringToneRef.current?.play();
+        // }
 
         return () => {
             ringToneRef.current?.pause();
             ringToneRef.current = null;
         };
-    }, [incomingCall, open, receiver.id, currentUserId]);
+    }, [status, open, receiver.id, currentUserId]);
 
     const handleCallClick = async () => {
         try {
@@ -70,7 +75,7 @@ export default function CallModal({
 
     const handleEndCall = async () => {
         try {
-            const response = await endCall(currentUserId, receiver.id);
+            const response = await endCall(currentUserId, receiver.id, callId);
             console.log('Call ended:', response);
         } catch (error) {
             console.error('Failed to end call:', error);
@@ -84,10 +89,18 @@ export default function CallModal({
 
     const handleAcceptCall = async () => {
         try {
-            const response = await acceptCall(currentUserId, sender.id);
+            const response = await acceptCall(currentUserId, sender.id, callId);
             console.log('Call accepted:', response);
             setIsCallActive(true);
             ringToneRef.current?.pause();
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'callAccepted',
+                    fromUserId: sender.id,
+                    toUserId: currentUserId,
+                    callId: callId,
+                }));
+            }
         } catch (error) {
             console.error('Failed to accept call:', error);
         }
@@ -128,16 +141,16 @@ export default function CallModal({
                     {sender.realname}
                 </Typography>
                 <Typography level="body-md" sx={{ marginBottom: 6 }}>
-                    {incomingCall && !isCallActive
+                    {status === 'incoming' && !isCallActive
                         ? 'Входящий звонок...'
                         : isWaiting && !isCallActive
                             ? 'Ожидание ответа...'
-                            : <>Если вы хотите начать видеозвонок,<br/>нажмите на значок камеры.</>}
+                            : 'Если вы хотите начать видеозвонок, нажмите на значок камеры.'}
                 </Typography>
 
                 <Box sx={{ flexGrow: 1 }} />
 
-                {incomingCall && !isCallActive && receiver.id === currentUserId ? (
+                {status === 'incoming' && !isCallActive && receiver.id === currentUserId ? (
                     <Stack direction="row" spacing={4} justifyContent="center" alignItems="center" sx={{ marginBottom: 0 }}>
                         <Stack alignItems="center">
                             <IconButton variant="outlined" color="neutral" onClick={handleAcceptCall}>

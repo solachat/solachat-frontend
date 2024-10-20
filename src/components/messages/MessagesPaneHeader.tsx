@@ -36,7 +36,6 @@ export default function MessagesPaneHeader({
     const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
     const [isCallModalOpen, setIsCallModalOpen] = React.useState(false);
     const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
-    const [ws, setWs] = React.useState<WebSocket | null>(null);
 
     React.useEffect(() => {
         const token = localStorage.getItem('token');
@@ -44,15 +43,6 @@ export default function MessagesPaneHeader({
             const decodedToken: { id: number } = jwtDecode(token);
             setCurrentUserId(decodedToken.id);
         }
-
-        const websocket = new WebSocket('ws://localhost:4005/ws');
-        websocket.onopen = () => console.log('WebSocket connected');
-        websocket.onclose = () => console.log('WebSocket disconnected');
-        websocket.onerror = (error) => console.error('WebSocket error:', error);
-
-        setWs(websocket);
-
-        return () => websocket.close();
     }, []);
 
     const receiverId = !isGroup && sender && currentUserId !== null && sender.id !== currentUserId
@@ -65,12 +55,6 @@ export default function MessagesPaneHeader({
         } else if (sender?.username) {
             window.location.href = `/account?username=${sender.username}`;
         }
-    };
-
-    const receiver = {
-        id: receiverId || null,
-        username: sender?.username || 'User',
-        avatar: sender?.avatar || 'avatar.png',
     };
 
     return sender ? (
@@ -163,7 +147,7 @@ export default function MessagesPaneHeader({
                 />
             )}
 
-            {sender && ws && receiverId !== null && (
+            {sender && receiverId !== null && (
                 <CallModal
                     open={isCallModalOpen}
                     onClose={() => setIsCallModalOpen(false)}
@@ -173,9 +157,10 @@ export default function MessagesPaneHeader({
                         username: sender.username || 'User',
                         avatar: sender.avatar || 'avatar.png',
                     }}
-                    isGroup={isGroup}
-                    ws={ws}
+                    ws={null}
                     currentUserId={currentUserId}
+                    callId={null}
+                    status={"incoming" || "outgoing" || "accepted" || "rejected"}
                 />
             )}
         </>

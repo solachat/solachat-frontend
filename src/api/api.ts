@@ -348,11 +348,13 @@ export const initiateCall = async (fromUserId: number | null, toUserId: number |
     }
 };
 
-export const endCall = async (fromUserId: number | null, toUserId: number | null) => {
+// Завершение звонка
+export const endCall = async (fromUserId: number | null, toUserId: number | null, callId: number | null) => {
     try {
         const response = await axios.post(`${API_URL}/api/calls/reject`, {
             fromUserId,
             toUserId,
+            callId,  // Добавляем callId для корректного завершения звонка
         });
         return response.data;
     } catch (error) {
@@ -362,11 +364,12 @@ export const endCall = async (fromUserId: number | null, toUserId: number | null
 };
 
 // Принятие звонка
-export const acceptCall = async (fromUserId: number | null, toUserId: number | null) => {
+export const acceptCall = async (fromUserId: number | null, toUserId: number | null, callId: number | null) => {
     try {
         const response = await axios.post(`${API_URL}/api/calls/answer`, {
             fromUserId,
             toUserId,
+            callId,  // Добавляем callId для принятия звонка
         });
         return response.data;
     } catch (error) {
@@ -375,6 +378,7 @@ export const acceptCall = async (fromUserId: number | null, toUserId: number | n
     }
 };
 
+// Инициация группового звонка
 export const initiateGroupCall = async (fromUserId: number, participantUserIds: number[], token: string) => {
     try {
         const response = await axios.post(
@@ -399,11 +403,12 @@ export const initiateGroupCall = async (fromUserId: number, participantUserIds: 
 };
 
 // Отклонение звонка
-export const rejectCall = async (fromUserId: number | null, toUserId: number | null) => {
+export const rejectCall = async (fromUserId: number | null, toUserId: number | null, callId: number | null) => {
     try {
         const response = await axios.post(`${API_URL}/api/calls/reject`, {
             fromUserId,
             toUserId,
+            callId,  // Добавляем callId для отклонения звонка
         });
         return response.data;
     } catch (error) {

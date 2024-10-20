@@ -86,18 +86,35 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                     break;
                 case 'callOffer':
                     console.log('Incoming call offer:', message);
-                    onMessage({
-                        type: 'callOffer',
-                        fromUserId: message.fromUserId,
-                        fromUsername: message.fromUsername,       // Имя пользователя отправителя
-                        fromAvatar: message.fromAvatar,           // Аватар отправителя
-                        toUserId: message.toUserId,
-                        toUsername: message.toUsername,           // Имя пользователя получателя
-                        toAvatar: message.toAvatar,               // Аватар получателя
-                        callId: message.callId,
-                        status: message.status                    // Статус вызова (например, 'initiated')
-                    });
+
+                    if (message.toUserId === currentUserId) {
+                        onMessage({
+                            type: 'callOffer',
+                            fromUserId: message.fromUserId,
+                            fromUsername: message.fromUsername,
+                            fromAvatar: message.fromAvatar,
+                            toUserId: message.toUserId,
+                            toUsername: message.toUsername,
+                            toAvatar: message.toAvatar,
+                            callId: message.callId,
+                            status: 'incoming'
+                        });
+                    }
+                    else if (message.fromUserId === currentUserId) {
+                        onMessage({
+                            type: 'callOffer',
+                            fromUserId: message.fromUserId,
+                            fromUsername: message.fromUsername,
+                            fromAvatar: message.fromAvatar,
+                            toUserId: message.toUserId,
+                            toUsername: message.toUsername,
+                            toAvatar: message.toAvatar,
+                            callId: message.callId,
+                            status: 'outgoing'
+                        });
+                    }
                     break;
+
 
                 case 'callAccepted':
                     console.log('Call accepted:', message);

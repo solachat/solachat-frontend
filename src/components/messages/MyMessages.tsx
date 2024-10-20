@@ -28,16 +28,15 @@ export default function MyProfile() {
 
     const [callModalState, setCallModalState] = useState({
         open: false,
-        fromUserId: null,
-        fromUsername: null,
-        fromAvatar: null,
-        toUserId: null,
-        toUsername: null,
-        toAvatar: null,
-        callId: null,
+        fromUserId: null as number | null,
+        fromUsername: null as string | null,
+        fromAvatar: null as string | null,
+        toUserId: null as number | null,
+        toUsername: null as string | null,
+        toAvatar: null as string | null,
+        callId: null as number | null,
         status: null,
     });
-
 
     const getCurrentUserFromToken = (): UserProps | null => {
         const token = localStorage.getItem('token');
@@ -49,10 +48,10 @@ export default function MyProfile() {
         try {
             const decodedToken = jwtDecode<JwtPayload>(token);
             return {
-                id: decodedToken.id,
-                username: decodedToken.username,
-                realname: decodedToken.realname,
-                avatar: decodedToken.avatar,
+                id: decodedToken.id as number,
+                username: decodedToken.username as string,
+                realname: decodedToken.realname as string,
+                avatar: decodedToken.avatar as string,
                 online: true,
                 role: 'member',
             };
@@ -137,11 +136,24 @@ export default function MyProfile() {
                     });
                 }
                 break;
+            case 'callRejected':
+                setCallModalState({
+                    open: false,
+                    fromUserId: null,
+                    fromUsername: null,
+                    fromAvatar: null,
+                    toUserId: null,
+                    toUsername: null,
+                    toAvatar: null,
+                    callId: null,
+                    status: null,
+                });
+                console.log('Call rejected, closing modal.');
+                break;
             default:
                 console.warn('Unknown message type:', message.type);
         }
     };
-
 
     useWebSocket(handleWebSocketMessage);
 
@@ -289,10 +301,10 @@ export default function MyProfile() {
                         }}
                         currentUserId={currentUser?.id || null}
                         ws={null}
+                        callId={callModalState.callId || null}
+                        status={callModalState.status || 'incoming'}
                     />
                 )}
-
-
             </Sheet>
         </>
     );
