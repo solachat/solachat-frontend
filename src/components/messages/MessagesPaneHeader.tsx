@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import MessagesMenu from './MessagesMenu';
 import GroupInfoModal from '../group/GroupInfoModal';
 import CallModal from './CallModal';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
@@ -55,7 +55,6 @@ export default function MessagesPaneHeader({
         return () => websocket.close();
     }, []);
 
-
     const receiverId = !isGroup && sender && currentUserId !== null && sender.id !== currentUserId
         ? sender.id
         : null;
@@ -66,6 +65,12 @@ export default function MessagesPaneHeader({
         } else if (sender?.username) {
             window.location.href = `/account?username=${sender.username}`;
         }
+    };
+
+    const receiver = {
+        id: receiverId || null,
+        username: sender?.username || 'User',
+        avatar: sender?.avatar || 'avatar.png',
     };
 
     return sender ? (
@@ -86,9 +91,7 @@ export default function MessagesPaneHeader({
                         variant="plain"
                         color="neutral"
                         size="sm"
-                        sx={{
-                            display: { xs: 'inline-flex', sm: 'none' },
-                        }}
+                        sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
                         onClick={toggleMessagesPane}
                     >
                         <ArrowBackIosNewRoundedIcon />
@@ -160,12 +163,16 @@ export default function MessagesPaneHeader({
                 />
             )}
 
-            {sender && ws && receiverId && (
+            {sender && ws && receiverId !== null && (
                 <CallModal
                     open={isCallModalOpen}
                     onClose={() => setIsCallModalOpen(false)}
                     sender={sender}
-                    receiverId={receiverId}
+                    receiver={{
+                        id: receiverId,
+                        username: sender.username || 'User',
+                        avatar: sender.avatar || 'avatar.png',
+                    }}
                     isGroup={isGroup}
                     ws={ws}
                     currentUserId={currentUserId}

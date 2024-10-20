@@ -13,6 +13,8 @@ import { useWebSocket } from '../../api/useWebSocket';
 import PageTitle from './PageTitle';
 import Box from "@mui/joy/Box";
 import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import CallModal from './CallModal';
 
 export default function MyProfile() {
     const [chats, setChats] = React.useState<ChatProps[]>([]);
@@ -23,6 +25,19 @@ export default function MyProfile() {
     const [searchParams] = useSearchParams();
     const { t } = useTranslation();
     const navigate = useNavigate();
+
+    const [callModalState, setCallModalState] = useState({
+        open: false,
+        fromUserId: null,
+        fromUsername: null,
+        fromAvatar: null,
+        toUserId: null,
+        toUsername: null,
+        toAvatar: null,
+        callId: null,
+        status: null,
+    });
+
 
     const getCurrentUserFromToken = (): UserProps | null => {
         const token = localStorage.getItem('token');
@@ -92,6 +107,8 @@ export default function MyProfile() {
     };
 
     const handleWebSocketMessage = (message: any) => {
+        console.log('Received WebSocket message:', message);
+
         switch (message.type) {
             case 'newMessage':
                 updateLastMessageInChatList(message.message);
@@ -105,10 +122,26 @@ export default function MyProfile() {
             case 'roleChange':
                 updateRoleInChat(message.chatId, message.userId, message.newRole);
                 break;
+            case 'callOffer':
+                if (message.toUserId === currentUser?.id) {
+                    setCallModalState({
+                        open: true,
+                        fromUserId: message.fromUserId,
+                        fromUsername: message.fromUsername,
+                        fromAvatar: message.fromAvatar,
+                        toUserId: message.toUserId,
+                        toUsername: message.toUsername,
+                        toAvatar: message.toAvatar,
+                        callId: message.callId,
+                        status: message.status,
+                    });
+                }
+                break;
             default:
                 console.warn('Unknown message type:', message.type);
         }
     };
+
 
     useWebSocket(handleWebSocketMessage);
 
@@ -162,8 +195,6 @@ export default function MyProfile() {
         loadChats();
     }, [currentUser, searchParams, navigate]);
 
-
-
     return (
         <>
             <PageTitle
@@ -174,7 +205,6 @@ export default function MyProfile() {
                     )
                     : 'Messenger'}
             />
-
 
             <Sheet
                 sx={{
@@ -229,6 +259,40 @@ export default function MyProfile() {
                 ) : (
                     <Typography>{t('loadingUserInformation')}</Typography>
                 )}
+
+                {callModalState.open && (
+                    <CallModal
+                        open={callModalState.open}
+                        onClose={() => setCallModalState({
+                            open: false,
+                            fromUserId: null,
+                            fromUsername: null,
+                            fromAvatar: null,
+                            toUserId: null,
+                            toUsername: null,
+                            toAvatar: null,
+                            callId: null,
+                            status: null
+                        })}
+                        sender={{
+                            id: callModalState.fromUserId!,
+                            username: callModalState.fromUsername || 'User',
+                            realname: callModalState.fromUsername || 'User',
+                            avatar: callModalState.fromAvatar || 'avatar.png',
+                            online: true,
+                            role: 'member',
+                        }}
+                        receiver={{
+                            id: callModalState.toUserId ?? currentUser?.id!,
+                            username: callModalState.toUsername || currentUser?.username || 'User',
+                            avatar: callModalState.toAvatar || currentUser?.avatar || 'avatar.png',
+                        }}
+                        currentUserId={currentUser?.id || null}
+                        ws={null}
+                    />
+                )}
+
+
             </Sheet>
         </>
     );

@@ -397,3 +397,17 @@ export const initiateGroupCall = async (fromUserId: number, participantUserIds: 
         throw new Error('Could not initiate group call');
     }
 };
+
+// Отклонение звонка
+export const rejectCall = async (fromUserId: number | null, toUserId: number | null) => {
+    try {
+        const response = await axios.post(`${API_URL}/api/calls/reject`, {
+            fromUserId,
+            toUserId,
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error rejecting call:', error);
+        throw error;
+    }
+};

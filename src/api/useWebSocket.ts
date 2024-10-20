@@ -89,9 +89,16 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                     onMessage({
                         type: 'callOffer',
                         fromUserId: message.fromUserId,
+                        fromUsername: message.fromUsername,       // Имя пользователя отправителя
+                        fromAvatar: message.fromAvatar,           // Аватар отправителя
+                        toUserId: message.toUserId,
+                        toUsername: message.toUsername,           // Имя пользователя получателя
+                        toAvatar: message.toAvatar,               // Аватар получателя
                         callId: message.callId,
+                        status: message.status                    // Статус вызова (например, 'initiated')
                     });
                     break;
+
                 case 'callAccepted':
                     console.log('Call accepted:', message);
                     onMessage({

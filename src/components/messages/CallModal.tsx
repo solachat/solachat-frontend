@@ -4,21 +4,40 @@ import VideoCallRoundedIcon from '@mui/icons-material/VideoCallRounded';
 import CallRoundedIcon from '@mui/icons-material/CallRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import MicOffRoundedIcon from '@mui/icons-material/MicOffRounded';
-import { UserProps } from '../core/types';
-import { useEffect, useRef, useState } from "react";
-import { initiateCall, endCall } from '../../api/api';
+import { useEffect, useRef, useState } from 'react';
+import { initiateCall, endCall, acceptCall } from '../../api/api';
 
 type CallModalProps = {
     open: boolean;
     onClose: () => void;
-    sender: UserProps;
-    receiverId: number | null;
+    sender: {
+        id: number;
+        username: string;
+        realname: string;
+        avatar: string;
+        online: boolean;
+        role: string;
+    };
+    receiver: {
+        id: number;
+        username: string;
+        avatar: string;
+    };
     isGroup?: boolean;
     currentUserId: number | null;
     ws: WebSocket | null;
+    incomingCall?: boolean;
 };
 
-export default function CallModal({ open, onClose, sender, receiverId, isGroup, currentUserId }: CallModalProps) {
+export default function CallModal({
+                                      open,
+                                      onClose,
+                                      sender,
+                                      receiver,
+                                      isGroup,
+                                      currentUserId,
+                                      incomingCall = false,
+                                  }: CallModalProps) {
     const [isWaiting, setIsWaiting] = useState(false);
     const [isCallActive, setIsCallActive] = useState(false);
     const ringToneRef = useRef<HTMLAudioElement | null>(null);
@@ -28,15 +47,19 @@ export default function CallModal({ open, onClose, sender, receiverId, isGroup, 
         ringToneRef.current.loop = true;
         ringToneRef.current.volume = 0.2;
 
+        if (incomingCall && open && receiver.id === currentUserId) {
+            ringToneRef.current?.play();
+        }
+
         return () => {
             ringToneRef.current?.pause();
             ringToneRef.current = null;
         };
-    }, []);
+    }, [incomingCall, open, receiver.id, currentUserId]);
 
     const handleCallClick = async () => {
         try {
-            const response = await initiateCall(currentUserId, receiverId); // Вызываем API для звонка
+            const response = await initiateCall(currentUserId, receiver.id);
             console.log('Call initiated:', response);
             setIsWaiting(true);
             ringToneRef.current?.play();
@@ -47,7 +70,7 @@ export default function CallModal({ open, onClose, sender, receiverId, isGroup, 
 
     const handleEndCall = async () => {
         try {
-            const response = await endCall(currentUserId, receiverId); // Вызываем API для завершения звонка
+            const response = await endCall(currentUserId, receiver.id);
             console.log('Call ended:', response);
         } catch (error) {
             console.error('Failed to end call:', error);
@@ -57,6 +80,17 @@ export default function CallModal({ open, onClose, sender, receiverId, isGroup, 
         setIsWaiting(false);
         ringToneRef.current?.pause();
         onClose();
+    };
+
+    const handleAcceptCall = async () => {
+        try {
+            const response = await acceptCall(currentUserId, sender.id);
+            console.log('Call accepted:', response);
+            setIsCallActive(true);
+            ringToneRef.current?.pause();
+        } catch (error) {
+            console.error('Failed to accept call:', error);
+        }
     };
 
     return (
@@ -94,14 +128,31 @@ export default function CallModal({ open, onClose, sender, receiverId, isGroup, 
                     {sender.realname}
                 </Typography>
                 <Typography level="body-md" sx={{ marginBottom: 6 }}>
-                    {isWaiting && !isCallActive
-                        ? 'Ожидание ответа...'
-                        : <>Если вы хотите начать видеозвонок,<br />нажмите на значок камеры.</>}
+                    {incomingCall && !isCallActive
+                        ? 'Входящий звонок...'
+                        : isWaiting && !isCallActive
+                            ? 'Ожидание ответа...'
+                            : <>Если вы хотите начать видеозвонок,<br/>нажмите на значок камеры.</>}
                 </Typography>
 
                 <Box sx={{ flexGrow: 1 }} />
 
-                {isWaiting && !isCallActive ? (
+                {incomingCall && !isCallActive && receiver.id === currentUserId ? (
+                    <Stack direction="row" spacing={4} justifyContent="center" alignItems="center" sx={{ marginBottom: 0 }}>
+                        <Stack alignItems="center">
+                            <IconButton variant="outlined" color="neutral" onClick={handleAcceptCall}>
+                                <CallRoundedIcon sx={{ fontSize: 40 }} />
+                            </IconButton>
+                            <Typography level="body-xs">Принять</Typography>
+                        </Stack>
+                        <Stack alignItems="center">
+                            <IconButton variant="outlined" color="neutral" onClick={handleEndCall}>
+                                <CloseRoundedIcon sx={{ fontSize: 40 }} />
+                            </IconButton>
+                            <Typography level="body-xs">Отклонить</Typography>
+                        </Stack>
+                    </Stack>
+                ) : isWaiting && !isCallActive ? (
                     <Stack direction="row" spacing={4} justifyContent="center" alignItems="center" sx={{ marginBottom: 0 }}>
                         <Stack alignItems="center">
                             <IconButton variant="outlined" color="neutral" onClick={handleEndCall}>
