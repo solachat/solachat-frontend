@@ -29,7 +29,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
     const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
     const [loadingChats, setLoadingChats] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
-    const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
 
     React.useEffect(() => {
         const loadChats = async () => {
@@ -75,7 +74,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                         borderRight: '1px solid',
                         borderColor: 'divider',
                         height: '100%',
-                        width: 'calc(100% - 150px)',
+                        width: 'calc(100% - 198px)',
                         overflowY: 'auto',
                     }}
                 >

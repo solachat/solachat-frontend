@@ -84,6 +84,18 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                         chatId: message.chatId,
                     });
                     break;
+                case 'chatCreated':
+                    onMessage({
+                        type: 'chatCreated',
+                        chat: message.chat,
+                    });
+                    break;
+                case 'chatDeleted':
+                    onMessage({
+                        type: 'chatDeleted',
+                        chatId: message.chatId,
+                    });
+                    break;
                 case 'callOffer':
                     console.log('Incoming call offer:', message);
 
@@ -114,8 +126,6 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                         });
                     }
                     break;
-
-
                 case 'callAccepted':
                     console.log('Call accepted:', message);
                     onMessage({

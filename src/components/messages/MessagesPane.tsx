@@ -190,7 +190,6 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                 display: 'flex',
                 flexDirection: 'column',
                 backgroundColor: 'background.level1',
-                borderRadius: 'md',
                 boxShadow: 'lg',
                 overflow: 'hidden',
             }}

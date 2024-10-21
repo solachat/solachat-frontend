@@ -74,7 +74,6 @@ export default function ChatListItem(props: ChatListItemProps) {
         }
     };
 
-
     if (!sender && !isGroup) {
         return null;
     }
@@ -137,7 +136,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         whiteSpace: 'nowrap',
                                         color: 'text.secondary',
                                         marginTop: '3px',
-                                        maxWidth: '300px',
+                                        maxWidth: '350px',
                                         width: '100%'
                                     }}
                                 >

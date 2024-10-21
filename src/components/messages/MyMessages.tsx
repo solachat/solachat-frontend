@@ -75,11 +75,12 @@ export default function MyProfile() {
     const addNewChat = (chatId: number) => {
         fetchChatsFromServer(currentUser!.id, localStorage.getItem('token')!).then((fetchedChats: ChatProps[]) => {
             const newChat = fetchedChats.find((chat: ChatProps) => chat.id === chatId);
-            if (newChat) {
+            if (newChat && !chats.some(chat => chat.id === chatId)) {
                 setChats((prevChats) => [...prevChats, newChat]);
             }
         });
     };
+
 
     const removeUserFromChat = (chatId: number, userId: number) => {
         setChats((prevChats) =>
@@ -106,6 +107,11 @@ export default function MyProfile() {
         );
     };
 
+    const removeChatFromList = (chatId: number) => {
+        setChats((prevChats) => prevChats.filter(chat => chat.id !== chatId));
+    };
+
+
     const handleWebSocketMessage = (message: any) => {
         console.log('Received WebSocket message:', message);
 
@@ -113,11 +119,17 @@ export default function MyProfile() {
             case 'newMessage':
                 updateLastMessageInChatList(message.message);
                 break;
+            case 'chatCreated':
+                addNewChat(message.chat);
+                break;
             case 'userAdded':
                 addNewChat(message.chatId);
                 break;
             case 'userRemoved':
                 removeUserFromChat(message.chatId, message.userId);
+                break;
+            case 'chatDeleted':
+                removeChatFromList(message.chatId);
                 break;
             case 'roleChange':
                 updateRoleInChat(message.chatId, message.userId, message.newRole);
