@@ -126,6 +126,19 @@ export default function MessageInput(props: MessageInputProps) {
         setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     };
 
+    const handlePaste = (event: React.ClipboardEvent) => {
+        const clipboardItems = event.clipboardData.items;
+        for (let i = 0; i < clipboardItems.length; i++) {
+            const item = clipboardItems[i];
+            if (item.kind === 'file') {
+                const file = item.getAsFile();
+                if (file) {
+                    handleFileSelect(file);
+                }
+            }
+        }
+    };
+
     return (
         <Box sx={{ position: 'relative', px: 3, pb: 1 }}>
             <FormControl sx={{ position: 'sticky', zIndex: 10 }}>
@@ -215,11 +228,12 @@ export default function MessageInput(props: MessageInputProps) {
                                 width: '100%',
                             }}
                             onClick={() => editorRef.current?.focus()}
+                            onPaste={handlePaste}
                         >
                             <Box
                                 sx={{
                                     width: '100%',
-                                    maxWidth: '800px',
+                                    maxWidth: '1000px',
                                     minWidth: '300px',
                                 }}
                             >
@@ -237,14 +251,14 @@ export default function MessageInput(props: MessageInputProps) {
 
                         <IconButton
                             size="sm"
-                            color={textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 'primary' : 'neutral'}  // Изменение цвета в зависимости от состояния
+                            color={textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 'primary' : 'neutral'}
                             onClick={handleClick}
                             sx={{
                                 ml: 1,
-                                opacity: 1,  // Кнопка всегда видима
-                                transition: 'color 0.3s ease',  // Плавная анимация цвета
+                                opacity: 1,
+                                transition: 'color 0.3s ease',
                                 '&:hover': {
-                                    color: textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 'primary.dark' : 'neutral.main',  // Цвет при наведении
+                                    color: textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 'primary.dark' : 'neutral.main',
                                 },
                             }}
                         >

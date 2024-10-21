@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {Helmet} from "react-helmet-async";
 import {Checkbox} from "@mui/joy";
+import Verified from '../components/core/Verified';
 
 import ConnectButtons from '../components/profile/ConnectButtons';
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
@@ -71,6 +72,7 @@ export default function AccountPage() {
         lastLogin: '',
         avatar: '',
         online: false,
+        verified: false
     });
 
     React.useEffect(() => {
@@ -133,6 +135,7 @@ export default function AccountPage() {
                     email: profileData.email,
                     aboutMe: profileData.aboutMe,
                     shareEmail: shareEmail,
+                    verified: profileData.verified,
                 },
                 {
                     headers: {
@@ -237,7 +240,7 @@ export default function AccountPage() {
                             <Typography>{t('myProfile')} {username}</Typography>
                         </Breadcrumbs>
                         <Typography level="h2" component="h1" sx={{ mt: 1, mb: 2 }}>
-                            {t('profile')} {username}
+                            {t('profile')} {username} {profileData.verified && <Verified sx={{ fontSize: 24, verticalAlign: 'middle' }} />}
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: { xs: 2, md: 6 }, gap: 2 }}>
@@ -247,7 +250,6 @@ export default function AccountPage() {
                         <LanguageSwitcher />
                     </Box>
                 </Box>
-
                 <Stack spacing={4} sx={{ maxWidth: '800px', mx: 'auto', px: { xs: 2, md: 6 }, py: { xs: 2, md: 3 } }}>
                     <Card>
                         <Box sx={{ mb: 1 }}>

@@ -3,8 +3,6 @@ import Avatar from '@mui/joy/Avatar';
 import IconButton from '@mui/joy/IconButton';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
-import Chip from '@mui/joy/Chip';
-import CircleIcon from '@mui/icons-material/Circle';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
 import { UserProps } from '../core/types';
@@ -14,6 +12,7 @@ import MessagesMenu from './MessagesMenu';
 import GroupInfoModal from '../group/GroupInfoModal';
 import CallModal from './CallModal';
 import { jwtDecode } from 'jwt-decode';
+import Verified from '../core/Verified';
 
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
@@ -57,7 +56,6 @@ export default function MessagesPaneHeader({
         }
     };
 
-    // Убедимся, что заголовок отображается даже если это групповой чат
     return isGroup || sender ? (
         <>
             <Stack
@@ -96,26 +94,27 @@ export default function MessagesPaneHeader({
                             fontSize="lg"
                             component="h2"
                             noWrap
-                            sx={{ fontWeight: 'lg', fontSize: 'lg', cursor: 'pointer' }}
+                            sx={{ fontWeight: 'lg', fontSize: 'lg', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                             onClick={handleAvatarClick}
                         >
                             {isGroup ? chatName : sender?.realname}
+
+                            {sender?.verified && <Verified sx={{ ml: 1 }} />}
                         </Typography>
 
-                        {/* Если это групповой чат, отображаем количество участников */}
+
+
                         {isGroup && (
                             <Typography level="body-sm">
                                 {members.length} {members.length === 1 ? 'member' : 'members'}
                             </Typography>
                         )}
 
-                        {/* Если это приватный чат, отображаем имя пользователя */}
                         {!isGroup && <Typography level="body-sm">{sender?.username}</Typography>}
                     </div>
                 </Stack>
 
                 <Stack direction="row" spacing={1} alignItems="center">
-                    {/* Кнопка вызова будет только в приватных чатах */}
                     {receiverId && (
                         <IconButton size="sm" onClick={() => setIsCallModalOpen(true)}>
                             <PhoneInTalkRoundedIcon />
@@ -126,7 +125,6 @@ export default function MessagesPaneHeader({
                 </Stack>
             </Stack>
 
-            {/* Модальное окно с информацией о группе для группового чата */}
             {isGroup && currentUserId !== null && (
                 <GroupInfoModal
                     open={isGroupModalOpen}
@@ -140,7 +138,6 @@ export default function MessagesPaneHeader({
                 />
             )}
 
-            {/* Модальное окно вызова для приватного чата */}
             {sender && receiverId !== null && (
                 <CallModal
                     open={isCallModalOpen}

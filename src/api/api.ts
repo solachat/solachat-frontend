@@ -348,13 +348,12 @@ export const initiateCall = async (fromUserId: number | null, toUserId: number |
     }
 };
 
-// Завершение звонка
 export const endCall = async (fromUserId: number | null, toUserId: number | null, callId: number | null) => {
     try {
         const response = await axios.post(`${API_URL}/api/calls/reject`, {
             fromUserId,
             toUserId,
-            callId,  // Добавляем callId для корректного завершения звонка
+            callId,
         });
         return response.data;
     } catch (error) {
@@ -363,13 +362,12 @@ export const endCall = async (fromUserId: number | null, toUserId: number | null
     }
 };
 
-// Принятие звонка
 export const acceptCall = async (fromUserId: number | null, toUserId: number | null, callId: number | null) => {
     try {
         const response = await axios.post(`${API_URL}/api/calls/answer`, {
             fromUserId,
             toUserId,
-            callId,  // Добавляем callId для принятия звонка
+            callId,
         });
         return response.data;
     } catch (error) {
@@ -378,7 +376,6 @@ export const acceptCall = async (fromUserId: number | null, toUserId: number | n
     }
 };
 
-// Инициация группового звонка
 export const initiateGroupCall = async (fromUserId: number, participantUserIds: number[], token: string) => {
     try {
         const response = await axios.post(

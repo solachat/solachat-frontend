@@ -123,7 +123,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                     {searchResults.length > 0 ? (
                         <List>
                             {searchResults
-                                .filter((user) => user.id !== currentUser.id)  // Фильтрация текущего пользователя
+                                .filter((user) => user.id !== currentUser.id)
                                 .map((user) => (
                                     <ChatListItem
                                         key={user.id.toString()}

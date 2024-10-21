@@ -53,6 +53,7 @@ export default function MyProfile() {
                 realname: decodedToken.realname as string,
                 avatar: decodedToken.avatar as string,
                 online: true,
+                verified: false,
                 role: 'member',
             };
         } catch (error) {
