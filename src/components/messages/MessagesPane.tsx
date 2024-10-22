@@ -38,7 +38,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     const scrollToBottom = (smooth: boolean = true) => {
         const container = messagesContainerRef.current;
         if (container) {
-            container.scrollTop = container.scrollHeight; // Прокрутка к началу
+            container.scrollTop = container.scrollHeight;
         }
     };
 

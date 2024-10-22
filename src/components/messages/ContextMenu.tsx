@@ -50,7 +50,7 @@ export default function ContextMenu({
                                         currentUserId,
                                         messageCreatorId,
                                     }: ContextMenuProps) {
-    const { t } = useTranslation(); // Используем хук для перевода
+    const { t } = useTranslation();
 
     return (
         <StyledMenu

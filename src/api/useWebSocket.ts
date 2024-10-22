@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { updateUserStatus } from './api';
 import {jwtDecode} from 'jwt-decode';
+import {UserProps} from "../components/core/types";
 
 const WS_URL = process.env.WS_URL || 'ws://localhost:4005';
 const RECONNECT_INTERVAL = 3000;
@@ -85,11 +86,9 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                     });
                     break;
                 case 'chatCreated':
-                    onMessage({
-                        type: 'chatCreated',
-                        chat: message.chat,
-                    });
+                    onMessage(message);
                     break;
+
                 case 'chatDeleted':
                     onMessage({
                         type: 'chatDeleted',

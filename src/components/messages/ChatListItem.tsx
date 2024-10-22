@@ -2,19 +2,20 @@ import * as React from 'react';
 import Box from '@mui/joy/Box';
 import ListDivider from '@mui/joy/ListDivider';
 import ListItem from '@mui/joy/ListItem';
-import ListItemButton, { ListItemButtonProps } from '@mui/joy/ListItemButton';
+import ListItemButton from '@mui/joy/ListItemButton';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
 import CircleIcon from '@mui/icons-material/Circle';
 import AvatarWithStatus from './AvatarWithStatus';
 import { ChatProps, MessageProps, UserProps } from '../core/types';
 import { createPrivateChat } from '../../api/api';
-import { toast } from "react-toastify";
+import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import {t} from "i18next";
 import Avatar from '@mui/joy/Avatar';
+import { useEffect, useState } from 'react';
+import {t} from "i18next";
 
-type ChatListItemProps = ListItemButtonProps & {
+type ChatListItemProps = {
     id: string;
     unread?: boolean;
     sender?: UserProps;
@@ -24,6 +25,7 @@ type ChatListItemProps = ListItemButtonProps & {
     currentUserId: number;
     chats: ChatProps[];
     isGroup?: boolean;
+    newMessage?: MessageProps;
 };
 
 const isImage = (fileName: string) => {
@@ -43,11 +45,19 @@ const fixFilePath = (filePath: string) => {
 };
 
 export default function ChatListItem(props: ChatListItemProps) {
-    const { id, sender, messages, selectedChatId, setSelectedChat, currentUserId, chats, isGroup } = props;
+    const { id, sender, messages, selectedChatId, setSelectedChat, currentUserId, chats, isGroup, newMessage } = props;
+    const [localMessages, setLocalMessages] = useState<MessageProps[]>(messages);
     const selected = selectedChatId === id;
-    const hasMessages = Array.isArray(messages) && messages.length > 0;
-    const lastMessage = hasMessages ? messages[messages.length - 1] : null;
+
+    const hasMessages = Array.isArray(localMessages) && localMessages.length > 0;
+    const lastMessage = hasMessages ? localMessages[localMessages.length - 1] : null;
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (newMessage && newMessage.chatId === Number(id)) {
+            setLocalMessages((prevMessages) => [...prevMessages, newMessage]);
+        }
+    }, [newMessage, id]);
 
     const existingChat = Array.isArray(chats)
         ? chats.find((chat: ChatProps) => chat.id === Number(id))
@@ -56,11 +66,7 @@ export default function ChatListItem(props: ChatListItemProps) {
     const handleClick = async () => {
         if (existingChat) {
             setSelectedChat(existingChat);
-            if (isGroup) {
-                navigate(`/chat/#-${existingChat.id}`);
-            } else {
-                navigate(`/chat/#${existingChat.id}`);
-            }
+            navigate(isGroup ? `/chat/#-${existingChat.id}` : `/chat/#${existingChat.id}`);
         } else if (sender) {
             const token = localStorage.getItem('token');
             const newChat = await createPrivateChat(currentUserId, sender.id, token || '');
@@ -96,21 +102,14 @@ export default function ChatListItem(props: ChatListItemProps) {
                             <Avatar
                                 src={existingChat?.avatar ? existingChat.avatar : 'path/to/default-group-avatar.jpg'}
                                 alt={existingChat?.name || 'Group Chat'}
-                                sx={{
-                                    width: { xs: 32, sm: 48 },
-                                    height: { xs: 32, sm: 48 },
-                                }}
+                                sx={{ width: { xs: 32, sm: 48 }, height: { xs: 32, sm: 48 } }}
                             />
                         ) : (
                             <AvatarWithStatus
                                 online={sender?.online}
                                 src={sender?.avatar || undefined}
                                 alt={sender?.realname}
-                                sx={{
-                                    width: { xs: 32, sm: 48 },
-                                    height: { xs: 32, sm: 48 },
-                                    fontSize: { xs: 16, sm: 24 },
-                                }}
+                                sx={{ width: { xs: 32, sm: 48 }, height: { xs: 32, sm: 48 }, fontSize: { xs: 16, sm: 24 } }}
                             >
                                 {(!sender?.avatar && sender?.realname) ? sender.realname[0].toUpperCase() : null}
                             </AvatarWithStatus>
@@ -118,11 +117,7 @@ export default function ChatListItem(props: ChatListItemProps) {
 
                         <Box sx={{ flex: 1 }}>
                             <Typography level="body-md" fontSize={{ xs: 'sm', sm: 'md' }}>
-                                {isGroup ? (
-                                    existingChat?.name || 'Group Chat'
-                                ) : (
-                                    `${sender?.realname || 'No Name'} (${sender?.username || 'No Username'})`
-                                )}
+                                {isGroup ? existingChat?.name || 'Group Chat' : `${sender?.realname || 'No Name'} (${sender?.username || 'No Username'})`}
                             </Typography>
                             {hasMessages && lastMessage && (
                                 <Typography
@@ -137,7 +132,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         color: 'text.secondary',
                                         marginTop: '3px',
                                         maxWidth: '350px',
-                                        width: '100%'
+                                        width: '100%',
                                     }}
                                 >
                                     {lastMessage.attachment && isImage(lastMessage.attachment.fileName) ? (
@@ -166,18 +161,11 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 </Typography>
                             )}
                             {!hasMessages && (
-                                <Typography level="body-sm">
-                                    No messages
-                                </Typography>
+                                <Typography level="body-sm">No messages</Typography>
                             )}
                         </Box>
                         {hasMessages && lastMessage && (
-                            <Box
-                                sx={{
-                                    lineHeight: 1.5,
-                                    textAlign: 'right',
-                                }}
-                            >
+                            <Box sx={{ lineHeight: 1.5, textAlign: 'right' }}>
                                 {lastMessage.unread && (
                                     <CircleIcon sx={{ fontSize: 12 }} color="primary" />
                                 )}
@@ -186,7 +174,10 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     display={{ xs: 'none', md: 'block' }}
                                     noWrap
                                 >
-                                    {new Date(lastMessage.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                    {new Date(lastMessage.createdAt).toLocaleTimeString('en-GB', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    })}
                                 </Typography>
                             </Box>
                         )}

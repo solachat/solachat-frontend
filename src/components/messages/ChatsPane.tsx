@@ -13,6 +13,7 @@ import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
 import { CssVarsProvider } from '@mui/joy/styles';
 import Sidebar from '../core/Sidebar';
 import CircularProgress from '@mui/joy/CircularProgress';
+import { useWebSocket } from '../../api/useWebSocket'; // Подключаем WebSocket
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -30,6 +31,19 @@ export default function ChatsPane(props: ChatsPaneProps) {
     const [loadingChats, setLoadingChats] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
 
+    useWebSocket((message) => {
+        if (message.type === 'chatCreated') {
+            const newChat = message.chat;
+            setChats((prevChats) => {
+                const chatExists = prevChats.some((chat) => chat.id === newChat.id);
+                if (!chatExists) {
+                    return [...prevChats, newChat];
+                }
+                return prevChats;
+            });
+        }
+    }, []);
+
     React.useEffect(() => {
         const loadChats = async () => {
             try {
@@ -42,7 +56,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
 
                 const chatsFromServer = await fetchChatsFromServer(currentUser.id, token);
                 setChats(chatsFromServer || []);
-
                 setLoadingChats(false);
             } catch (error) {
                 console.error('Error fetching chats:', error);
@@ -138,39 +151,47 @@ export default function ChatsPane(props: ChatsPaneProps) {
                     ) : (
                         <>
                             {loadingChats ? (
-                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', mt: 2 }}>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        mt: 2,
+                                    }}
+                                >
                                     <CircularProgress color="primary" />
                                     <Typography fontSize="lg" sx={{ mt: 2, color: 'text.secondary' }}>
                                         {t('Loading chats...')}
                                     </Typography>
                                 </Box>
+                            ) : chats && chats.length > 0 ? (
+                                <List>
+                                    {chats.map((chat) => (
+                                        <ChatListItem
+                                            key={chat.id.toString()}
+                                            id={chat.id.toString()}
+                                            sender={
+                                                chat.isGroup
+                                                    ? undefined
+                                                    : chat.users && chat.users.find((user) => user.id !== currentUser.id)
+                                            }
+                                            messages={chat.messages}
+                                            setSelectedChat={setSelectedChat}
+                                            currentUserId={currentUser.id}
+                                            chats={chats}
+                                            selectedChatId={selectedChatId}
+                                            isGroup={chat.isGroup}
+                                        />
+                                    ))}
+                                </List>
                             ) : (
-                                chats.length > 0 ? (
-                                    <List>
-                                        {chats.map((chat) => (
-                                            <ChatListItem
-                                                key={chat.id.toString()}
-                                                id={chat.id.toString()}
-                                                sender={chat.isGroup ? undefined : chat.users.find(user => user.id !== currentUser.id)}
-                                                messages={chat.messages}
-                                                setSelectedChat={setSelectedChat}
-                                                currentUserId={currentUser.id}
-                                                chats={chats}
-                                                selectedChatId={selectedChatId}
-                                                isGroup={chat.isGroup}
-                                            />
-                                        ))}
-
-                                    </List>
-                                ) : (
-                                    <Typography sx={{ textAlign: 'center', mt: 3 }}>
-                                        {t('startcommunicate')}
-                                    </Typography>
-                                )
+                                <Typography sx={{ textAlign: 'center', mt: 3 }}>
+                                    {t('startcommunicate')}
+                                </Typography>
                             )}
                         </>
                     )}
-
                 </Sheet>
             </Box>
         </CssVarsProvider>
