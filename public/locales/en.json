@@ -196,5 +196,8 @@
   "contactDescription": "If you have any questions or would like to collaborate, feel free to reach out to us through any of the following channels:",
   "license": "License",
   "licenseDescription": "All projects under the SolaCoin organization are licensed under the MIT License. Please refer to individual repositories for more details.",
-  "finalNote": "Together, let's build the future of decentralized finance with SolaCoin."
+  "finalNote": "Together, let's build the future of decentralized finance with SolaCoin.",
+  "delete": "Delete",
+  "copy": "Copy",
+  "forward": "Forward"
 }

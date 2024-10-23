@@ -181,5 +181,8 @@
   "online": "在线",
   "addParticipant": "添加参与者",
   "enterUsername": "输入用户名",
-  "add": "添加"
+  "add": "添加",
+  "delete": "删除",
+  "copy": "复制",
+  "forward": "转发"
 }
