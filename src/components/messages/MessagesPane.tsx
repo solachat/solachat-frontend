@@ -17,9 +17,10 @@ import IconButton from '@mui/joy/IconButton';
 type MessagesPaneProps = {
     chat: ChatProps | null;
     members?: UserProps[];
+    setSelectedChat: (chat: ChatProps | null) => void;
 };
 
-export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) {
+export default function MessagesPane({ chat, members = [], setSelectedChat }: MessagesPaneProps) {
     const { t } = useTranslation();
     const [chatMessages, setChatMessages] = useState<MessageProps[]>(chat?.messages || []);
     const [textAreaValue, setTextAreaValue] = useState<string>('');
@@ -28,7 +29,6 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     const [isFarFromBottom, setIsFarFromBottom] = useState<boolean>(false);
     const [chatId, setChatId] = useState<number | null>(null);
     const [allChatMessages, setAllChatMessages] = useState<{ [key: number]: MessageProps[] }>({});
-
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -59,7 +59,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     }, []);
 
     useEffect(() => {
-            scrollToBottom();
+        scrollToBottom();
     }, [chatMessages]);
 
     useEffect(() => {
@@ -121,7 +121,6 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
         }
     };
 
-
     const handleEditMessageInList = (updatedMessage: MessageProps) => {
         setChatMessages((prevMessages) =>
             prevMessages.map((msg) =>
@@ -137,9 +136,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     };
 
     const handleDeleteMessageInList = (messageId: number) => {
-        setChatMessages((prevMessages) =>
-            prevMessages.filter((msg) => Number(msg.id) !== messageId)
-        );
+        setChatMessages((prevMessages) => prevMessages.filter((msg) => Number(msg.id) !== messageId));
     };
 
     useWebSocket((message) => {
@@ -173,7 +170,6 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
         }
     }, [currentUserId]);
 
-
     const handleEditMessage = (messageId: number, content: string) => {
         setEditingMessageId(messageId);
         setTextAreaValue(content);
@@ -186,7 +182,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
     return (
         <Sheet
             sx={{
-                height: { xs: 'calc(100dvh - var(--Header-height))', md: '100dvh' },
+                height: '100vh',
                 display: 'flex',
                 flexDirection: 'column',
                 backgroundColor: 'background.level1',
@@ -202,6 +198,7 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                     chatName={chat.isGroup ? chat.name : undefined}
                     groupAvatar={chat.isGroup ? chat.avatar || 'path/to/default-group-avatar.jpg' : undefined}
                     members={chat?.users || []}
+                    onBack={() => setSelectedChat(null)}
                 />
             )}
 
@@ -214,9 +211,6 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                     px: 2,
                     py: { xs: 1, sm: 3 },
                     overflowY: 'auto',
-                    '&::-webkit-scrollbar': {
-                        width: { xs: '6px', sm: '8px' },
-                    },
                 }}
             >
                 {chatMessages.length > 0 ? (
@@ -272,13 +266,14 @@ export default function MessagesPane({ chat, members = [] }: MessagesPaneProps) 
                 <IconButton
                     sx={{
                         position: 'fixed',
-                        bottom: 16,
                         right: 16,
                         zIndex: 10,
                         backgroundColor: 'primary.main',
                         '&:hover': {
                             backgroundColor: 'primary.dark',
                         },
+                        width: { xs: 40, sm: 56 },
+                        height: { xs: 40, sm: 56 },
                     }}
                     onClick={() => scrollToBottom()}
                 >

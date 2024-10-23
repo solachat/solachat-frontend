@@ -8,12 +8,10 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChatListItem from './ChatListItem';
 import { ChatProps, UserProps } from '../core/types';
 import { searchUsers, fetchChatsFromServer } from '../../api/api';
-import LanguageSwitcher from '../core/LanguageSwitcher';
-import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
 import { CssVarsProvider } from '@mui/joy/styles';
 import Sidebar from '../core/Sidebar';
 import CircularProgress from '@mui/joy/CircularProgress';
-import { useWebSocket } from '../../api/useWebSocket'; // Подключаем WebSocket
+import { useWebSocket } from '../../api/useWebSocket';
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -77,18 +75,20 @@ export default function ChatsPane(props: ChatsPaneProps) {
         }
     };
 
+
     return (
         <CssVarsProvider>
-            <Box sx={{ display: 'flex', height: 'auto' }}>
+            <Box sx={{ display: 'flex', height: 'auto', maxWidth: '100%' }}>
                 <Sidebar />
 
                 <Sheet
                     sx={{
                         borderRight: '1px solid',
                         borderColor: 'divider',
-                        height: '100%',
-                        width: 'calc(100% - 198px)',
+                        height: '100vh',
+                        width: { xs: selectedChatId ? '0' : '100%', sm: 'calc(100% - 198px)' },
                         overflowY: 'auto',
+                        display: { xs: selectedChatId ? 'none' : 'block', sm: 'block' },
                     }}
                 >
                     <Stack
@@ -110,10 +110,10 @@ export default function ChatsPane(props: ChatsPaneProps) {
                         >
                             {t('Messages')}
                         </Typography>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <LanguageSwitcher />
-                            <ColorSchemeToggle />
-                        </div>
+                        {/*<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>*/}
+                        {/*    <LanguageSwitcher />*/}
+                        {/*    <ColorSchemeToggle />*/}
+                        {/*</div>*/}
                     </Stack>
 
                     <Box sx={{ px: 2, pb: 1.5, display: 'flex', gap: '8px', alignItems: 'center' }}>

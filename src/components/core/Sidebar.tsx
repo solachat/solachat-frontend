@@ -13,14 +13,14 @@ import { useTranslation } from 'react-i18next';
 import GroupChatModal from '../group/GroupChatModal';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useNavigate } from 'react-router-dom';
-
 import QuestionAnswerRoundedIcon from '@mui/icons-material/QuestionAnswerRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
 import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
 import CallRoundedIcon from '@mui/icons-material/CallRounded';
 import VideoLibraryRoundedIcon from '@mui/icons-material/VideoLibraryRounded';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import {UserProps} from "./types";
+import { DarkModeSwitch } from './ColorSchemeToggle';
+import {LanguageSwitcherWithText} from "./LanguageSwitcher";
 
 interface DecodedToken {
     username: string;
@@ -99,15 +99,6 @@ export default function Sidebar() {
         setIsGroupModalOpen(false);
     };
 
-    const handleCreateGroup = async (groupName: string, avatar?: File | null, selectedUsers?: UserProps[]) => {
-        console.log('Group created with name:', groupName);
-        console.log('Selected users:', selectedUsers);
-        console.log('Avatar:', avatar);
-
-
-        setIsGroupModalOpen(false);
-    };
-
     return (
         <>
             <Sheet
@@ -119,7 +110,7 @@ export default function Sidebar() {
                         md: 'none',
                     },
                     transition: 'transform 0.4s, width 0.4s',
-                    zIndex: 10000,
+                    zIndex: 10,
                     height: 'auto',
                     top: 0,
                     p: 1,
@@ -290,6 +281,14 @@ export default function Sidebar() {
                         </ListItem>
                     </List>
                 </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Box sx={{ marginLeft: 'auto', marginRight: 'auto', mb: 2, zIndex: 10001 }}>
+                    <DarkModeSwitch />
+                    <LanguageSwitcherWithText />
+                </Box>
+
             </Sheet>
 
             <GroupChatModal

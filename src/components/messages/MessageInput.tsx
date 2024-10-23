@@ -233,8 +233,8 @@ export default function MessageInput(props: MessageInputProps) {
                             <Box
                                 sx={{
                                     width: '100%',
-                                    maxWidth: '1000px',
-                                    minWidth: '300px',
+                                    maxWidth: { xs: '250px', sm: '1000px' },
+                                    minWidth: { xs: '150px', sm: '300px' },
                                 }}
                             >
                                 <Editor

@@ -140,7 +140,7 @@ export default function MyProfile() {
                     ) : loading ? (
                         <Typography>Loading chats...</Typography>
                     ) : selectedChat ? (
-                        <MessagesPane chat={selectedChat}/>
+                        <MessagesPane chat={selectedChat} setSelectedChat={setSelectedChat}  />
                     ) : (
                         <Typography>No messages yet.</Typography>
                     )}

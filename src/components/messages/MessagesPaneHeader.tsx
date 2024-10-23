@@ -21,6 +21,7 @@ type MessagesPaneHeaderProps = {
     chatName?: string;
     groupAvatar?: string;
     members?: UserProps[];
+    onBack?: () => void;
 };
 
 export default function MessagesPaneHeader({
@@ -30,6 +31,7 @@ export default function MessagesPaneHeader({
                                                chatName,
                                                groupAvatar,
                                                members = [],
+                                               onBack
                                            }: MessagesPaneHeaderProps) {
     const { t } = useTranslation();
     const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
@@ -62,7 +64,7 @@ export default function MessagesPaneHeader({
                 direction="row"
                 sx={{
                     justifyContent: 'space-between',
-                    py: { xs: 2, md: 2 },
+                    py: { xs: 1, md: 2 },
                     px: { xs: 1, md: 2 },
                     borderBottom: '1px solid',
                     borderColor: 'divider',
@@ -75,7 +77,7 @@ export default function MessagesPaneHeader({
                         color="neutral"
                         size="sm"
                         sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
-                        onClick={toggleMessagesPane}
+                        onClick={onBack}  // вызываем переданную функцию onBack
                     >
                         <ArrowBackIosNewRoundedIcon />
                     </IconButton>
@@ -94,13 +96,22 @@ export default function MessagesPaneHeader({
                             fontSize="lg"
                             component="h2"
                             noWrap
-                            sx={{ fontWeight: 'lg', fontSize: 'lg', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            sx={{
+                                fontWeight: 'lg',
+                                fontSize: 'lg',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                            }}
                             onClick={handleAvatarClick}
                         >
                             {isGroup ? chatName : sender?.realname}
-
                             {sender?.verified && <Verified sx={{ ml: 1 }} />}
                         </Typography>
+
 
 
 

@@ -95,6 +95,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                         flexDirection: 'column',
                         alignItems: 'initial',
                         gap: 1,
+                        padding: { xs: '8px' },
                     }}
                 >
                     <Stack direction="row" spacing={1.5}>
@@ -131,7 +132,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         whiteSpace: 'nowrap',
                                         color: 'text.secondary',
                                         marginTop: '3px',
-                                        maxWidth: '350px',
+                                        maxWidth: { xs: '300px', sm: '350px' },
                                         width: '100%',
                                     }}
                                 >
@@ -161,11 +162,11 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 </Typography>
                             )}
                             {!hasMessages && (
-                                <Typography level="body-sm">No messages</Typography>
+                                <Typography level="body-sm">{t('No messages')}</Typography>
                             )}
                         </Box>
                         {hasMessages && lastMessage && (
-                            <Box sx={{ lineHeight: 1.5, textAlign: 'right' }}>
+                            <Box sx={{ lineHeight: 1.5, textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
                                 {lastMessage.unread && (
                                     <CircleIcon sx={{ fontSize: 12 }} color="primary" />
                                 )}

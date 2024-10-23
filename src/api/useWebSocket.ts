@@ -88,12 +88,8 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                 case 'chatCreated':
                     onMessage(message);
                     break;
-
                 case 'chatDeleted':
-                    onMessage({
-                        type: 'chatDeleted',
-                        chatId: message.chatId,
-                    });
+                    onMessage(message);
                     break;
                 case 'callOffer':
                     console.log('Incoming call offer:', message);

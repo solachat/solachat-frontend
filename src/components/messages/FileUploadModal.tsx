@@ -4,7 +4,7 @@ import UploadIcon from '@mui/icons-material/Upload';
 import CloseIcon from '@mui/icons-material/Close';
 
 interface FileUploadModalProps {
-    onFileSelect: (file: File) => void; // Вместо отправки сразу на сервер, файл просто передаётся в MessageInput
+    onFileSelect: (file: File) => void;
     open: boolean;
     handleClose: () => void;
 }

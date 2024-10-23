@@ -7,6 +7,7 @@ import Typography from '@mui/joy/Typography';
 import LanguageSwitcher from '../core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
 import { useTranslation } from 'react-i18next';
+import SolanaIcon from "../core/SolanaIcon";
 
 type HeaderProps = {
     title: string;
@@ -26,7 +27,7 @@ export default function Header({ title, onSidebarToggle }: HeaderProps) {
                 sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
             >
                 <IconButton onClick={onSidebarToggle}>
-                    <MenuIcon />
+                    <SolanaIcon />
                 </IconButton>
 
                 <Typography component="h1" fontWeight="lg" sx={{ flexGrow: 1, textAlign: { xs: 'center', md: 'left' } }}>
