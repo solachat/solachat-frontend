@@ -59,6 +59,13 @@ export default function ChatListItem(props: ChatListItemProps) {
         }
     }, [newMessage, id]);
 
+    useEffect(() => {
+        if (!chats.some(chat => chat.id === Number(id))) {
+            console.log(`Chat with ID ${id} was deleted`);
+            setLocalMessages([]);
+        }
+    }, [chats, id]);
+
     const existingChat = Array.isArray(chats)
         ? chats.find((chat: ChatProps) => chat.id === Number(id))
         : null;

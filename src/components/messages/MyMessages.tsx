@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from "react";
 import CallModal from './CallModal';
 
+
 export default function MyProfile() {
     const [chats, setChats] = React.useState<ChatProps[]>([]);
     const [selectedChat, setSelectedChat] = React.useState<ChatProps | null>(null);
@@ -81,7 +82,6 @@ export default function MyProfile() {
         });
     };
 
-
     const removeUserFromChat = (chatId: number, userId: number) => {
         setChats((prevChats) =>
             prevChats.map((chat) =>
@@ -110,7 +110,6 @@ export default function MyProfile() {
     const removeChatFromList = (chatId: number) => {
         setChats((prevChats) => prevChats.filter(chat => chat.id !== chatId));
     };
-
 
     const handleWebSocketMessage = (message: any) => {
         console.log('Received WebSocket message:', message);
@@ -268,7 +267,7 @@ export default function MyProfile() {
                                 <Typography sx={{ textAlign: 'center', color: 'red' }}>{error}</Typography>
                             ) : loading ? (
                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                                    <Typography>Loading chats...</Typography>
+                                    <Typography>{t('Loading chats')}</Typography>
                                     <CircularProgress sx={{ marginTop: 2 }} />
                                 </Box>
                             ) : selectedChat ? (

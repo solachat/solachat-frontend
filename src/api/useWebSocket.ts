@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { updateUserStatus } from './api';
-import {jwtDecode} from 'jwt-decode';
-import {UserProps} from "../components/core/types";
+import { jwtDecode } from 'jwt-decode';
 
 const WS_URL = process.env.WS_URL || 'ws://localhost:4005';
 const RECONNECT_INTERVAL = 3000;
@@ -45,7 +44,6 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
             return;
         }
 
-
         const ws = new WebSocket(`${WS_URL.replace(/^http/, 'ws')}/ws?token=${token}`);
         wsRef.current = ws;
 
@@ -65,13 +63,20 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
             updateStatusIfChanged(true);
         };
 
-        console.log('Connecting to WebSocket at:', WS_URL);
-        console.log('WebSocket state:', wsRef.current.readyState);
-
-
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
             console.log('Received WebSocket message:', message);
+
+            if (message.targetUserId && message.targetUserId !== currentUserId) {
+                return;
+            }
+
+            if (message.type === 'chatCreated') {
+                const currentUserInChat = message.chat.users.some((user: { id: number }) => user.id === currentUserId);
+                if (!currentUserInChat) {
+                    return;
+                }
+            }
 
             switch (message.type) {
                 case 'newMessage':
@@ -91,9 +96,10 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                 case 'chatDeleted':
                     onMessage(message);
                     break;
+                case 'groupChatCreated':
+                    onMessage(message);
+                    break
                 case 'callOffer':
-                    console.log('Incoming call offer:', message);
-
                     if (message.toUserId === currentUserId) {
                         onMessage({
                             type: 'callOffer',
@@ -106,8 +112,7 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                             callId: message.callId,
                             status: 'incoming'
                         });
-                    }
-                    else if (message.fromUserId === currentUserId) {
+                    } else if (message.fromUserId === currentUserId) {
                         onMessage({
                             type: 'callOffer',
                             fromUserId: message.fromUserId,
@@ -122,7 +127,6 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                     }
                     break;
                 case 'callAccepted':
-                    console.log('Call accepted:', message);
                     onMessage({
                         type: 'callAccepted',
                         fromUserId: message.fromUserId,
@@ -130,7 +134,6 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                     });
                     break;
                 case 'callRejected':
-                    console.log('Call rejected:', message);
                     onMessage({
                         type: 'callRejected',
                         fromUserId: message.fromUserId,
@@ -158,7 +161,7 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
             wsRef.current = null;
             handleReconnection();
         };
-    }, [onMessage, sendHeartbeat, updateStatusIfChanged, isConnected]);
+    }, [onMessage, sendHeartbeat, updateStatusIfChanged, isConnected, currentUserId]);
 
     const handleReconnection = useCallback(() => {
         if (!reconnectTimeout.current) {
@@ -190,4 +193,3 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
 
     return wsRef.current;
 };
-

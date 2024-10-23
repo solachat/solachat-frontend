@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Editor, EditorState, getDefaultKeyBinding, SelectionState } from 'draft-js';
+import { Editor, EditorState, getDefaultKeyBinding, ContentState, RichUtils } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import Box from '@mui/joy/Box';
 import FormControl from '@mui/joy/FormControl';
@@ -21,8 +21,6 @@ export type UploadedFileData = {
 
 export type MessageInputProps = {
     chatId: number;
-    textAreaValue: string;
-    setTextAreaValue: (value: string) => void;
     onSubmit: (newMessage: any) => void;
     editingMessage?: { id: number | null; content: string | null } | null;
     setEditingMessage: (message: { id: number | null; content: string | null } | null) => void;
@@ -30,46 +28,32 @@ export type MessageInputProps = {
 
 export default function MessageInput(props: MessageInputProps) {
     const { t } = useTranslation();
-    const { setTextAreaValue, chatId, textAreaValue, editingMessage, setEditingMessage } = props;
+    const { chatId, editingMessage, setEditingMessage, onSubmit } = props;
 
     const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
     const editorRef = useRef<Editor | null>(null);
     const [isFileUploadOpen, setFileUploadOpen] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
 
-    const saveCursorPosition = (editorState: EditorState) => {
-        const selectionState = editorState.getSelection();
-        return {
-            anchorOffset: selectionState.getAnchorOffset(),
-            focusOffset: selectionState.getFocusOffset(),
-        };
-    };
-
-    const restoreCursorPosition = (editorState: EditorState, position: { anchorOffset: number; focusOffset: number }) => {
-        const selectionState = editorState.getSelection().merge({
-            anchorOffset: position.anchorOffset,
-            focusOffset: position.focusOffset,
-        }) as SelectionState;
-
-        return EditorState.forceSelection(editorState, selectionState);
-    };
-
+    // Обработка изменения chatId и состояния редактирования
     useEffect(() => {
-        const cursorPosition = saveCursorPosition(editorState);
-        const contentState = editorState.getCurrentContent();
-        let newState = EditorState.push(editorState, contentState, 'change-block-data');
-        newState = restoreCursorPosition(newState, cursorPosition);
-        setEditorState(newState);
-    }, [textAreaValue]);
-
-    const handleEditorChange = (newState: EditorState) => {
-        const currentContent = newState.getCurrentContent().getPlainText();
-        if (currentContent !== textAreaValue) {
-            setTextAreaValue(currentContent);
+        if (editingMessage?.content) {
+            const contentState = ContentState.createFromText(editingMessage.content);
+            setEditorState(EditorState.createWithContent(contentState));
+        } else {
+            setEditorState(EditorState.createEmpty());
         }
-        setEditorState(newState);
+        setUploadedFiles([]);
+    }, [chatId, editingMessage]);
+
+    // Функция для обработки изменений в редакторе
+    const handleEditorChange = (newState: EditorState) => {
+        if (newState.getCurrentContent() !== editorState.getCurrentContent()) {
+            setEditorState(newState);
+        }
     };
 
+    // Обработка нажатий клавиш
     const keyBindingFn = (e: React.KeyboardEvent): string | null => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -79,28 +63,28 @@ export default function MessageInput(props: MessageInputProps) {
         return getDefaultKeyBinding(e);
     };
 
-    const handleClick = useCallback(async () => {
+    // Отправка сообщения
+    const handleClick = async () => {
         const token = localStorage.getItem('token');
         if (!token) {
             console.error('Authorization token is missing');
             return;
         }
 
-        // Проверяем, что сообщение не пустое и нет файлов
-        if (textAreaValue.trim() === '' && uploadedFiles.length === 0) {
+        const content = editorState.getCurrentContent().getPlainText().trim();
+
+        if (content === '' && uploadedFiles.length === 0) {
             console.warn('Cannot send an empty message');
-            return;  // Не отправляем пустое сообщение
+            return;
         }
 
         try {
-            let startTime = performance.now();
-
             if (editingMessage && editingMessage.id) {
-                await editMessage(editingMessage.id, textAreaValue, token);
+                await editMessage(editingMessage.id, content, token);
                 setEditingMessage(null);
             } else {
                 const formData = new FormData();
-                formData.append('content', textAreaValue);
+                formData.append('content', content);
                 uploadedFiles.forEach((fileData) => {
                     formData.append('file', fileData.file);
                 });
@@ -108,24 +92,24 @@ export default function MessageInput(props: MessageInputProps) {
                 await sendMessage(chatId, formData, token);
             }
 
-            console.log(`Message sent in: ${(performance.now() - startTime).toFixed(2)} ms`);
-
-            setTextAreaValue('');
             setEditorState(EditorState.createEmpty());
             setUploadedFiles([]);
         } catch (error) {
             console.error('Error sending or editing message:', error);
         }
-    }, [textAreaValue, uploadedFiles, editingMessage, chatId]);
+    };
 
+    // Обработка выбора файла
     const handleFileSelect = (file: File) => {
         setUploadedFiles((prevFiles) => [...prevFiles, { file }]);
     };
 
+    // Удаление загруженного файла
     const removeUploadedFile = (index: number) => {
         setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     };
 
+    // Обработка вставки файлов из буфера обмена
     const handlePaste = (event: React.ClipboardEvent) => {
         const clipboardItems = event.clipboardData.items;
         for (let i = 0; i < clipboardItems.length; i++) {
@@ -197,7 +181,6 @@ export default function MessageInput(props: MessageInputProps) {
                         </Stack>
                     )}
 
-
                     <Stack
                         direction="row"
                         alignItems="center"
@@ -251,21 +234,28 @@ export default function MessageInput(props: MessageInputProps) {
 
                         <IconButton
                             size="sm"
-                            color={textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 'primary' : 'neutral'}
+                            color={
+                                editorState.getCurrentContent().getPlainText().trim() !== '' ||
+                                uploadedFiles.length > 0
+                                    ? 'primary'
+                                    : 'neutral'
+                            }
                             onClick={handleClick}
                             sx={{
                                 ml: 1,
                                 opacity: 1,
                                 transition: 'color 0.3s ease',
                                 '&:hover': {
-                                    color: textAreaValue.trim() !== '' || uploadedFiles.length > 0 ? 'primary.dark' : 'neutral.main',
+                                    color:
+                                        editorState.getCurrentContent().getPlainText().trim() !== '' ||
+                                        uploadedFiles.length > 0
+                                            ? 'primary.dark'
+                                            : 'neutral.main',
                                 },
                             }}
                         >
                             <SendRoundedIcon />
                         </IconButton>
-
-
                     </Stack>
                 </Stack>
             </FormControl>

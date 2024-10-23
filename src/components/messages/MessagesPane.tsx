@@ -1,5 +1,6 @@
 import * as React from 'react';
 import Box from '@mui/joy/Box';
+import { useParams } from 'react-router-dom';
 import Sheet from '@mui/joy/Sheet';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
@@ -11,8 +12,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import IconButton from '@mui/joy/IconButton';
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
@@ -27,9 +26,8 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
     const [isFarFromBottom, setIsFarFromBottom] = useState<boolean>(false);
-    const [chatId, setChatId] = useState<number | null>(null);
     const [allChatMessages, setAllChatMessages] = useState<{ [key: number]: MessageProps[] }>({});
-
+    const { chatId } = useParams<{ chatId: string }>();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const chatIdRef = useRef<number | null>(null);
@@ -96,6 +94,13 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
         }
     }, []);
 
+    useEffect(() => {
+        if (chat) {
+            setChatMessages(allChatMessages[chat.id] || []);
+        }
+    }, [chat, allChatMessages]);
+
+
     const handleNewMessage = (newMessage: MessageProps) => {
         setAllChatMessages((prev) => {
             const chatId = newMessage.chatId;
@@ -140,35 +145,64 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
     };
 
     useWebSocket((message) => {
-        const currentChatId = chatIdRef.current;
-        if (!currentChatId) return;
-
         console.log('Received WebSocket message:', message);
-        console.log('Current chat ID:', currentChatId);
 
         if (message.type === 'newMessage') {
-            if (message.message.chatId === currentChatId) {
-                console.log(`Adding message for current chat ID: ${currentChatId}`);
-                handleNewMessage(message.message);
-            } else {
-                console.log(`Message for different chat (message.chatId=${message.message.chatId}, current chat ID=${currentChatId})`);
+            const newMessage = message.message;
+
+            setAllChatMessages((prev) => {
+                const chatId = newMessage.chatId;
+                const chatMessages = prev[chatId] || [];
+                const exists = chatMessages.some((message) => message.id === newMessage.id);
+                if (!exists) {
+                    return {
+                        ...prev,
+                        [chatId]: [...chatMessages, newMessage],
+                    };
+                }
+                return prev;
+            });
+
+            if (newMessage.chatId === chatIdRef.current) {
+                setChatMessages((prevMessages) => {
+                    const exists = prevMessages.some((message) => message.id === newMessage.id);
+                    if (!exists) {
+                        return [...prevMessages, newMessage];
+                    }
+                    return prevMessages;
+                });
             }
         } else if (message.type === 'editMessage') {
-            if (message.message.chatId === currentChatId) {
-                console.log(`Editing message for current chat ID: ${currentChatId}`);
-                handleEditMessageInList(message.message);
-            } else {
-                console.log(`Ignoring editMessage for chat ID ${message.message.chatId}`);
+            const updatedMessage = message.message;
+            setAllChatMessages((prev) => {
+                const chatId = updatedMessage.chatId;
+                const chatMessages = prev[chatId] || [];
+                return {
+                    ...prev,
+                    [chatId]: chatMessages.map((msg) =>
+                        msg.id === updatedMessage.id ? { ...msg, ...updatedMessage } : msg
+                    ),
+                };
+            });
+
+            if (updatedMessage.chatId === chatIdRef.current) {
+                handleEditMessageInList(updatedMessage);
             }
         } else if (message.type === 'deleteMessage') {
-            if (message.chatId === currentChatId) {
-                console.log(`Deleting message for current chat ID: ${currentChatId}`);
-                handleDeleteMessageInList(message.messageId);
-            } else {
-                console.log(`Ignoring deleteMessage for chat ID ${message.chatId}`);
+            const { messageId, chatId } = message;
+            setAllChatMessages((prev) => {
+                return {
+                    ...prev,
+                    [chatId]: prev[chatId].filter((msg) => msg.id !== messageId),
+                };
+            });
+
+            if (chatId === chatIdRef.current) {
+                handleDeleteMessageInList(messageId);
             }
         }
     }, [currentUserId]);
+
 
     const handleEditMessage = (messageId: number, content: string) => {
         setEditingMessageId(messageId);
@@ -289,8 +323,6 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
             {chat && (
                 <MessageInput
                     chatId={Number(chat?.id ?? 0)}
-                    textAreaValue={textAreaValue}
-                    setTextAreaValue={setTextAreaValue}
                     onSubmit={() => {
                         const newMessage: MessageProps = {
                             id: (chatMessages.length + 1).toString(),

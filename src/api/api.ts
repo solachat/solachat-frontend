@@ -35,7 +35,6 @@ export const createPrivateChat = async (currentUserId: number, userId: number, t
             }
         );
 
-        console.log("Chat created successfully:", response.data);
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -146,7 +145,6 @@ export const deleteChat = async (chatId: number, token: string) => {
         }
 
         const data = await response.json();
-        toast.success('Chat deleted successfully');
         return data;
     } catch (error) {
         console.error('Error deleting chat:', error);
@@ -189,7 +187,6 @@ export const addUsersToGroupChat = async (chatId: number, newUserIds: number[], 
                 },
             }
         );
-        toast.success('Users added to group successfully');
         return response.data;
     } catch (error) {
         console.error('Error adding users to group:', error);
@@ -212,7 +209,6 @@ export const assignRoleInChat = async (chatId: number, userId: number, role: 'ad
                 },
             }
         );
-        toast.success('Role assigned successfully');
         return response.data;
     } catch (error) {
         console.error('Error assigning role:', error);
@@ -277,7 +273,6 @@ export const removeUserFromChat = async (chatId: number, userId: number, token: 
                 },
             }
         );
-        toast.success('User removed successfully');
         return response.data;
     } catch (error) {
         console.error('Error removing user:', error);
@@ -307,7 +302,6 @@ export const updateChatSettings = async (chatId: number, groupName?: string, ava
             },
         });
 
-        toast.success('Chat settings updated successfully!');
         return response.data;
     } catch (error) {
         console.error('Error updating chat settings:', error);
@@ -399,13 +393,12 @@ export const initiateGroupCall = async (fromUserId: number, participantUserIds: 
     }
 };
 
-// Отклонение звонка
 export const rejectCall = async (fromUserId: number | null, toUserId: number | null, callId: number | null) => {
     try {
         const response = await axios.post(`${API_URL}/api/calls/reject`, {
             fromUserId,
             toUserId,
-            callId,  // Добавляем callId для отклонения звонка
+            callId,
         });
         return response.data;
     } catch (error) {

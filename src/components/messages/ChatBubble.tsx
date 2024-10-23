@@ -326,6 +326,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         <img
                             src={getAttachmentUrl()}
                             alt="attachment"
+
                             style={{
                                 width: '100%',
                                 maxWidth: '700px',

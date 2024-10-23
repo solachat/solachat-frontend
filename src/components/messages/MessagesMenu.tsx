@@ -34,8 +34,6 @@ export default function MessagesMenu({ chatId, token, onDeleteChat }: MessagesMe
         try {
             await deleteChat(chatId, token);
             onDeleteChat();
-            // Можно убрать window.location.reload, если вы не хотите перезагружать страницу
-            window.location.reload();
         } catch (error) {
             console.error('Failed to delete chat:', error);
             toast.error('Failed to delete chat');

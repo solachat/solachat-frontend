@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
-import { Box, Input, List } from '@mui/joy';
+import {Box, Input, List, Skeleton} from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChatListItem from './ChatListItem';
 import { ChatProps, UserProps } from '../core/types';
@@ -14,6 +14,7 @@ import CircularProgress from '@mui/joy/CircularProgress';
 import { useWebSocket } from '../../api/useWebSocket';
 import IconButton from '@mui/joy/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
+import { useNavigate } from 'react-router-dom';
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -30,7 +31,9 @@ export default function ChatsPane(props: ChatsPaneProps) {
     const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
     const [loadingChats, setLoadingChats] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false); // состояние для Sidebar
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+    const navigate = useNavigate();
+
 
     useWebSocket((message) => {
         if (message.type === 'chatCreated') {
@@ -43,7 +46,48 @@ export default function ChatsPane(props: ChatsPaneProps) {
                 return prevChats;
             });
         }
+
+        if (message.type === 'groupChatCreated') {
+            const newGroupChat = message.chat;
+            setChats((prevChats) => {
+                const chatExists = prevChats.some((chat) => chat.id === newGroupChat.id);
+                if (!chatExists) {
+                    return [...prevChats, newGroupChat];
+                }
+                return prevChats;
+            });
+            console.log('Group chat created:', newGroupChat);
+        }
+
+        if (message.type === 'chatDeleted') {
+            const deletedChatId = message.chatId;
+            console.log('Получено сообщение об удалении чата с ID:', deletedChatId);
+
+            setChats((prevChats) => {
+                const updatedChats = prevChats.filter((chat) => chat.id !== deletedChatId);
+                console.log('Список чатов после удаления:', updatedChats);
+                return updatedChats;
+            });
+            navigate('/chat');
+        }
+
+        if (message.type === 'newMessage') {
+            const newMessage = message.message;
+            setChats((prevChats) => {
+                return prevChats.map((chat) => {
+                    if (chat.id === newMessage.chatId) {
+                        return {
+                            ...chat,
+                            messages: [...chat.messages, newMessage],
+                            lastMessage: newMessage,
+                        };
+                    }
+                    return chat;
+                });
+            });
+        }
     }, []);
+
 
     React.useEffect(() => {
         const loadChats = async () => {
@@ -68,6 +112,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
         loadChats();
     }, [currentUser.id]);
 
+
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
         if (e.target.value.trim()) {
@@ -78,7 +123,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
         }
     };
 
-    // Закрытие Sidebar при клике вне его области
     const handleClickOutside = (event: MouseEvent) => {
         const sidebar = document.querySelector('.Sidebar');
         if (sidebar && !sidebar.contains(event.target as Node)) {
@@ -87,10 +131,8 @@ export default function ChatsPane(props: ChatsPaneProps) {
     };
 
     React.useEffect(() => {
-        // Добавление обработчика события клика
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
-            // Удаление обработчика при размонтировании компонента
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
@@ -114,7 +156,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                         borderRight: '1px solid',
                         borderColor: 'divider',
                         height: '100vh',
-                        width: { xs: selectedChatId ? '0' : '100%', sm: 'calc(100% - 199px)' },
+                        width: { xs: selectedChatId ? '0' : '100%', sm: 'calc(100% - 198px)' },
                         overflowY: 'auto',
                         display: { xs: selectedChatId ? 'none' : 'block', sm: 'block' },
                     }}
@@ -175,20 +217,23 @@ export default function ChatsPane(props: ChatsPaneProps) {
                     ) : (
                         <>
                             {loadingChats ? (
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        mt: 2,
-                                    }}
-                                >
-                                    <CircularProgress color="primary" />
-                                    <Typography fontSize="lg" sx={{ mt: 2, color: 'text.secondary' }}>
-                                        {t('Loading chats...')}
-                                    </Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 4 }}>
+                                    {[1, 2, 3].map((index) => (
+                                        <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                                            <Skeleton variant="circular" width={48} height={48} sx={{ ml: 1, mr: 1 }} />
+                                            <Box sx={{ flexGrow: 1 }}>
+                                                <Skeleton variant="text" width={100} sx={{ mb: 1 }} />
+                                                <Skeleton variant="text" width="80%" />
+                                            </Box>
+                                            <Skeleton
+                                                variant="text"
+                                                width={35}
+                                                sx={{ mr: 1, mt: 0.5 }}
+                                            />
+                                        </Box>
+                                    ))}
                                 </Box>
+
                             ) : chats && chats.length > 0 ? (
                                 <List>
                                     {chats.map((chat) => (
@@ -214,6 +259,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                     {t('startcommunicate')}
                                 </Typography>
                             )}
+
                         </>
                     )}
                 </Sheet>
