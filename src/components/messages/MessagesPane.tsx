@@ -211,6 +211,11 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                     px: 2,
                     py: { xs: 1, sm: 3 },
                     overflowY: 'auto',
+                    '&::-webkit-scrollbar': {
+                        display: 'none',
+                    },
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
                 }}
             >
                 {chatMessages.length > 0 ? (
@@ -262,24 +267,24 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                 )}
             </Box>
 
-            {isFarFromBottom && (
-                <IconButton
-                    sx={{
-                        position: 'fixed',
-                        right: 16,
-                        zIndex: 10,
-                        backgroundColor: 'primary.main',
-                        '&:hover': {
-                            backgroundColor: 'primary.dark',
-                        },
-                        width: { xs: 40, sm: 56 },
-                        height: { xs: 40, sm: 56 },
-                    }}
-                    onClick={() => scrollToBottom()}
-                >
-                    <ArrowDownwardIcon />
-                </IconButton>
-            )}
+            {/*{isFarFromBottom && (*/}
+            {/*    <IconButton*/}
+            {/*        sx={{*/}
+            {/*            position: 'fixed',*/}
+            {/*            right: 16,*/}
+            {/*            zIndex: 10,*/}
+            {/*            backgroundColor: 'primary.main',*/}
+            {/*            '&:hover': {*/}
+            {/*                backgroundColor: 'primary.dark',*/}
+            {/*            },*/}
+            {/*            width: { xs: 40, sm: 56 },*/}
+            {/*            height: { xs: 40, sm: 56 },*/}
+            {/*        }}*/}
+            {/*        onClick={() => scrollToBottom()}*/}
+            {/*    >*/}
+            {/*        <ArrowDownwardIcon />*/}
+            {/*    </IconButton>*/}
+            {/*)}*/}
 
             {chat && (
                 <MessageInput

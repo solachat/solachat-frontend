@@ -12,6 +12,8 @@ import { CssVarsProvider } from '@mui/joy/styles';
 import Sidebar from '../core/Sidebar';
 import CircularProgress from '@mui/joy/CircularProgress';
 import { useWebSocket } from '../../api/useWebSocket';
+import IconButton from '@mui/joy/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -28,6 +30,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
     const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
     const [loadingChats, setLoadingChats] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false); // состояние для Sidebar
 
     useWebSocket((message) => {
         if (message.type === 'chatCreated') {
@@ -75,18 +78,43 @@ export default function ChatsPane(props: ChatsPaneProps) {
         }
     };
 
+    // Закрытие Sidebar при клике вне его области
+    const handleClickOutside = (event: MouseEvent) => {
+        const sidebar = document.querySelector('.Sidebar');
+        if (sidebar && !sidebar.contains(event.target as Node)) {
+            setIsSidebarOpen(false);
+        }
+    };
+
+    React.useEffect(() => {
+        // Добавление обработчика события клика
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            // Удаление обработчика при размонтировании компонента
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     return (
         <CssVarsProvider>
             <Box sx={{ display: 'flex', height: 'auto', maxWidth: '100%' }}>
-                <Sidebar />
+                {!selectedChatId && (
+                    <IconButton
+                        sx={{ display: { xs: 'block', sm: 'none' }, position: 'absolute', zIndex: 10, left: '16px', top: '16px' }}
+                        onClick={() => setIsSidebarOpen(true)}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                )}
+
+                <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
                 <Sheet
                     sx={{
                         borderRight: '1px solid',
                         borderColor: 'divider',
                         height: '100vh',
-                        width: { xs: selectedChatId ? '0' : '100%', sm: 'calc(100% - 198px)' },
+                        width: { xs: selectedChatId ? '0' : '100%', sm: 'calc(100% - 199px)' },
                         overflowY: 'auto',
                         display: { xs: selectedChatId ? 'none' : 'block', sm: 'block' },
                     }}
@@ -106,14 +134,10 @@ export default function ChatsPane(props: ChatsPaneProps) {
                             fontSize={{ xs: 'md', sm: 'lg' }}
                             component="h1"
                             fontWeight="lg"
-                            sx={{ mr: 'auto' }}
+                            sx={{ mr: 'auto', ml: { xs: 2, sm: 0 } }}
                         >
                             {t('Messages')}
                         </Typography>
-                        {/*<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>*/}
-                        {/*    <LanguageSwitcher />*/}
-                        {/*    <ColorSchemeToggle />*/}
-                        {/*</div>*/}
                     </Stack>
 
                     <Box sx={{ px: 2, pb: 1.5, display: 'flex', gap: '8px', alignItems: 'center' }}>

@@ -20,7 +20,7 @@ import CallRoundedIcon from '@mui/icons-material/CallRounded';
 import VideoLibraryRoundedIcon from '@mui/icons-material/VideoLibraryRounded';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { DarkModeSwitch } from './ColorSchemeToggle';
-import {LanguageSwitcherWithText} from "./LanguageSwitcher";
+import { LanguageSwitcherWithText } from "./LanguageSwitcher";
 
 interface DecodedToken {
     username: string;
@@ -59,7 +59,12 @@ function Toggler(props: {
     );
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const [userData, setUserData] = React.useState<{ username: string; avatar: string } | null>(null);
     const { t } = useTranslation();
     const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
@@ -89,7 +94,7 @@ export default function Sidebar() {
     const handleLogout = () => {
         localStorage.removeItem('token');
         navigate('/login');
-    }
+    };
 
     const handleCreateGroupClick = () => {
         setIsGroupModalOpen(true);
@@ -105,14 +110,10 @@ export default function Sidebar() {
                 className="Sidebar"
                 sx={{
                     position: { xs: 'fixed', md: 'sticky' },
-                    transform: {
-                        xs: 'translateX(calc(100% * (var(--SideNavigation-slideIn, 0) - 1)))',
-                        md: 'none',
-                    },
+                    transform: isOpen ? 'translateX(0)' : { xs: 'translateX(-100%)', md: 'none' },
                     transition: 'transform 0.4s, width 0.4s',
                     zIndex: 10,
-                    height: 'auto',
-                    top: 0,
+                    height: { xs: '100vh', md: 'auto' },
                     p: 1,
                     flexShrink: 0,
                     display: 'flex',
@@ -120,17 +121,17 @@ export default function Sidebar() {
                     gap: 1,
                     borderRight: '1px solid',
                     borderColor: 'divider',
-                    width: '180px',
+                    width: { xs: '240px', md: '180px' },
                 }}
             >
-                <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2, marginLeft: '5px', marginBottom: '0px', marginTop: '5px' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', mb: 0, padding: 0 }}>
                     <Avatar
                         variant="outlined"
                         size="lg"
                         sx={{ width: 50, height: 50 }}
                         src={userData.avatar || 'https://via.placeholder.com/80'}
                     />
-                    <Typography level="title-sm" sx={{ mt: 1 }}>
+                    <Typography level="title-sm" sx={{ mt: 1, mb: 0 }}>
                         {userData.username}
                     </Typography>
                 </Box>
