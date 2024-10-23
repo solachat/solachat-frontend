@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
-import {Box, Input, List, Skeleton} from '@mui/joy';
+import { Box, Input, List, Skeleton } from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChatListItem from './ChatListItem';
 import { ChatProps, UserProps } from '../core/types';
@@ -33,7 +33,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
     const [error, setError] = React.useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
     const navigate = useNavigate();
-
 
     useWebSocket((message) => {
         if (message.type === 'chatCreated') {
@@ -78,7 +77,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                     if (chat.id === newMessage.chatId) {
                         return {
                             ...chat,
-                            messages: [...chat.messages, newMessage],
+                            messages: Array.isArray(chat.messages) ? [...chat.messages, newMessage] : [newMessage],
                             lastMessage: newMessage,
                         };
                     }
@@ -87,7 +86,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
             });
         }
     }, []);
-
 
     React.useEffect(() => {
         const loadChats = async () => {
@@ -111,7 +109,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
 
         loadChats();
     }, [currentUser.id]);
-
 
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
@@ -245,7 +242,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                                     ? undefined
                                                     : chat.users && chat.users.find((user) => user.id !== currentUser.id)
                                             }
-                                            messages={chat.messages}
+                                            messages={chat.messages || []}
                                             setSelectedChat={setSelectedChat}
                                             currentUserId={currentUser.id}
                                             chats={chats}
