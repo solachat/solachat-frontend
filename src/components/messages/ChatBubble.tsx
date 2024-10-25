@@ -255,15 +255,19 @@ export default function ChatBubble(props: ChatBubbleProps) {
             onContextMenu={handleContextMenu}
         >
             {isGroupChat && !isSent && (
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <img
-                        src={user.avatar || 'path/to/default-avatar.jpg'}
-                        alt="avatar"
-                        style={{ width: '30px', height: '30px', borderRadius: '50%', marginRight: '8px' }}
-                    />
-                    <Typography>{user.username}</Typography>
-                </Box>
+                <Typography
+                    sx={{
+                        fontSize: '14px',
+                        color: 'text.secondary',
+                        textAlign: 'left',
+                        ml: 1,
+                    }}
+                >
+                    {user.username}
+                </Typography>
             )}
+
+
 
             <Sheet
                 color={isSent ? 'primary' : 'neutral'}
@@ -275,7 +279,12 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     borderRadius: '12px',
                     borderBottomLeftRadius: isSent ? '18px' : '0px',
                     borderBottomRightRadius: isSent ? '0px' : '18px',
-                    background: (isImage || isVideo || isAudio) && !content ? 'transparent' : (isSent ? 'linear-gradient(135deg, #76baff, #4778e2)' : 'var(--joy-palette-background-level2)'),
+                    background: (isImage || isVideo || isAudio) && !content ? 'transparent' :
+                        (isSent ?
+                            '#4F6D7A'
+                            : 'var(--joy-palette-background-level2)'),
+                    // 'linear-gradient(135deg, #76baff, #4778e2)'
+                    //     : 'var(--joy-palette-background-level2)'),
                     wordWrap: 'break-word',
                     overflowWrap: 'break-word',
                     whiteSpace: 'pre-wrap',
@@ -374,6 +383,28 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </Typography>
                 )}
 
+                {isGroupChat && !isSent && (
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            bottom: '-3px',  // Немного ниже нижней границы облачка
+                            left: '-37px',  // Чуть слева от облачка
+                            display: 'flex',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <img
+                            src={user.avatar || 'path/to/default-avatar.jpg'}
+                            alt="avatar"
+                            style={{
+                                width: '35px',
+                                height: '35px',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                            }}
+                        />
+                    </Box>
+                )}
 
                 <Stack
                     direction="row"

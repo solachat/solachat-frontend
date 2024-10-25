@@ -253,10 +253,11 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                     },
                     scrollbarWidth: 'none',
                     msOverflowStyle: 'none',
+                    alignItems: 'center',
                 }}
             >
                 {chatMessages.length > 0 ? (
-                    <Stack spacing={2} sx={{ width: '100%' }}>
+                    <Stack spacing={2} sx={{ width: { xs: '90%', sm: '80%', md: '97%' } }}>
                         {chatMessages.map((message: MessageProps, index: number) => {
                             const isCurrentUser = message.userId === currentUserId;
                             const messageCreatorId = message.userId;
@@ -303,6 +304,7 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                     </Typography>
                 )}
             </Box>
+
 
             {/*{isFarFromBottom && (*/}
             {/*    <IconButton*/}

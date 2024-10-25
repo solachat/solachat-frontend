@@ -110,6 +110,8 @@ export default function MessageInput(props: MessageInputProps) {
                         borderRadius: '4px',
                         padding: '6px',
                         backgroundColor: 'background.level1',
+                        maxWidth: '100%',
+                        width: '97%'
                     }}
                 >
                     {editingMessage && editingMessage.content && (
