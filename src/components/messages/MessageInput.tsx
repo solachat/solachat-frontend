@@ -35,7 +35,6 @@ export default function MessageInput(props: MessageInputProps) {
     const [isFileUploadOpen, setFileUploadOpen] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
 
-    // Обработка изменения chatId и состояния редактирования
     useEffect(() => {
         if (editingMessage?.content) {
             const contentState = ContentState.createFromText(editingMessage.content);
@@ -46,14 +45,12 @@ export default function MessageInput(props: MessageInputProps) {
         setUploadedFiles([]);
     }, [chatId, editingMessage]);
 
-    // Функция для обработки изменений в редакторе
     const handleEditorChange = (newState: EditorState) => {
         if (newState.getCurrentContent() !== editorState.getCurrentContent()) {
             setEditorState(newState);
         }
     };
 
-    // Обработка нажатий клавиш
     const keyBindingFn = (e: React.KeyboardEvent): string | null => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -63,7 +60,6 @@ export default function MessageInput(props: MessageInputProps) {
         return getDefaultKeyBinding(e);
     };
 
-    // Отправка сообщения
     const handleClick = async () => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -99,17 +95,14 @@ export default function MessageInput(props: MessageInputProps) {
         }
     };
 
-    // Обработка выбора файла
     const handleFileSelect = (file: File) => {
         setUploadedFiles((prevFiles) => [...prevFiles, { file }]);
     };
 
-    // Удаление загруженного файла
     const removeUploadedFile = (index: number) => {
         setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     };
 
-    // Обработка вставки файлов из буфера обмена
     const handlePaste = (event: React.ClipboardEvent) => {
         const clipboardItems = event.clipboardData.items;
         for (let i = 0; i < clipboardItems.length; i++) {

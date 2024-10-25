@@ -144,16 +144,17 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
         setChatMessages((prevMessages) => prevMessages.filter((msg) => Number(msg.id) !== messageId));
     };
 
-    useWebSocket((message) => {
-        console.log('Received WebSocket message:', message);
+    useWebSocket((data) => {
+        console.log('Received WebSocket message:', data);
 
-        if (message.type === 'newMessage') {
-            const newMessage = message.message;
+        if (data.type === 'newMessage' && data.message) {
+            const newMessage = data.message; // Извлекаем сообщение из поля `message`
 
+            // Обновляем все сообщения в списке чатов
             setAllChatMessages((prev) => {
                 const chatId = newMessage.chatId;
                 const chatMessages = prev[chatId] || [];
-                const exists = chatMessages.some((message) => message.id === newMessage.id);
+                const exists = chatMessages.some((msg) => msg.id === newMessage.id);
                 if (!exists) {
                     return {
                         ...prev,
@@ -165,15 +166,17 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
 
             if (newMessage.chatId === chatIdRef.current) {
                 setChatMessages((prevMessages) => {
-                    const exists = prevMessages.some((message) => message.id === newMessage.id);
+                    const exists = prevMessages.some((msg) => msg.id === newMessage.id);
                     if (!exists) {
                         return [...prevMessages, newMessage];
                     }
                     return prevMessages;
                 });
             }
-        } else if (message.type === 'editMessage') {
-            const updatedMessage = message.message;
+
+        } else if (data.type === 'editMessage' && data.message) {
+            const updatedMessage = data.message;
+
             setAllChatMessages((prev) => {
                 const chatId = updatedMessage.chatId;
                 const chatMessages = prev[chatId] || [];
@@ -188,8 +191,10 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
             if (updatedMessage.chatId === chatIdRef.current) {
                 handleEditMessageInList(updatedMessage);
             }
-        } else if (message.type === 'deleteMessage') {
-            const { messageId, chatId } = message;
+
+        } else if (data.type === 'deleteMessage') {
+            const { messageId, chatId } = data;
+
             setAllChatMessages((prev) => {
                 return {
                     ...prev,
@@ -201,7 +206,8 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                 handleDeleteMessageInList(messageId);
             }
         }
-    }, [currentUserId]);
+    }, [currentUserId, chatIdRef]);
+
 
 
     const handleEditMessage = (messageId: number, content: string) => {

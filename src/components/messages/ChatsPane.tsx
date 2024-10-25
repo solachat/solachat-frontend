@@ -26,7 +26,7 @@ type ChatsPaneProps = {
 export default function ChatsPane(props: ChatsPaneProps) {
     const { setSelectedChat, selectedChatId, currentUser } = props;
     const { t } = useTranslation();
-    const [chats, setChats] = React.useState<ChatProps[]>(props.chats);
+    const [chats, setChats] = React.useState<ChatProps[]>(props.chats); // добавляем setChats для обновления чатов
     const [searchTerm, setSearchTerm] = React.useState('');
     const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
     const [loadingChats, setLoadingChats] = React.useState(true);
@@ -34,9 +34,11 @@ export default function ChatsPane(props: ChatsPaneProps) {
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
     const navigate = useNavigate();
 
-    useWebSocket((message) => {
-        if (message.type === 'chatCreated') {
-            const newChat = message.chat;
+    useWebSocket((data) => {
+        console.log('Received WebSocket message:', data);
+
+        if (data.type === 'chatCreated') {
+            const newChat = data.chat;
             setChats((prevChats) => {
                 const chatExists = prevChats.some((chat) => chat.id === newChat.id);
                 if (!chatExists) {
@@ -46,8 +48,8 @@ export default function ChatsPane(props: ChatsPaneProps) {
             });
         }
 
-        if (message.type === 'groupChatCreated') {
-            const newGroupChat = message.chat;
+        if (data.type === 'groupChatCreated') {
+            const newGroupChat = data.chat;
             setChats((prevChats) => {
                 const chatExists = prevChats.some((chat) => chat.id === newGroupChat.id);
                 if (!chatExists) {
@@ -58,32 +60,29 @@ export default function ChatsPane(props: ChatsPaneProps) {
             console.log('Group chat created:', newGroupChat);
         }
 
-        if (message.type === 'chatDeleted') {
-            const deletedChatId = message.chatId;
-            console.log('Получено сообщение об удалении чата с ID:', deletedChatId);
+        if (data.type === 'chatDeleted') {
+            const deletedChatId = data.chatId;
+            console.log('Chat deleted with ID:', deletedChatId);
 
             setChats((prevChats) => {
                 const updatedChats = prevChats.filter((chat) => chat.id !== deletedChatId);
-                console.log('Список чатов после удаления:', updatedChats);
+                console.log('Chats after deletion:', updatedChats);
                 return updatedChats;
             });
             navigate('/chat');
         }
 
-        if (message.type === 'newMessage') {
-            const newMessage = message.message;
-            setChats((prevChats) => {
-                return prevChats.map((chat) => {
-                    if (chat.id === newMessage.chatId) {
-                        return {
-                            ...chat,
-                            messages: Array.isArray(chat.messages) ? [...chat.messages, newMessage] : [newMessage],
-                            lastMessage: newMessage,
-                        };
-                    }
-                    return chat;
-                });
-            });
+        if (data.type === 'newMessage') {
+            const newMessage = data.message;
+            setChats((prevChats) => prevChats.map(chat => {
+                if (chat.id === newMessage.chatId) {
+                    return {
+                        ...chat,
+                        messages: [...chat.messages, newMessage],
+                    };
+                }
+                return chat;
+            }));
         }
     }, []);
 
@@ -208,6 +207,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                         setSelectedChat={setSelectedChat}
                                         currentUserId={currentUser.id}
                                         chats={chats}
+                                        setChats={setChats} // передаем setChats
                                     />
                                 ))}
                         </List>
@@ -246,6 +246,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                             setSelectedChat={setSelectedChat}
                                             currentUserId={currentUser.id}
                                             chats={chats}
+                                            setChats={setChats} // передаем setChats
                                             selectedChatId={selectedChatId}
                                             isGroup={chat.isGroup}
                                         />

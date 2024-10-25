@@ -49,14 +49,22 @@ const isAudioFile = (fileName: string) => {
 };
 
 const isLink = (text: string) => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return urlRegex.test(text);
+    const urlRegex = /(?:^|\s)(https?:\/\/[^\s]+|(?:[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:[\/\w.-]*)?)(?=\s|$)/g;
+    return urlRegex.test(text.trim());
 };
 
 const renderMessageContent = (text: string) => {
-    const parts = text.split(/(https?:\/\/[^\s]+)/g);
+    const parts = text.split(/((?:https?:\/\/[^\s]+|(?:[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:[\/\w.-]*)?)(?=\s|$))/g);
+
     return parts.map((part, index) => {
         if (isLink(part)) {
+            let href = part;
+
+            if (href.includes('@')) {
+                href = `mailto:${part}`;
+            } else if (!part.startsWith('http')) {
+                href = `https://${part}`;
+            }
             return (
                 <a
                     href={part}
@@ -71,7 +79,7 @@ const renderMessageContent = (text: string) => {
                     onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
                     onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
                 >
-                    {part}
+                    {part.trim()}
                 </a>
             );
         }
@@ -352,7 +360,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',
                             textAlign: 'left',
                             transition: 'color 0.3s ease',
-                            maxWidth: '480px',
+                            // maxWidth: '480px',
+                            maxWidth: { xs: '300px', md: '480px' },
                             wordWrap: 'break-word',
                             overflowWrap: 'break-word',
                             whiteSpace: 'pre-wrap',

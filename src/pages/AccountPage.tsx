@@ -205,14 +205,43 @@ export default function AccountPage() {
                 <CssBaseline />
                 <Box sx={{ flex: 1, width: '100%' }}>
                     <Box sx={{ px: { xs: 2, md: 6 }, textAlign: 'center' }}>
-                        <Breadcrumbs size="sm" aria-label="breadcrumbs" separator={<ChevronRightRoundedIcon />} sx={{ pl: 0, justifyContent: 'center' }}>
+                        <Breadcrumbs
+                            size="sm"
+                            aria-label="breadcrumbs"
+                            separator={<ChevronRightRoundedIcon />}
+                            sx={{ pl: 0, justifyContent: 'center' }}
+                        >
                             <Link underline="none" color="neutral" href="/" aria-label="Home">
                                 <HomeRoundedIcon />
                             </Link>
-                            <Typography sx={{ fontWeight: 'bold' }}>{t('loading')}</Typography>
+                            <Typography
+                                sx={{
+                                    fontWeight: 'bold',
+                                    animation: 'typing 3.5s steps(11, end), blink-caret 0.75s step-end infinite',
+                                    borderRight: '.15em solid transparent',
+                                    display: 'inline-block',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                {t('loading')}
+                            </Typography>
                         </Breadcrumbs>
                     </Box>
                 </Box>
+                <style>
+                    {`
+                    @keyframes typing {
+                        from { width: 0; }
+                        to { width: 11ch; }
+                    }
+
+                    @keyframes blink-caret {
+                        from, to { border-color: transparent; }
+                        50% { border-color: orange; }
+                    }
+                `}
+                </style>
             </CssVarsProvider>
         );
     }
@@ -222,7 +251,7 @@ export default function AccountPage() {
             <Helmet>
                 <title>{`${t('profile')} ${username}`}</title>
             </Helmet>
-            <CssBaseline />
+            <CssBaseline/>
             <GlobalStyles
                 styles={{
                     ':root': {

@@ -13,7 +13,7 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/joy/Avatar';
 import { useEffect, useState } from 'react';
-import {t} from "i18next";
+import { t } from 'i18next';
 
 type ChatListItemProps = {
     id: string;
@@ -26,6 +26,7 @@ type ChatListItemProps = {
     chats: ChatProps[];
     isGroup?: boolean;
     newMessage?: MessageProps;
+    setChats: React.Dispatch<React.SetStateAction<ChatProps[]>>;
 };
 
 const isImage = (fileName: string) => {
@@ -45,7 +46,7 @@ const fixFilePath = (filePath: string) => {
 };
 
 export default function ChatListItem(props: ChatListItemProps) {
-    const { id, sender, messages, selectedChatId, setSelectedChat, currentUserId, chats, isGroup, newMessage } = props;
+    const { id, sender, messages, selectedChatId, setSelectedChat, currentUserId, chats, isGroup, newMessage, setChats } = props;
     const [localMessages, setLocalMessages] = useState<MessageProps[]>(messages);
     const selected = selectedChatId === id;
 
@@ -55,9 +56,31 @@ export default function ChatListItem(props: ChatListItemProps) {
 
     useEffect(() => {
         if (newMessage && newMessage.chatId === Number(id)) {
-            setLocalMessages((prevMessages) => [...prevMessages, newMessage]);
+            // Обновляем локальные сообщения
+            setLocalMessages((prevMessages) => {
+                const messageExists = prevMessages.some(msg => msg.id === newMessage.id);
+                if (!messageExists) {
+                    return [...prevMessages, newMessage];
+                }
+                return prevMessages;
+            });
+
+            // Обновляем последнее сообщение для этого чата
+            setChats((prevChats) => {
+                return prevChats.map((chat) => {
+                    if (chat.id === newMessage.chatId) {
+                        return {
+                            ...chat,
+                            lastMessage: newMessage,  // обновляем lastMessage
+                        };
+                    }
+                    return chat;
+                });
+            });
         }
-    }, [newMessage, id]);
+    }, [newMessage, id, setChats]);
+
+
 
     useEffect(() => {
         if (!chats.some(chat => chat.id === Number(id))) {

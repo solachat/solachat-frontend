@@ -64,8 +64,8 @@ export default function MessagesPaneHeader({
                 direction="row"
                 sx={{
                     justifyContent: 'space-between',
-                    py: { xs: 1, md: 2 },
-                    px: { xs: 1, md: 2 },
+                    py: { xs: 2, md: 2 },
+                    px: { xs: 2, md: 2 },
                     borderBottom: '1px solid',
                     borderColor: 'divider',
                     backgroundColor: 'background.body',
@@ -77,7 +77,7 @@ export default function MessagesPaneHeader({
                         color="neutral"
                         size="sm"
                         sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
-                        onClick={onBack}  // вызываем переданную функцию onBack
+                        onClick={onBack}
                     >
                         <ArrowBackIosNewRoundedIcon />
                     </IconButton>
