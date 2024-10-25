@@ -257,7 +257,7 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                 }}
             >
                 {chatMessages.length > 0 ? (
-                    <Stack spacing={2} sx={{ width: { xs: '90%', sm: '80%', md: '97%' } }}>
+                    <Stack spacing={2} sx={{ width: { xs: '90%', sm: '80%', md: '95%' } }}>
                         {chatMessages.map((message: MessageProps, index: number) => {
                             const isCurrentUser = message.userId === currentUserId;
                             const messageCreatorId = message.userId;
@@ -326,43 +326,46 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
             {/*)}*/}
 
             {chat && (
-                <MessageInput
-                    chatId={Number(chat?.id ?? 0)}
-                    onSubmit={() => {
-                        const newMessage: MessageProps = {
-                            id: (chatMessages.length + 1).toString(),
-                            user: chat?.users?.find((user) => user.id === currentUserId)!,
-                            userId: currentUserId!,
-                            chatId: chat?.id!,
-                            content: textAreaValue,
-                            createdAt: new Date().toISOString(),
-                        };
-                        handleNewMessage(newMessage);
-                        setEditingMessageId(null);
-                    }}
-                    editingMessage={
-                        editingMessageId !== null
-                            ? {
-                                id: editingMessageId,
-                                content: chatMessages.find(
-                                    (msg) => msg.id.toString() === editingMessageId.toString()
-                                )?.content ?? null,
-                            }
-                            : { id: null, content: null }
-                    }
-                    setEditingMessage={(msg) => {
-                        if (msg === null) {
+                <Box sx={{ width: { xs: '90%', sm: '80%', md: '95%' }, margin: '0 auto' }}>
+                    <MessageInput
+                        chatId={Number(chat?.id ?? 0)}
+                        onSubmit={() => {
+                            const newMessage: MessageProps = {
+                                id: (chatMessages.length + 1).toString(),
+                                user: chat?.users?.find((user) => user.id === currentUserId)!,
+                                userId: currentUserId!,
+                                chatId: chat?.id!,
+                                content: textAreaValue,
+                                createdAt: new Date().toISOString(),
+                            };
+                            handleNewMessage(newMessage);
                             setEditingMessageId(null);
-                        } else {
-                            const messageToEdit = chatMessages.find(
-                                (msgItem) => msgItem.content === msg.content
-                            );
-                            if (messageToEdit) {
-                                setEditingMessageId(Number(messageToEdit.id));
-                            }
+                        }}
+                        editingMessage={
+                            editingMessageId !== null
+                                ? {
+                                    id: editingMessageId,
+                                    content:
+                                        chatMessages.find(
+                                            (msg) => msg.id.toString() === editingMessageId.toString()
+                                        )?.content ?? null,
+                                }
+                                : { id: null, content: null }
                         }
-                    }}
-                />
+                        setEditingMessage={(msg) => {
+                            if (msg === null) {
+                                setEditingMessageId(null);
+                            } else {
+                                const messageToEdit = chatMessages.find(
+                                    (msgItem) => msgItem.content === msg.content
+                                );
+                                if (messageToEdit) {
+                                    setEditingMessageId(Number(messageToEdit.id));
+                                }
+                            }
+                        }}
+                    />
+                </Box>
             )}
         </Sheet>
     );

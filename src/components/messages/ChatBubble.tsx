@@ -254,143 +254,20 @@ export default function ChatBubble(props: ChatBubbleProps) {
             }}
             onContextMenu={handleContextMenu}
         >
-            {isGroupChat && !isSent && (
-                <Typography
-                    sx={{
-                        fontSize: '14px',
-                        color: 'text.secondary',
-                        textAlign: 'left',
-                        ml: 1,
-                    }}
-                >
-                    {user.username}
-                </Typography>
-            )}
-
-
-
-            <Sheet
-                color={isSent ? 'primary' : 'neutral'}
-                variant={isSent ? 'solid' : 'soft'}
+            <Box
                 sx={{
-                    maxWidth: isEdited ? '75%' : '70%',
-                    minWidth: 'fit-content',
-                    padding: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 10px' } : 0,
-                    borderRadius: '12px',
-                    borderBottomLeftRadius: isSent ? '18px' : '0px',
-                    borderBottomRightRadius: isSent ? '0px' : '18px',
-                    background: (isImage || isVideo || isAudio) && !content ? 'transparent' :
-                        (isSent ?
-                            '#4F6D7A'
-                            : 'var(--joy-palette-background-level2)'),
-                    // 'linear-gradient(135deg, #76baff, #4778e2)'
-                    //     : 'var(--joy-palette-background-level2)'),
-                    wordWrap: 'break-word',
-                    overflowWrap: 'break-word',
-                    whiteSpace: 'pre-wrap',
-                    display: 'inline-block',
-                    fontSize: '14px',
-                    lineHeight: '18px',
-                    '@media (max-width: 600px)': {
-                        maxWidth: '85%',
-                        width: 'auto'
-                    },
+                    display: 'flex',
+                    flexDirection: isSent ? 'row-reverse' : 'row',
+                    alignItems: 'flex-end',
+                    width: '100%',
                 }}
             >
-
-                {isVideo && (
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            maxWidth: '100%',
-                            cursor: 'pointer',
-                            overflow: 'hidden',
-                            mb: content ? 2 : 0,
-                        }}
-                    >
-                        <video
-                            ref={messageVideoRef}
-                            src={getAttachmentUrl()}
-                            style={{
-                                width: '100%',
-                                maxWidth: '700px',
-                                maxHeight: '500px',
-                                objectFit: 'contain',
-                                borderRadius: 0,
-                            }}
-                            controls
-                            onTimeUpdate={updateVideoState}
-                            onVolumeChange={updateVideoState}
-                        />
-
-                    </Box>
-                )}
-
-                {isImage && !isVideo && (
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            maxWidth: '100%',
-                            cursor: 'pointer',
-                            overflow: 'hidden',
-                            mb: content ? 1 : 0,
-                        }}
-                        onClick={handleImageClick}
-                    >
-                        <img
-                            src={getAttachmentUrl()}
-                            alt="attachment"
-
-                            style={{
-                                width: '100%',
-                                maxWidth: '700px',
-                                maxHeight: '500px',
-                                objectFit: 'contain',
-                                borderRadius: 0,
-                            }}
-                        />
-                    </Box>
-                )}
-
-                {isAudio && !isVideo && (
-                    <CustomAudioPlayer audioSrc={getAttachmentUrl()} isSent={isSent} />
-                )}
-
-                {content && (
-                    <Typography
-                        sx={{
-                            fontSize: { xs: '14px', sm: '14px' },
-                            lineHeight: 1.6,
-                            color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-primary)',
-                            marginLeft: isImage || isVideo || isAudio ? '12px' : '0px',
-                            marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',
-                            textAlign: 'left',
-                            transition: 'color 0.3s ease',
-                            // maxWidth: '480px',
-                            maxWidth: { xs: '300px', md: '480px' },
-                            wordWrap: 'break-word',
-                            overflowWrap: 'break-word',
-                            whiteSpace: 'pre-wrap',
-                            display: 'inline-block',
-                            paddingRight: isEdited ? '100px' : '40px',
-                        }}
-                    >
-                        {renderMessageContent(content)}
-                    </Typography>
-                )}
-
                 {isGroupChat && !isSent && (
                     <Box
                         sx={{
-                            position: 'absolute',
-                            bottom: '-3px',  // Немного ниже нижней границы облачка
-                            left: '-37px',  // Чуть слева от облачка
-                            display: 'flex',
-                            alignItems: 'center',
+                            marginRight: isSent ? '8px' : 0,
+                            alignSelf: 'flex-end',
+                            marginTop: '5px'
                         }}
                     >
                         <img
@@ -401,155 +278,177 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 height: '35px',
                                 borderRadius: '50%',
                                 objectFit: 'cover',
+                                marginRight: '2px',
+                                paddingTop: '2px'
                             }}
                         />
                     </Box>
                 )}
 
-                <Stack
-                    direction="row"
-                    spacing={1}
+                <Sheet
+                    color={isSent ? 'primary' : 'neutral'}
+                    variant={isSent ? 'solid' : 'soft'}
                     sx={{
-                        position: 'absolute',
-                        bottom: '4px',
-                        right: '10px',
-                        alignItems: 'center',
+                        maxWidth: isEdited ? '75%' : '70%',
+                        minWidth: 'fit-content',
+                        padding: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 10px' } : 0,
+                        borderRadius: '12px',
+                        borderBottomLeftRadius: isSent ? '18px' : '0px',
+                        borderBottomRightRadius: isSent ? '0px' : '18px',
+                        background: (isImage || isVideo || isAudio) && !content ? 'transparent' :
+                            (isSent ? '#4F6D7A' : 'var(--joy-palette-background-level2)'),
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'pre-wrap',
+                        display: 'inline-block',
+                        fontSize: '14px',
+                        lineHeight: '18px',
+                        '@media (max-width: 600px)': {
+                            maxWidth: '85%',
+                            width: 'auto',
+                        },
                     }}
                 >
-                    {isEdited && (
+                    {isGroupChat && !isSent && (
+                            <Typography>{user.username}</Typography>
+                    )}
+
+                    {isVideo && (
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                maxWidth: '100%',
+                                cursor: 'pointer',
+                                overflow: 'hidden',
+                                mb: content ? 2 : 0,
+                            }}
+                        >
+                            <video
+                                ref={messageVideoRef}
+                                src={getAttachmentUrl()}
+                                style={{
+                                    width: '100%',
+                                    maxWidth: '700px',
+                                    maxHeight: '500px',
+                                    objectFit: 'contain',
+                                    borderRadius: 0,
+                                }}
+                                controls
+                                onTimeUpdate={updateVideoState}
+                                onVolumeChange={updateVideoState}
+                            />
+                        </Box>
+                    )}
+
+                    {isImage && !isVideo && (
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                maxWidth: '100%',
+                                cursor: 'pointer',
+                                overflow: 'hidden',
+                                mb: content ? 1 : 0,
+                            }}
+                            onClick={handleImageClick}
+                        >
+                            <img
+                                src={getAttachmentUrl()}
+                                alt="attachment"
+                                style={{
+                                    width: '100%',
+                                    maxWidth: '700px',
+                                    maxHeight: '500px',
+                                    objectFit: 'contain',
+                                    borderRadius: 0,
+                                }}
+                            />
+                        </Box>
+                    )}
+
+                    {isAudio && !isVideo && (
+                        <CustomAudioPlayer audioSrc={getAttachmentUrl()} isSent={isSent} />
+                    )}
+
+                    {content && (
+                        <Typography
+                            sx={{
+                                fontSize: { xs: '14px', sm: '14px' },
+                                lineHeight: 1.6,
+                                color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-primary)',
+                                marginLeft: isImage || isVideo || isAudio ? '12px' : '0px',
+                                marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',
+                                textAlign: 'left',
+                                transition: 'color 0.3s ease',
+                                maxWidth: { xs: '300px', md: '480px' },
+                                wordWrap: 'break-word',
+                                overflowWrap: 'break-word',
+                                whiteSpace: 'pre-wrap',
+                                display: 'inline-block',
+                                paddingRight: isEdited ? '100px' : '40px',
+                            }}
+                        >
+                            {renderMessageContent(content)}
+                        </Typography>
+                    )}
+
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{
+                            position: 'absolute',
+                            bottom: '4px',
+                            right: '10px',
+                            alignItems: 'center',
+                        }}
+                    >
+                        {isEdited && (
+                            <Typography
+                                sx={{
+                                    fontSize: '12px',
+                                    color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
+                                }}
+                            >
+                                {t('edited')}
+                            </Typography>
+                        )}
+
                         <Typography
                             sx={{
                                 fontSize: '12px',
                                 color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
                             }}
                         >
-                            {t('edited')}
+                            {formattedTime}
                         </Typography>
-                    )}
-
-                    <Typography
-                        sx={{
-                            fontSize: '12px',
-                            color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
-                        }}
-                    >
-                        {formattedTime}
-                    </Typography>
-                </Stack>
-
-                {!isImage && !isVideo && !isAudio && attachment && (
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                        <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
-                        <Typography sx={{ fontSize: 'sm' }}>{attachment.fileName}</Typography>
-                        <IconButton
-                            component="a"
-                            href={getAttachmentUrl()}
-                            download={attachment?.fileName}
-                            sx={{
-                                ml: 0.5,
-                                color: isSent ? 'white' : '#0B6BCB',
-                                transition: 'color 0.3s ease',
-                            }}
-                        >
-                            <DownloadIcon />
-                        </IconButton>
                     </Stack>
-                )}
 
-                {isImageOpen && imageSrc && (
-                    <Box
-                        sx={{
-                            position: 'fixed',
-                            top: 0,
-                            left: 0,
-                            width: '100vw',
-                            height: '100vh',
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 999,
-                            cursor: 'pointer',
-                        }}
-                        onClick={handleClose}
-                    >
-                        <Box
-                            sx={{
-                                position: 'relative',
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
-                            <img
-                                src={imageSrc}
-                                alt="attachment-preview"
-                                style={{
-                                    width: '90%',
-                                    height: '80%',
-                                    objectFit: 'contain',
+                    {/* Вложение файла */}
+                    {!isImage && !isVideo && !isAudio && attachment && (
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                            <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
+                            <Typography sx={{ fontSize: 'sm' }}>{attachment.fileName}</Typography>
+                            <IconButton
+                                component="a"
+                                href={getAttachmentUrl()}
+                                download={attachment?.fileName}
+                                sx={{
+                                    ml: 0.5,
+                                    color: isSent ? 'white' : '#0B6BCB',
+                                    transition: 'color 0.3s ease',
                                 }}
-                            />
-                            {content && (
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        bottom: '15px',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        paddingX: 2,
-                                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                                        color: 'white',
-                                        borderRadius: 5,
-                                    }}
-                                >
-                                    <Typography sx={{ fontSize: '16px', wordWrap: 'break-word', textAlign: 'center' }}>
-                                        {content}
-                                    </Typography>
-                                </Box>
-                            )}
-                        </Box>
-                    </Box>
-                )}
+                            >
+                                <DownloadIcon />
+                            </IconButton>
+                        </Stack>
+                    )}
+                </Sheet>
+            </Box>
 
-
-
-                {isVideoOpen && videoSrc && (
-                    <Box
-                        sx={{
-                            position: 'fixed',
-                            top: 0,
-                            left: 0,
-                            width: '100vw',
-                            height: '100vh',
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 999,
-                            cursor: 'pointer',
-                        }}
-                        onClick={handleClose}
-                    >
-                        <video
-                            ref={modalVideoRef}
-                            src={videoSrc}
-                            style={{
-                                maxWidth: '100%',
-                                maxHeight: '100%',
-                                borderRadius: '12px',
-                            }}
-                            controls
-                            onPlay={syncVideoWithModal}
-                            onTimeUpdate={updateVideoState}
-                            onVolumeChange={updateVideoState}
-                        />
-                    </Box>
-                )}
-            </Sheet>
-
+            {/* Контекстное меню */}
             <ContextMenu
                 anchorPosition={
                     anchorPosition !== null ? { top: anchorPosition.mouseY, left: anchorPosition.mouseX } : undefined
@@ -564,5 +463,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 messageCreatorId={messageCreatorId}
             />
         </Box>
+
+
     );
 }

@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next'; // Импортируем хук
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
     '&:hover': {
-        backgroundColor: theme.palette.primary.main,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
         transition: 'background-color 0.3s ease',
     },
     display: 'flex',
@@ -21,9 +21,9 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
     '& .MuiPaper-root': {
-        background: 'linear-gradient(135deg, #76baff, #4778e2)',
+        background: '#4F6D7A',
         minWidth: '160px',
-        borderRadius: '8px',
+        borderRadius: '3px',
     },
 }));
 

@@ -12,7 +12,7 @@ import { createPrivateChat } from '../../api/api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/joy/Avatar';
-import { useEffect, useState } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { t } from 'i18next';
 
 type ChatListItemProps = {
@@ -41,52 +41,39 @@ const isVideo = (fileName: string) => {
     return videoExtensions.includes(fileExtension || '');
 };
 
-const fixFilePath = (filePath: string) => {
-    return filePath.replace(/\\/g, '/');
-};
+const fixFilePath = (filePath: string) => filePath.replace(/\\/g, '/');
 
 export default function ChatListItem(props: ChatListItemProps) {
-    const { id, sender, messages, selectedChatId, setSelectedChat, currentUserId, chats, isGroup, newMessage, setChats } = props;
-    const [localMessages, setLocalMessages] = useState<MessageProps[]>(messages);
-    const selected = selectedChatId === id;
+    const {
+        id, sender, messages, selectedChatId, setSelectedChat,
+        currentUserId, chats, isGroup, newMessage, setChats,
+    } = props;
 
-    const hasMessages = Array.isArray(localMessages) && localMessages.length > 0;
-    const lastMessage = hasMessages ? localMessages[localMessages.length - 1] : null;
+    const selected = selectedChatId === id;
     const navigate = useNavigate();
 
+    // Находим существующий чат по ID
+    const existingChat = chats.find((chat: ChatProps) => chat.id === Number(id));
+
+    // Используем useMemo для кэширования lastMessage и уменьшения вычислений
+    const lastMessage = useMemo(() => messages[messages.length - 1] || null, [messages]);
+
+    // Обновление чатов с помощью useCallback для уменьшения ререндеров
+    const updateChatsWithNewMessage = useCallback(() => {
+        setChats((prevChats) => prevChats.map((chat) => {
+            if (chat.id === newMessage?.chatId) {
+                return { ...chat, lastMessage: newMessage };
+            }
+            return chat;
+        }));
+    }, [newMessage, setChats]);
+
+    // Обновляем чат при поступлении нового сообщения
     useEffect(() => {
         if (newMessage && newMessage.chatId === Number(id)) {
-            setLocalMessages((prevMessages) => {
-                const messageExists = prevMessages.some(msg => msg.id === newMessage.id);
-                if (!messageExists) {
-                    return [...prevMessages, newMessage];
-                }
-                return prevMessages;
-            });
-
-            setChats((prevChats) => {
-                return prevChats.map((chat) => {
-                    if (chat.id === newMessage.chatId) {
-                        return {
-                            ...chat,
-                            lastMessage: newMessage,
-                        };
-                    }
-                    return chat;
-                });
-            });
+            updateChatsWithNewMessage();
         }
-    }, [newMessage, id, setChats]);
-
-    useEffect(() => {
-        if (!chats.some(chat => chat.id === Number(id))) {
-            setLocalMessages([]);
-        }
-    }, [chats, id]);
-
-    const existingChat = Array.isArray(chats)
-        ? chats.find((chat: ChatProps) => chat.id === Number(id))
-        : null;
+    }, [newMessage, id, updateChatsWithNewMessage]);
 
     const handleClick = async () => {
         if (existingChat) {
@@ -145,7 +132,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                             <Typography level="body-md" fontSize={{ xs: 'sm', sm: 'md' }}>
                                 {isGroup ? existingChat?.name || 'Group Chat' : `${sender?.realname || 'No Name'} (${sender?.username || 'No Username'})`}
                             </Typography>
-                            {hasMessages && lastMessage && (
+                            {lastMessage ? (
                                 <Typography
                                     level="body-sm"
                                     sx={{
@@ -185,12 +172,11 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         lastMessage.content
                                     )}
                                 </Typography>
-                            )}
-                            {!hasMessages && (
+                            ) : (
                                 <Typography level="body-sm">{t('No messages')}</Typography>
                             )}
                         </Box>
-                        {hasMessages && lastMessage && (
+                        {lastMessage && (
                             <Box sx={{ lineHeight: 1.5, textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
                                 {lastMessage.unread && (
                                     <CircleIcon sx={{ fontSize: 12 }} color="primary" />

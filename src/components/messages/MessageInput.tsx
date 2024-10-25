@@ -14,6 +14,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from 'react-i18next';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 
 export type UploadedFileData = {
     file: File;
@@ -111,7 +112,6 @@ export default function MessageInput(props: MessageInputProps) {
                         padding: '6px',
                         backgroundColor: 'background.level1',
                         maxWidth: '100%',
-                        width: '97%'
                     }}
                 >
                     {editingMessage && editingMessage.content && (
@@ -175,19 +175,35 @@ export default function MessageInput(props: MessageInputProps) {
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
+                                maxWidth: '100%',
+
                             }}
                             onClick={() => editorRef.current?.focus()}
                         >
-                            <Editor
-                                editorState={editorState}
-                                keyBindingFn={keyBindingFn}
-                                onChange={handleEditorChange}
-                                placeholder={t('writeMessage')}
-                                ref={editorRef}
-                                spellCheck={true}
-                                stripPastedStyles={true}
-                            />
+                            <Box
+                                sx={{
+                                    width: '100%',
+                                    maxWidth: { xs: '150px', sm: '800px' },
+                                    minWidth: { xs: '100%', sm: '300px' },
+                                }}
+                            >
+                                <Editor
+                                    editorState={editorState}
+                                    keyBindingFn={keyBindingFn}
+                                    onChange={handleEditorChange}
+                                    placeholder={t('writeMessage')}
+                                    ref={editorRef}
+                                    spellCheck={true}
+                                    stripPastedStyles={true}
+                                />
+                            </Box>
                         </Box>
+                        <IconButton
+                            size="sm"
+                            sx={{ ml: 1 }}
+                        >
+                            <EmojiEmotionsIcon />
+                        </IconButton>
                         <IconButton
                             size="sm"
                             color={editorState.getCurrentContent().getPlainText().trim() !== '' || uploadedFiles.length > 0 ? 'primary' : 'neutral'}
