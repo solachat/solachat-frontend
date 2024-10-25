@@ -207,7 +207,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                         setSelectedChat={setSelectedChat}
                                         currentUserId={currentUser.id}
                                         chats={chats}
-                                        setChats={setChats} // передаем setChats
+                                        setChats={setChats}
                                     />
                                 ))}
                         </List>
@@ -246,7 +246,7 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                             setSelectedChat={setSelectedChat}
                                             currentUserId={currentUser.id}
                                             chats={chats}
-                                            setChats={setChats} // передаем setChats
+                                            setChats={setChats}
                                             selectedChatId={selectedChatId}
                                             isGroup={chat.isGroup}
                                         />

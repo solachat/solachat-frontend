@@ -284,6 +284,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     lineHeight: '18px',
                     '@media (max-width: 600px)': {
                         maxWidth: '85%',
+                        width: 'auto'
                     },
                 }}
             >
@@ -327,7 +328,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             maxWidth: '100%',
                             cursor: 'pointer',
                             overflow: 'hidden',
-                            mb: content ? 2 : 0,
+                            mb: content ? 1 : 0,
                         }}
                         onClick={handleImageClick}
                     >
@@ -441,18 +442,48 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         }}
                         onClick={handleClose}
                     >
-                        <img
-                            src={imageSrc}
-                            alt="attachment-preview"
-                            style={{
-                                maxWidth: '100%',
-                                maxHeight: '100%',
-                                objectFit: 'contain',
-                                borderRadius: '12px',
+                        <Box
+                            sx={{
+                                position: 'relative',
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                             }}
-                        />
+                        >
+                            <img
+                                src={imageSrc}
+                                alt="attachment-preview"
+                                style={{
+                                    width: '90%',
+                                    height: '80%',
+                                    objectFit: 'contain',
+                                }}
+                            />
+                            {content && (
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        bottom: '15px',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        paddingX: 2,
+                                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                        color: 'white',
+                                        borderRadius: 5,
+                                    }}
+                                >
+                                    <Typography sx={{ fontSize: '16px', wordWrap: 'break-word', textAlign: 'center' }}>
+                                        {content}
+                                    </Typography>
+                                </Box>
+                            )}
+                        </Box>
                     </Box>
                 )}
+
+
 
                 {isVideoOpen && videoSrc && (
                     <Box

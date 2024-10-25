@@ -160,7 +160,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     >
                         {/* Music section */}
                         <ListItem>
-                            <ListItemButton>
+                            <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>
                                 <MusicNoteRoundedIcon />
                                 <ListItemContent>
                                     <Typography level="title-sm">{t('Music')}</Typography>
@@ -170,7 +170,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                         {/* Call section */}
                         <ListItem>
-                            <ListItemButton>
+                            <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>
                                 <CallRoundedIcon />
                                 <ListItemContent>
                                     <Typography level="title-sm">{t('Call')}</Typography>
@@ -179,17 +179,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         </ListItem>
 
                         <ListItem>
-                            <ListItemButton>
+                            <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>
                                 <AutoAwesomeIcon />
                                 <ListItemContent>
-                                    <Typography level="title-sm">{t('GPT')}</Typography>
+                                    <Typography level="title-sm">
+                                        {t('GPT')}
+                                    </Typography>
                                 </ListItemContent>
                             </ListItemButton>
                         </ListItem>
 
+
                         {/* Clips section */}
                         <ListItem>
-                            <ListItemButton>
+                            <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>
                                 <VideoLibraryRoundedIcon />
                                 <ListItemContent>
                                     <Typography level="title-sm">{t('Clips')}</Typography>

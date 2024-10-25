@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Editor, EditorState, getDefaultKeyBinding, ContentState, RichUtils } from 'draft-js';
+import { Editor, EditorState, getDefaultKeyBinding, ContentState } from 'draft-js';
 import 'draft-js/dist/Draft.css';
 import Box from '@mui/joy/Box';
 import FormControl from '@mui/joy/FormControl';
@@ -45,11 +45,9 @@ export default function MessageInput(props: MessageInputProps) {
         setUploadedFiles([]);
     }, [chatId, editingMessage]);
 
-    const handleEditorChange = (newState: EditorState) => {
-        if (newState.getCurrentContent() !== editorState.getCurrentContent()) {
-            setEditorState(newState);
-        }
-    };
+    const handleEditorChange = useCallback((newState: EditorState) => {
+        setEditorState(newState);
+    }, []);
 
     const keyBindingFn = (e: React.KeyboardEvent): string | null => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -68,7 +66,6 @@ export default function MessageInput(props: MessageInputProps) {
         }
 
         const content = editorState.getCurrentContent().getPlainText().trim();
-
         if (content === '' && uploadedFiles.length === 0) {
             console.warn('Cannot send an empty message');
             return;
@@ -81,10 +78,7 @@ export default function MessageInput(props: MessageInputProps) {
             } else {
                 const formData = new FormData();
                 formData.append('content', content);
-                uploadedFiles.forEach((fileData) => {
-                    formData.append('file', fileData.file);
-                });
-
+                uploadedFiles.forEach((fileData) => formData.append('file', fileData.file));
                 await sendMessage(chatId, formData, token);
             }
 
@@ -95,26 +89,13 @@ export default function MessageInput(props: MessageInputProps) {
         }
     };
 
-    const handleFileSelect = (file: File) => {
+    const handleFileSelect = useCallback((file: File) => {
         setUploadedFiles((prevFiles) => [...prevFiles, { file }]);
-    };
+    }, []);
 
-    const removeUploadedFile = (index: number) => {
+    const removeUploadedFile = useCallback((index: number) => {
         setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-    };
-
-    const handlePaste = (event: React.ClipboardEvent) => {
-        const clipboardItems = event.clipboardData.items;
-        for (let i = 0; i < clipboardItems.length; i++) {
-            const item = clipboardItems[i];
-            if (item.kind === 'file') {
-                const file = item.getAsFile();
-                if (file) {
-                    handleFileSelect(file);
-                }
-            }
-        }
-    };
+    }, []);
 
     return (
         <Box sx={{ position: 'relative', px: 3, pb: 1 }}>
@@ -173,13 +154,7 @@ export default function MessageInput(props: MessageInputProps) {
                             </IconButton>
                         </Stack>
                     )}
-
-                    <Stack
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="space-between"
-                        sx={{ width: '100%' }}
-                    >
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
                         <IconButton
                             size="sm"
                             variant="plain"
@@ -189,11 +164,8 @@ export default function MessageInput(props: MessageInputProps) {
                         >
                             <AttachFileIcon />
                         </IconButton>
-
                         <Box
                             sx={{
-                                display: 'flex',
-                                alignItems: 'center',
                                 flexGrow: 1,
                                 minHeight: 'auto',
                                 cursor: 'text',
@@ -201,51 +173,24 @@ export default function MessageInput(props: MessageInputProps) {
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
-                                width: '100%',
                             }}
                             onClick={() => editorRef.current?.focus()}
-                            onPaste={handlePaste}
                         >
-                            <Box
-                                sx={{
-                                    width: '100%',
-                                    maxWidth: { xs: '250px', sm: '1000px' },
-                                    minWidth: { xs: '150px', sm: '300px' },
-                                }}
-                            >
-                                <Editor
-                                    editorState={editorState}
-                                    keyBindingFn={keyBindingFn}
-                                    onChange={handleEditorChange}
-                                    placeholder={t('writeMessage')}
-                                    ref={editorRef}
-                                    spellCheck={true}
-                                    stripPastedStyles={true}
-                                />
-                            </Box>
+                            <Editor
+                                editorState={editorState}
+                                keyBindingFn={keyBindingFn}
+                                onChange={handleEditorChange}
+                                placeholder={t('writeMessage')}
+                                ref={editorRef}
+                                spellCheck={true}
+                                stripPastedStyles={true}
+                            />
                         </Box>
-
                         <IconButton
                             size="sm"
-                            color={
-                                editorState.getCurrentContent().getPlainText().trim() !== '' ||
-                                uploadedFiles.length > 0
-                                    ? 'primary'
-                                    : 'neutral'
-                            }
+                            color={editorState.getCurrentContent().getPlainText().trim() !== '' || uploadedFiles.length > 0 ? 'primary' : 'neutral'}
                             onClick={handleClick}
-                            sx={{
-                                ml: 1,
-                                opacity: 1,
-                                transition: 'color 0.3s ease',
-                                '&:hover': {
-                                    color:
-                                        editorState.getCurrentContent().getPlainText().trim() !== '' ||
-                                        uploadedFiles.length > 0
-                                            ? 'primary.dark'
-                                            : 'neutral.main',
-                                },
-                            }}
+                            sx={{ ml: 1 }}
                         >
                             <SendRoundedIcon />
                         </IconButton>
@@ -262,19 +207,12 @@ export default function MessageInput(props: MessageInputProps) {
                                 sx={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'space-between',
                                     padding: '8px 16px',
                                     border: '1px solid',
                                     borderColor: 'divider',
                                     borderRadius: '8px',
                                     backgroundColor: 'background.level2',
-                                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.05)',
                                     minWidth: '200px',
-                                    transition: 'transform 0.2s ease-in-out',
-                                    '&:hover': {
-                                        transform: 'scale(1.02)',
-                                        boxShadow: '0px 6px 16px rgba(0, 0, 0, 0.1)',
-                                    },
                                 }}
                             >
                                 <Stack direction="row" spacing={1} alignItems="center">

@@ -148,9 +148,8 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
         console.log('Received WebSocket message:', data);
 
         if (data.type === 'newMessage' && data.message) {
-            const newMessage = data.message; // Извлекаем сообщение из поля `message`
+            const newMessage = data.message;
 
-            // Обновляем все сообщения в списке чатов
             setAllChatMessages((prev) => {
                 const chatId = newMessage.chatId;
                 const chatMessages = prev[chatId] || [];
@@ -209,7 +208,6 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
     }, [currentUserId, chatIdRef]);
 
 
-
     const handleEditMessage = (messageId: number, content: string) => {
         setEditingMessageId(messageId);
         setTextAreaValue(content);
@@ -226,7 +224,6 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                 display: 'flex',
                 flexDirection: 'column',
                 backgroundColor: 'background.level1',
-                boxShadow: 'lg',
                 overflow: 'hidden',
             }}
         >
@@ -339,7 +336,6 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                             createdAt: new Date().toISOString(),
                         };
                         handleNewMessage(newMessage);
-                        setTextAreaValue('');
                         setEditingMessageId(null);
                     }}
                     editingMessage={

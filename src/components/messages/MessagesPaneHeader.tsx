@@ -93,7 +93,7 @@ export default function MessagesPaneHeader({
                     <div>
                         <Typography
                             fontWeight="lg"
-                            fontSize="lg"
+                            fontSize={{ xs: 'md', md: 'lg' }}
                             component="h2"
                             noWrap
                             sx={{

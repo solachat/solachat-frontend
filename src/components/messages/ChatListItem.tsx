@@ -56,7 +56,6 @@ export default function ChatListItem(props: ChatListItemProps) {
 
     useEffect(() => {
         if (newMessage && newMessage.chatId === Number(id)) {
-            // Обновляем локальные сообщения
             setLocalMessages((prevMessages) => {
                 const messageExists = prevMessages.some(msg => msg.id === newMessage.id);
                 if (!messageExists) {
@@ -65,13 +64,12 @@ export default function ChatListItem(props: ChatListItemProps) {
                 return prevMessages;
             });
 
-            // Обновляем последнее сообщение для этого чата
             setChats((prevChats) => {
                 return prevChats.map((chat) => {
                     if (chat.id === newMessage.chatId) {
                         return {
                             ...chat,
-                            lastMessage: newMessage,  // обновляем lastMessage
+                            lastMessage: newMessage,
                         };
                     }
                     return chat;
@@ -79,8 +77,6 @@ export default function ChatListItem(props: ChatListItemProps) {
             });
         }
     }, [newMessage, id, setChats]);
-
-
 
     useEffect(() => {
         if (!chats.some(chat => chat.id === Number(id))) {
