@@ -247,7 +247,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 display: 'flex',
                 justifyContent: isSent ? 'flex-end' : 'flex-start',
                 mb: { xs: 1, sm: 1 },
-                px: 1,
+                px: { xs: 0, sm: 1 },
                 width: { xs: '90%', sm: '70%', md: '55%' },
                 flexDirection: 'column',
                 alignItems: isSent ? 'flex-end' : 'flex-start',
@@ -279,7 +279,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 borderRadius: '50%',
                                 objectFit: 'cover',
                                 marginRight: '2px',
-                                paddingTop: '2px'
                             }}
                         />
                     </Box>

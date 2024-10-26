@@ -6,7 +6,6 @@ import Typography from '@mui/joy/Typography';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
 import { UserProps } from '../core/types';
-import { toggleMessagesPane } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import MessagesMenu from './MessagesMenu';
 import GroupInfoModal from '../group/GroupInfoModal';
@@ -71,7 +70,16 @@ export default function MessagesPaneHeader({
                     backgroundColor: 'background.body',
                 }}
             >
-                <Stack direction="row" spacing={{ xs: 1, md: 2 }} sx={{ alignItems: 'center' }}>
+                <Stack
+                    direction="row"
+                    spacing={{ xs: 1, md: 2 }}
+                    sx={{
+                        alignItems: 'center',
+                        width: { xs: '100%', sm: 'auto' },  // Ширина на мобильных устройствах
+                        maxWidth: { xs: '85%', sm: '100%' }, // Максимальная ширина на мобильных
+                        overflow: 'hidden',
+                    }}
+                >
                     <IconButton
                         variant="plain"
                         color="neutral"
@@ -90,7 +98,7 @@ export default function MessagesPaneHeader({
                         sx={{ cursor: 'pointer' }}
                     />
 
-                    <div>
+                    <div style={{ width: '100%' }}>
                         <Typography
                             fontWeight="lg"
                             fontSize={{ xs: 'md', md: 'lg' }}
@@ -112,9 +120,6 @@ export default function MessagesPaneHeader({
                             {sender?.verified && <Verified sx={{ ml: 1 }} />}
                         </Typography>
 
-
-
-
                         {isGroup && (
                             <Typography level="body-sm">
                                 {members.length} {members.length === 1 ? 'member' : 'members'}
@@ -132,7 +137,11 @@ export default function MessagesPaneHeader({
                         </IconButton>
                     )}
 
-                    <MessagesMenu chatId={chatId} token={localStorage.getItem('token') || ''} onDeleteChat={() => console.log('Chat deleted')} />
+                    <MessagesMenu
+                        chatId={chatId}
+                        token={localStorage.getItem('token') || ''}
+                        onDeleteChat={() => console.log('Chat deleted')}
+                    />
                 </Stack>
             </Stack>
 

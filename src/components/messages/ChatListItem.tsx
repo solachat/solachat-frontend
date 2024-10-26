@@ -1,6 +1,5 @@
 import * as React from 'react';
 import Box from '@mui/joy/Box';
-import ListDivider from '@mui/joy/ListDivider';
 import ListItem from '@mui/joy/ListItem';
 import ListItemButton from '@mui/joy/ListItemButton';
 import Stack from '@mui/joy/Stack';
@@ -115,14 +114,14 @@ export default function ChatListItem(props: ChatListItemProps) {
                             <Avatar
                                 src={existingChat?.avatar ? existingChat.avatar : 'path/to/default-group-avatar.jpg'}
                                 alt={existingChat?.name || 'Group Chat'}
-                                sx={{ width: { xs: 32, sm: 48 }, height: { xs: 32, sm: 48 } }}
+                                sx={{ width: { xs: 48, sm: 48 }, height: { xs: 48, sm: 48 } }}
                             />
                         ) : (
                             <AvatarWithStatus
                                 online={sender?.online}
                                 src={sender?.avatar || undefined}
                                 alt={sender?.realname}
-                                sx={{ width: { xs: 32, sm: 48 }, height: { xs: 32, sm: 48 }, fontSize: { xs: 16, sm: 24 } }}
+                                sx={{ width: { xs: 48, sm: 48 }, height: { xs: 48, sm: 48 }, fontSize: { xs: 16, sm: 24 } }}
                             >
                                 {(!sender?.avatar && sender?.realname) ? sender.realname[0].toUpperCase() : null}
                             </AvatarWithStatus>
@@ -144,7 +143,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         whiteSpace: 'nowrap',
                                         color: 'text.secondary',
                                         marginTop: '3px',
-                                        maxWidth: { xs: '300px', sm: '350px' },
+                                        maxWidth: { xs: '290px', sm: '350px' },
                                         width: '100%',
                                     }}
                                 >
@@ -177,14 +176,24 @@ export default function ChatListItem(props: ChatListItemProps) {
                             )}
                         </Box>
                         {lastMessage && (
-                            <Box sx={{ lineHeight: 1.5, textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
+                            <Box
+                                sx={{
+                                    lineHeight: 1.5,
+                                    textAlign: { xs: 'left', sm: 'right' },
+                                    display: { xs: 'flex', sm: 'block' },
+                                    justifyContent: { xs: 'flex-start' },
+                                    mt: { xs: 1, sm: 0 },
+                                }}
+                            >
                                 {lastMessage.unread && (
                                     <CircleIcon sx={{ fontSize: 12 }} color="primary" />
                                 )}
                                 <Typography
                                     level="body-xs"
-                                    display={{ xs: 'none', md: 'block' }}
                                     noWrap
+                                    sx={{
+                                        textAlign: { xs: 'left', sm: 'right' }, // Выравнивание текста
+                                    }}
                                 >
                                     {new Date(lastMessage.createdAt).toLocaleTimeString('en-GB', {
                                         hour: '2-digit',
@@ -196,7 +205,6 @@ export default function ChatListItem(props: ChatListItemProps) {
                     </Stack>
                 </ListItemButton>
             </ListItem>
-            <ListDivider sx={{ margin: 0 }} />
         </React.Fragment>
     );
 }

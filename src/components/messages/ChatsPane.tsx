@@ -23,10 +23,9 @@ type ChatsPaneProps = {
     currentUser: { id: number };
 };
 
-export default function ChatsPane(props: ChatsPaneProps) {
-    const { setSelectedChat, selectedChatId, currentUser } = props;
+export default function ChatsPane({ chats: initialChats, setSelectedChat, selectedChatId, currentUser }: ChatsPaneProps) {
     const { t } = useTranslation();
-    const [chats, setChats] = React.useState<ChatProps[]>(props.chats); // добавляем setChats для обновления чатов
+    const [chats, setChats] = React.useState<ChatProps[]>(initialChats);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
     const [loadingChats, setLoadingChats] = React.useState(true);
@@ -34,108 +33,72 @@ export default function ChatsPane(props: ChatsPaneProps) {
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
     const navigate = useNavigate();
 
+    // WebSocket для обработки событий (создание, удаление чатов и получение новых сообщений)
     useWebSocket((data) => {
-        console.log('Received WebSocket message:', data);
-
-        if (data.type === 'chatCreated') {
+        if (data.type === 'chatCreated' || data.type === 'groupChatCreated') {
             const newChat = data.chat;
-            setChats((prevChats) => {
-                const chatExists = prevChats.some((chat) => chat.id === newChat.id);
-                if (!chatExists) {
-                    return [...prevChats, newChat];
-                }
-                return prevChats;
-            });
-        }
-
-        if (data.type === 'groupChatCreated') {
-            const newGroupChat = data.chat;
-            setChats((prevChats) => {
-                const chatExists = prevChats.some((chat) => chat.id === newGroupChat.id);
-                if (!chatExists) {
-                    return [...prevChats, newGroupChat];
-                }
-                return prevChats;
-            });
-            console.log('Group chat created:', newGroupChat);
+            setChats((prevChats) => prevChats.some((chat) => chat.id === newChat.id) ? prevChats : [...prevChats, newChat]);
         }
 
         if (data.type === 'chatDeleted') {
-            const deletedChatId = data.chatId;
-            console.log('Chat deleted with ID:', deletedChatId);
-
-            setChats((prevChats) => {
-                const updatedChats = prevChats.filter((chat) => chat.id !== deletedChatId);
-                console.log('Chats after deletion:', updatedChats);
-                return updatedChats;
-            });
+            setChats((prevChats) => prevChats.filter((chat) => chat.id !== data.chatId));
             navigate('/chat');
         }
 
         if (data.type === 'newMessage') {
-            const newMessage = data.message;
-            setChats((prevChats) => prevChats.map(chat => {
-                if (chat.id === newMessage.chatId) {
-                    return {
-                        ...chat,
-                        messages: [...chat.messages, newMessage],
-                    };
-                }
-                return chat;
-            }));
+            const { chatId, message } = data;
+            setChats((prevChats) =>
+                prevChats.map((chat) => (chat.id === chatId ? { ...chat, messages: [...chat.messages, message] } : chat))
+            );
         }
     }, []);
 
+    // Загрузка чатов при инициализации компонента
     React.useEffect(() => {
         const loadChats = async () => {
             try {
                 const token = localStorage.getItem('token');
-                if (!token) {
-                    console.error('Authorization token is missing');
-                    setError('Authorization token is missing');
-                    return;
-                }
+                if (!token) throw new Error('Authorization token is missing');
 
                 const chatsFromServer = await fetchChatsFromServer(currentUser.id, token);
                 setChats(chatsFromServer || []);
-                setLoadingChats(false);
             } catch (error) {
-                console.error('Error fetching chats:', error);
+                console.error(error);
                 setError('Failed to fetch chats');
+            } finally {
                 setLoadingChats(false);
             }
         };
-
         loadChats();
     }, [currentUser.id]);
 
+    // Обработчик изменения строки поиска
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
-        if (e.target.value.trim()) {
-            const results = await searchUsers(e.target.value);
+        const term = e.target.value;
+        setSearchTerm(term);
+        if (term.trim()) {
+            const results = await searchUsers(term);
             setSearchResults(results || []);
         } else {
             setSearchResults([]);
         }
     };
 
-    const handleClickOutside = (event: MouseEvent) => {
-        const sidebar = document.querySelector('.Sidebar');
-        if (sidebar && !sidebar.contains(event.target as Node)) {
-            setIsSidebarOpen(false);
-        }
-    };
-
+    // Закрытие сайдбара при клике вне его
     React.useEffect(() => {
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!document.querySelector('.Sidebar')?.contains(event.target as Node)) {
+                setIsSidebarOpen(false);
+            }
         };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     return (
         <CssVarsProvider>
-            <Box sx={{ display: 'flex', height: 'auto', maxWidth: '100%' }}>
+            <Box sx={{ display: 'flex', maxWidth: '100%' }}>
+                {/* Кнопка меню для мобильных устройств */}
                 {!selectedChatId && (
                     <IconButton
                         sx={{ display: { xs: 'block', sm: 'none' }, position: 'absolute', zIndex: 10, left: '16px', top: '16px' }}
@@ -145,8 +108,10 @@ export default function ChatsPane(props: ChatsPaneProps) {
                     </IconButton>
                 )}
 
+                {/* Сайдбар */}
                 <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
+                {/* Лист чатов */}
                 <Sheet
                     sx={{
                         borderRight: '1px solid',
@@ -163,44 +128,47 @@ export default function ChatsPane(props: ChatsPaneProps) {
                         alignItems="center"
                         justifyContent="space-between"
                         p={2}
-                        pb={1.5}
                         sx={{
                             flexDirection: { xs: 'column', sm: 'row' },
                         }}
                     >
-                        <Typography
-                            fontSize={{ xs: 'md', sm: 'lg' }}
-                            component="h1"
-                            fontWeight="lg"
-                            sx={{ mr: 'auto', ml: { xs: 2, sm: 0 } }}
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                width: '100%',
+                                justifyContent: 'flex-start',
+                            }}
                         >
-                            {t('Messages')}
-                        </Typography>
+                            <IconButton sx={{ display: { xs: 'block', sm: 'none' } }}>
+                                <MenuIcon />
+                            </IconButton>
+                            <Input
+                                size="sm"
+                                startDecorator={<SearchRoundedIcon />}
+                                placeholder={t('Search')}
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                                aria-label="Search"
+                                sx={{
+                                    flex: 1,
+                                    fontSize: '14px',
+                                    maxWidth: { xs: '80%', sm: '100%' },
+                                    ml: 1,
+                                }}
+                            />
+                        </Box>
                     </Stack>
 
-                    <Box sx={{ px: 2, pb: 1.5, display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <Input
-                            size="sm"
-                            startDecorator={<SearchRoundedIcon />}
-                            placeholder={t('Search')}
-                            value={searchTerm}
-                            onChange={handleSearchChange}
-                            aria-label="Search"
-                            sx={{
-                                flex: 1,
-                                maxWidth: '100%',
-                                fontSize: '14px',
-                            }}
-                        />
-                    </Box>
 
+                    {/* Список результатов поиска или список чатов */}
                     {searchResults.length > 0 ? (
                         <List>
                             {searchResults
                                 .filter((user) => user.id !== currentUser.id)
                                 .map((user) => (
                                     <ChatListItem
-                                        key={user.id.toString()}
+                                        key={user.id}
                                         id={user.id.toString()}
                                         sender={user}
                                         messages={[]}
@@ -222,25 +190,20 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                                 <Skeleton variant="text" width={100} sx={{ mb: 1 }} />
                                                 <Skeleton variant="text" width="80%" />
                                             </Box>
-                                            <Skeleton
-                                                variant="text"
-                                                width={35}
-                                                sx={{ mr: 1, mt: 0.5 }}
-                                            />
+                                            <Skeleton variant="text" width={35} sx={{ mr: 1, mt: 0.5 }} />
                                         </Box>
                                     ))}
                                 </Box>
-
-                            ) : chats && chats.length > 0 ? (
+                            ) : chats.length > 0 ? (
                                 <List>
                                     {chats.map((chat) => (
                                         <ChatListItem
-                                            key={chat.id.toString()}
+                                            key={chat.id}
                                             id={chat.id.toString()}
                                             sender={
                                                 chat.isGroup
                                                     ? undefined
-                                                    : chat.users && chat.users.find((user) => user.id !== currentUser.id)
+                                                    : chat.users.find((user) => user.id !== currentUser.id)
                                             }
                                             messages={chat.messages || []}
                                             setSelectedChat={setSelectedChat}
@@ -257,7 +220,6 @@ export default function ChatsPane(props: ChatsPaneProps) {
                                     {t('startcommunicate')}
                                 </Typography>
                             )}
-
                         </>
                     )}
                 </Sheet>

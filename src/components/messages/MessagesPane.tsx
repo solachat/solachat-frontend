@@ -246,7 +246,7 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                     display: 'flex',
                     flexDirection: 'column-reverse',
                     px: 2,
-                    py: { xs: 1, sm: 3 },
+                    py: { xs: 2, sm: 3 },
                     overflowY: 'auto',
                     '&::-webkit-scrollbar': {
                         display: 'none',
@@ -257,7 +257,7 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                 }}
             >
                 {chatMessages.length > 0 ? (
-                    <Stack spacing={2} sx={{ width: { xs: '90%', sm: '80%', md: '95%' } }}>
+                    <Stack spacing={2} sx={{ width: { xs: '100%', sm: '80%', md: '95%' } }}>
                         {chatMessages.map((message: MessageProps, index: number) => {
                             const isCurrentUser = message.userId === currentUserId;
                             const messageCreatorId = message.userId;
@@ -326,7 +326,7 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
             {/*)}*/}
 
             {chat && (
-                <Box sx={{ width: { xs: '90%', sm: '80%', md: '95%' }, margin: '0 auto' }}>
+                <Box sx={{ width: { xs: '100%', sm: '80%', md: '95%' }, margin: '0 auto' }}>
                     <MessageInput
                         chatId={Number(chat?.id ?? 0)}
                         onSubmit={() => {
