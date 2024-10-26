@@ -248,14 +248,21 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                     px: 2,
                     py: { xs: 2, sm: 3 },
                     overflowY: 'auto',
-                    '&::-webkit-scrollbar': {
-                        display: 'none',
-                    },
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none',
                     alignItems: 'center',
+                    '&::-webkit-scrollbar': {
+                        width: '8px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                        borderRadius: '4px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        borderRadius: '4px',
+                    },
                 }}
             >
+
                 {chatMessages.length > 0 ? (
                     <Stack spacing={2} sx={{ width: { xs: '100%', sm: '80%', md: '95%' } }}>
                         {chatMessages.map((message: MessageProps, index: number) => {
