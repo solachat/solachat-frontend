@@ -4,14 +4,13 @@ import ListItem from '@mui/joy/ListItem';
 import ListItemButton from '@mui/joy/ListItemButton';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
-import CircleIcon from '@mui/icons-material/Circle';
 import AvatarWithStatus from './AvatarWithStatus';
 import { ChatProps, MessageProps, UserProps } from '../core/types';
 import { createPrivateChat } from '../../api/api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/joy/Avatar';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { t } from 'i18next';
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import CheckIcon from "@mui/icons-material/Check";
@@ -19,20 +18,20 @@ import CheckIcon from "@mui/icons-material/Check";
 type NewMessageEvent =
     | {
     type: "newMessage";
-    message: MessageProps; // Это должно быть сообщение
+    message: MessageProps;
 }
     | {
     type: "editMessage";
-    message: MessageProps; // Это должно быть сообщение с обновленными данными
+    message: MessageProps;
 }
     | {
     type: "deleteMessage";
-    messageId: number; // ID сообщения, которое нужно удалить
-    chatId: number; // ID чата, к которому принадлежит сообщение
+    messageId: number;
+    chatId: number;
 }
     | {
     type: "messageRead";
-    messageId: number; // ID прочитанного сообщения
+    messageId: number;
 };
 
 type ChatListItemProps = {
@@ -119,15 +118,29 @@ export default function ChatListItem(props: ChatListItemProps) {
                     chat.id === chatId
                         ? {
                             ...chat,
-                            messages: chat.messages.filter((msg) => msg.id !== messageId), // Убедитесь, что messageId является числом
+                            messages: chat.messages.filter((msg) => msg.id !== messageId),
                         }
                         : chat
                 )
             );
         }
 
+        if (newMessage?.type === "messageRead" && "messageId" in newMessage) {
+            const { messageId } = newMessage;
 
+            setChats((prevChats) =>
+                prevChats.map((chat) => ({
+                    ...chat,
+                    messages: chat.messages.map((msg) =>
+                        msg.id === messageId ? { ...msg, isRead: true } : msg
+                    ),
 
+                    lastMessage: chat.messages[chat.messages.length - 1]?.id === messageId
+                        ? { ...chat.messages[chat.messages.length - 1], isRead: true }
+                        : chat.lastMessage,
+                }))
+            );
+        }
     }, [newMessage, id, setChats]);
 
 
@@ -139,7 +152,6 @@ export default function ChatListItem(props: ChatListItemProps) {
             const token = localStorage.getItem('token');
             const newChat = await createPrivateChat(currentUserId, sender.id, token || '');
             if (newChat) {
-                toast.success('Chat created successfully!');
                 setSelectedChat({ ...newChat, users: [sender, { id: currentUserId }] });
                 navigate(`/chat/#${newChat.id}`);
             } else {

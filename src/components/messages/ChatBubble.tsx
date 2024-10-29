@@ -244,9 +244,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
         currentUserId = decodedToken.id || 0;
     }
 
-    useEffect(() => {
-        console.log(`Message ID: ${id}, isRead updated to: ${isRead}`);
-    }, [isRead]);
 
 
     return (

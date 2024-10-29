@@ -75,8 +75,8 @@ export default function MessagesPaneHeader({
                     spacing={{ xs: 1, md: 2 }}
                     sx={{
                         alignItems: 'center',
-                        width: { xs: '100%', sm: 'auto' },  // Ширина на мобильных устройствах
-                        maxWidth: { xs: '85%', sm: '100%' }, // Максимальная ширина на мобильных
+                        width: { xs: '100%', sm: 'auto' },
+                        maxWidth: { xs: '85%', sm: '100%' },
                         overflow: 'hidden',
                     }}
                 >

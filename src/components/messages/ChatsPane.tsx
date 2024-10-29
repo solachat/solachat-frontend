@@ -6,7 +6,7 @@ import Typography from '@mui/joy/Typography';
 import { Box, Input, List, Skeleton } from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChatListItem from './ChatListItem';
-import { ChatProps, UserProps } from '../core/types';
+import {ChatProps, MessageProps, UserProps} from '../core/types';
 import { searchUsers, fetchChatsFromServer } from '../../api/api';
 import { CssVarsProvider } from '@mui/joy/styles';
 import Sidebar from '../core/Sidebar';
@@ -65,6 +65,22 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 ];
             });
         }
+
+        if (data.type === 'messageRead' && data.messageId) {
+            const messageId = data.messageId;
+            setChats((prevChats) =>
+                prevChats.map((chat) => ({
+                    ...chat,
+                    messages: chat.messages.map((msg) =>
+                        msg.id === messageId ? { ...msg, isRead: true } : msg
+                    ),
+                    lastMessage: chat.lastMessage?.id === messageId
+                        ? { ...chat.lastMessage, isRead: true } as MessageProps
+                        : chat.lastMessage,
+                }))
+            );
+        }
+
     }, []);
 
     React.useEffect(() => {

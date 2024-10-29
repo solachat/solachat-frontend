@@ -76,11 +76,9 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
         const container = messagesContainerRef.current;
         if (container) {
             const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 300;
-            console.log('Is near bottom:', isNearBottom);
             setIsFarFromBottom(!isNearBottom);
 
             if (isNearBottom) {
-                console.log('Calling markMessagesAsRead...');
                 markMessagesAsRead();
             }
         }
@@ -223,7 +221,6 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
             setChatMessages((prevMessages) => {
                 const updatedMessages = prevMessages.map((msg) => {
                     if (msg.id === data.messageId) {
-                        console.log(`Updating message ${msg.id} isRead to true`);
                         return { ...msg, isRead: true };
                     }
                     return msg;
@@ -244,7 +241,6 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
             });
         }
 
-
     }, [currentUserId, chatIdRef]);
 
 
@@ -256,10 +252,6 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
     const interlocutor = chat?.isGroup
         ? undefined
         : chat?.users?.find((user) => user.id !== currentUserId);
-
-    useEffect(() => {
-        console.log('Updated chatMessages:', chatMessages);
-    }, [chatMessages]);
 
     return (
         <Sheet
