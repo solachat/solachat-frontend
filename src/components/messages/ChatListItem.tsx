@@ -152,7 +152,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     {lastMessage.attachment && isImage(lastMessage.attachment.fileName) ? (
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <img
-                                                src={fixFilePath(lastMessage.attachment.filePath)}
+                                                src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath)}`}
                                                 alt="attachment preview"
                                                 style={{ width: '20px', height: '20px', marginRight: '8px' }}
                                             />
@@ -161,7 +161,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     ) : lastMessage.attachment && isVideo(lastMessage.attachment.fileName) ? (
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <img
-                                                src={fixFilePath(lastMessage.attachment.filePath.replace('.mp4', '-thumbnail.jpg'))}
+                                                src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath.replace('.mp4', '-thumbnail.jpg'))}`}
                                                 alt="video preview"
                                                 style={{ width: '20px', height: '20px', marginRight: '8px' }}
                                             />

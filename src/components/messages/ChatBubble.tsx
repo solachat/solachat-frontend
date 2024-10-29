@@ -6,6 +6,7 @@ import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
 import DownloadIcon from '@mui/icons-material/Download';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
 import { IconButton, Slider } from '@mui/joy';
 import { useTranslation } from 'react-i18next';
 import { deleteMessage } from '../../api/api';
@@ -14,8 +15,10 @@ import { MessageProps } from '../core/types';
 import {jwtDecode} from "jwt-decode";
 import {JwtPayload} from "jsonwebtoken";
 import CustomAudioPlayer from '../core/CustomAudioPlayer';
+import CheckIcon from "@mui/icons-material/Check";
 
 type DecodedToken = JwtPayload & { id?: number };
+const isDelivered = true;
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
@@ -50,6 +53,8 @@ const isLink = (text: string) => {
     const urlRegex = /(?:^|\s)(https?:\/\/[^\s]+|(?:[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:[\/\w.-]*)?)(?=\s|$)/g;
     return urlRegex.test(text.trim());
 };
+
+const isRead = false;
 
 const renderMessageContent = (text: string) => {
     const parts = text.split(/((?:https?:\/\/[^\s]+|(?:[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:[\/\w.-]*)?)(?=\s|$))/g);
@@ -417,13 +422,15 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             sx={{
                                 fontSize: '12px',
                                 color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '2px'
                             }}
                         >
                             {formattedTime}
                         </Typography>
                     </Stack>
 
-                    {/* Вложение файла */}
                     {!isImage && !isVideo && !isAudio && attachment && (
                         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                             <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
