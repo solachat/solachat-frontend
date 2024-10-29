@@ -11,8 +11,13 @@ import { createPrivateChat } from '../../api/api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/joy/Avatar';
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { t } from 'i18next';
+
+type NewMessageEvent = {
+    type: "newMessage";
+    message: MessageProps;
+};
 
 type ChatListItemProps = {
     id: string;
@@ -24,7 +29,7 @@ type ChatListItemProps = {
     currentUserId: number;
     chats: ChatProps[];
     isGroup?: boolean;
-    newMessage?: MessageProps;
+    newMessage?: NewMessageEvent;
     setChats: React.Dispatch<React.SetStateAction<ChatProps[]>>;
 };
 
@@ -40,7 +45,7 @@ const isVideo = (fileName: string) => {
     return videoExtensions.includes(fileExtension || '');
 };
 
-const fixFilePath = (filePath: string) => filePath.replace(/\\/g, '/');
+const fixFilePath = (filePath: string) => filePath.replace(/\\/g, '/').replace(/\.enc$/, '');
 
 export default function ChatListItem(props: ChatListItemProps) {
     const {
@@ -51,28 +56,27 @@ export default function ChatListItem(props: ChatListItemProps) {
     const selected = selectedChatId === id;
     const navigate = useNavigate();
 
-    // Находим существующий чат по ID
     const existingChat = chats.find((chat: ChatProps) => chat.id === Number(id));
 
-    // Используем useMemo для кэширования lastMessage и уменьшения вычислений
-    const lastMessage = useMemo(() => messages[messages.length - 1] || null, [messages]);
+    const lastMessage = messages[messages.length - 1] || null;
 
-    // Обновление чатов с помощью useCallback для уменьшения ререндеров
-    const updateChatsWithNewMessage = useCallback(() => {
-        setChats((prevChats) => prevChats.map((chat) => {
-            if (chat.id === newMessage?.chatId) {
-                return { ...chat, lastMessage: newMessage };
-            }
-            return chat;
-        }));
-    }, [newMessage, setChats]);
-
-    // Обновляем чат при поступлении нового сообщения
     useEffect(() => {
-        if (newMessage && newMessage.chatId === Number(id)) {
-            updateChatsWithNewMessage();
+        if (newMessage?.type === "newMessage" && newMessage.message.chatId === Number(id)) {
+            const messageData = newMessage.message;
+
+            setChats((prevChats) =>
+                prevChats.map((chat) =>
+                    chat.id === messageData.chatId
+                        ? {
+                            ...chat,
+                            messages: [...chat.messages, messageData],
+                            lastMessage: messageData
+                        }
+                        : chat
+                )
+            );
         }
-    }, [newMessage, id, updateChatsWithNewMessage]);
+    }, [newMessage, id, setChats]);
 
     const handleClick = async () => {
         if (existingChat) {
@@ -91,9 +95,7 @@ export default function ChatListItem(props: ChatListItemProps) {
         }
     };
 
-    if (!sender && !isGroup) {
-        return null;
-    }
+    if (!sender && !isGroup) return null;
 
     return (
         <React.Fragment>
@@ -112,14 +114,14 @@ export default function ChatListItem(props: ChatListItemProps) {
                     <Stack direction="row" spacing={1.5}>
                         {isGroup ? (
                             <Avatar
-                                src={existingChat?.avatar ? existingChat.avatar : 'path/to/default-group-avatar.jpg'}
+                                src={existingChat?.avatar || 'path/to/default-group-avatar.jpg'}
                                 alt={existingChat?.name || 'Group Chat'}
                                 sx={{ width: { xs: 48, sm: 48 }, height: { xs: 48, sm: 48 } }}
                             />
                         ) : (
                             <AvatarWithStatus
                                 online={sender?.online}
-                                src={sender?.avatar || undefined}
+                                src={sender?.avatar}
                                 alt={sender?.realname}
                                 sx={{ width: { xs: 48, sm: 48 }, height: { xs: 48, sm: 48 }, fontSize: { xs: 16, sm: 24 } }}
                             >
@@ -150,7 +152,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     {lastMessage.attachment && isImage(lastMessage.attachment.fileName) ? (
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <img
-                                                src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath)}`}
+                                                src={fixFilePath(lastMessage.attachment.filePath)}
                                                 alt="attachment preview"
                                                 style={{ width: '20px', height: '20px', marginRight: '8px' }}
                                             />
@@ -159,7 +161,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     ) : lastMessage.attachment && isVideo(lastMessage.attachment.fileName) ? (
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <img
-                                                src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath.replace('.mp4', '-thumbnail.jpg'))}`}
+                                                src={fixFilePath(lastMessage.attachment.filePath.replace('.mp4', '-thumbnail.jpg'))}
                                                 alt="video preview"
                                                 style={{ width: '20px', height: '20px', marginRight: '8px' }}
                                             />
@@ -192,7 +194,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     level="body-xs"
                                     noWrap
                                     sx={{
-                                        textAlign: { xs: 'left', sm: 'right' }, // Выравнивание текста
+                                        textAlign: { xs: 'left', sm: 'right' },
                                     }}
                                 >
                                     {new Date(lastMessage.createdAt).toLocaleTimeString('en-GB', {

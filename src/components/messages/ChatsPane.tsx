@@ -10,7 +10,6 @@ import { ChatProps, UserProps } from '../core/types';
 import { searchUsers, fetchChatsFromServer } from '../../api/api';
 import { CssVarsProvider } from '@mui/joy/styles';
 import Sidebar from '../core/Sidebar';
-import CircularProgress from '@mui/joy/CircularProgress';
 import { useWebSocket } from '../../api/useWebSocket';
 import IconButton from '@mui/joy/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -33,7 +32,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
     const navigate = useNavigate();
 
-    // WebSocket для обработки событий (создание, удаление чатов и получение новых сообщений)
     useWebSocket((data) => {
         if (data.type === 'chatCreated' || data.type === 'groupChatCreated') {
             const newChat = data.chat;
@@ -46,14 +44,21 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
         }
 
         if (data.type === 'newMessage') {
-            const { chatId, message } = data;
+            const newMessage = data.message;
             setChats((prevChats) =>
-                prevChats.map((chat) => (chat.id === chatId ? { ...chat, messages: [...chat.messages, message] } : chat))
+                prevChats.map((chat) =>
+                    chat.id === newMessage.chatId
+                        ? {
+                            ...chat,
+                            messages: [...chat.messages, newMessage],
+                            lastMessage: newMessage
+                        }
+                        : chat
+                )
             );
         }
     }, []);
 
-    // Загрузка чатов при инициализации компонента
     React.useEffect(() => {
         const loadChats = async () => {
             try {
@@ -72,7 +77,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
         loadChats();
     }, [currentUser.id]);
 
-    // Обработчик изменения строки поиска
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const term = e.target.value;
         setSearchTerm(term);
@@ -84,7 +88,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
         }
     };
 
-    // Закрытие сайдбара при клике вне его
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (!document.querySelector('.Sidebar')?.contains(event.target as Node)) {
@@ -161,7 +164,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                     </Stack>
 
 
-                    {/* Список результатов поиска или список чатов */}
                     {searchResults.length > 0 ? (
                         <List>
                             {searchResults

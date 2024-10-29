@@ -6,8 +6,6 @@ import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
 import DownloadIcon from '@mui/icons-material/Download';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
 import { IconButton, Slider } from '@mui/joy';
 import { useTranslation } from 'react-i18next';
 import { deleteMessage } from '../../api/api';
@@ -309,7 +307,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     }}
                 >
                     {isGroupChat && !isSent && (
-                            <Typography>{user.username}</Typography>
+                        <Typography>{user.username}</Typography>
                     )}
 
                     {isVideo && (

@@ -33,6 +33,7 @@ export type ChatProps = {
     groupAvatar?: string;
     name?: string;
     avatar?: string
+    lastMessage?: MessageProps;
 };
 
 export type JwtPayload = {

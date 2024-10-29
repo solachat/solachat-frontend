@@ -333,7 +333,7 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
             {/*)}*/}
 
             {chat && (
-                <Box sx={{ width: { xs: '100%', sm: '80%', md: '95%' }, margin: '0 auto' }}>
+                <Box sx={{ width: { xs: '100%', sm: '80%', md: '94%' }, margin: '0 auto' }}>
                     <MessageInput
                         chatId={Number(chat?.id ?? 0)}
                         onSubmit={() => {

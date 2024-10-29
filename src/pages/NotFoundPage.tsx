@@ -28,8 +28,8 @@ const NotFoundPage: React.FC = () => {
                     backgroundColor: 'background.level1',
                     textAlign: 'center',
                     padding: '16px',
-                    animation: 'fadeIn 0.5s ease-in-out',  // Плавная анимация появления
-                    flexDirection: 'column',  // Централизованное расположение по вертикали
+                    animation: 'fadeIn 0.5s ease-in-out',
+                    flexDirection: 'column',
                 }}
             >
                 <Stack
@@ -38,7 +38,7 @@ const NotFoundPage: React.FC = () => {
                         maxWidth: 600,
                         width: '100%',
                         padding: '16px',
-                        animation: 'fadeInUp 0.7s ease-in-out',  // Плавная анимация
+                        animation: 'fadeInUp 0.7s ease-in-out',
                     }}
                 >
                     <Typography
@@ -46,7 +46,7 @@ const NotFoundPage: React.FC = () => {
                         sx={{
                             fontSize: { xs: '3rem', md: '5rem' },
                             color: 'primary.main',
-                            animation: 'fadeIn 1s ease-in-out',  // Плавное появление
+                            animation: 'fadeIn 1s ease-in-out',
                             fontWeight: 'bold',
                         }}
                     >

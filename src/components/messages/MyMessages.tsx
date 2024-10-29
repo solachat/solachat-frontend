@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import Sheet from '@mui/joy/Sheet';
 import MessagesPane from './MessagesPane';
 import ChatsPane from './ChatsPane';
-import { ChatProps, UserProps } from '../core/types';
+import {ChatProps, MessageProps, UserProps} from '../core/types';
 import { fetchChatsFromServer } from '../../api/api';
 import { CircularProgress, Typography } from '@mui/joy';
 import { useTranslation } from 'react-i18next';
@@ -63,14 +63,14 @@ export default function MyProfile() {
         }
     };
 
-    const updateLastMessageInChatList = (newMessage: any) => {
-        setChats((prevChats) =>
-            prevChats.map((chat) =>
-                chat.id === newMessage.chatId
-                    ? { ...chat, newMessage: newMessage }
-                    : chat
-            )
-        );
+    const updateLastMessageInChatList = (chatId: number, newMessage: MessageProps) => {
+                setChats((prevChats) =>
+                    prevChats.map((chat) =>
+                        chat.id === chatId
+                            ? { ...chat, lastMessage: newMessage }
+                            : chat
+                    )
+                );
     };
 
     const addNewChat = (chatId: number) => {
@@ -116,7 +116,7 @@ export default function MyProfile() {
 
         switch (message.type) {
             case 'newMessage':
-                updateLastMessageInChatList(message.message);
+                updateLastMessageInChatList(message.message.chatId, message.message);
                 break;
             case 'chatCreated':
                 addNewChat(message.chat);

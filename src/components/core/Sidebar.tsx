@@ -159,46 +159,46 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         }}
                     >
                         {/* Music section */}
-                        <ListItem>
-                            <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>
-                                <MusicNoteRoundedIcon />
-                                <ListItemContent>
-                                    <Typography level="title-sm">{t('Music')}</Typography>
-                                </ListItemContent>
-                            </ListItemButton>
-                        </ListItem>
+                        {/*<ListItem>*/}
+                        {/*    <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>*/}
+                        {/*        <MusicNoteRoundedIcon />*/}
+                        {/*        <ListItemContent>*/}
+                        {/*            <Typography level="title-sm">{t('Music')}</Typography>*/}
+                        {/*        </ListItemContent>*/}
+                        {/*    </ListItemButton>*/}
+                        {/*</ListItem>*/}
 
                         {/* Call section */}
-                        <ListItem>
-                            <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>
-                                <CallRoundedIcon />
-                                <ListItemContent>
-                                    <Typography level="title-sm">{t('Call')}</Typography>
-                                </ListItemContent>
-                            </ListItemButton>
-                        </ListItem>
+                        {/*<ListItem>*/}
+                        {/*    <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>*/}
+                        {/*        <CallRoundedIcon />*/}
+                        {/*        <ListItemContent>*/}
+                        {/*            <Typography level="title-sm">{t('Call')}</Typography>*/}
+                        {/*        </ListItemContent>*/}
+                        {/*    </ListItemButton>*/}
+                        {/*</ListItem>*/}
 
-                        <ListItem>
-                            <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>
-                                <AutoAwesomeIcon />
-                                <ListItemContent>
-                                    <Typography level="title-sm">
-                                        {t('GPT')}
-                                    </Typography>
-                                </ListItemContent>
-                            </ListItemButton>
-                        </ListItem>
+                        {/*<ListItem>*/}
+                        {/*    <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>*/}
+                        {/*        <AutoAwesomeIcon />*/}
+                        {/*        <ListItemContent>*/}
+                        {/*            <Typography level="title-sm">*/}
+                        {/*                {t('GPT')}*/}
+                        {/*            </Typography>*/}
+                        {/*        </ListItemContent>*/}
+                        {/*    </ListItemButton>*/}
+                        {/*</ListItem>*/}
 
 
                         {/* Clips section */}
-                        <ListItem>
-                            <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>
-                                <VideoLibraryRoundedIcon />
-                                <ListItemContent>
-                                    <Typography level="title-sm">{t('Clips')}</Typography>
-                                </ListItemContent>
-                            </ListItemButton>
-                        </ListItem>
+                        {/*<ListItem>*/}
+                        {/*    <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>*/}
+                        {/*        <VideoLibraryRoundedIcon />*/}
+                        {/*        <ListItemContent>*/}
+                        {/*            <Typography level="title-sm">{t('Clips')}</Typography>*/}
+                        {/*        </ListItemContent>*/}
+                        {/*    </ListItemButton>*/}
+                        {/*</ListItem>*/}
 
                         {/* Messages section */}
                         <ListItem nested>

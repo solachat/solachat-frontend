@@ -14,14 +14,13 @@ import Link from '@mui/joy/Link';
 import Input from '@mui/joy/Input';
 import Typography from '@mui/joy/Typography';
 import Stack from '@mui/joy/Stack';
-import {Link as RouterLink, useNavigate} from 'react-router-dom'; // Импортируем useNavigate
+import {Link as RouterLink, useNavigate} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import GoogleIcon from '../components/core/GoogleIcon';
 import {Header} from "../components/core/ColorSchemeToggle";
 import TelegramIcon from "../components/core/TelegramIcon";
 import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
-import PhantomIconPurple from "../components/core/PhantomIconPurple";
 
 interface FormElements extends HTMLFormControlsCollection {
     email: HTMLInputElement;

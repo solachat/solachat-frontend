@@ -132,7 +132,7 @@ export default function MessagesPaneHeader({
 
                 <Stack direction="row" spacing={1} alignItems="center">
                     {receiverId && (
-                        <IconButton size="sm" onClick={() => setIsCallModalOpen(true)}>
+                        <IconButton size="sm" sx={{ opacity: 0.5, cursor: 'not-allowed' }} onClick={() => setIsCallModalOpen(true)}>
                             <PhoneInTalkRoundedIcon />
                         </IconButton>
                     )}
