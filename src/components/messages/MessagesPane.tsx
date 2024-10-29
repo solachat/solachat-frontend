@@ -12,6 +12,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
+import {updateMessageStatus} from "../../api/api";
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
@@ -40,11 +41,48 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
         }
     };
 
+    const markMessagesAsRead = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) throw new Error('Authorization token is missing');
+
+            const decodedToken: { id: number } = jwtDecode(token);
+            const currentUserId = decodedToken.id;
+
+            const messageIds = chatMessages
+                .filter(msg => !msg.isRead && msg.userId !== currentUserId)
+                .map(msg => msg.id);
+
+            if (messageIds.length > 0) {
+                await Promise.all(messageIds.map(id => updateMessageStatus(Number(id), { isRead: true }, token)));
+
+                setChatMessages(prevMessages =>
+                    prevMessages.map(msg =>
+                        msg.userId !== currentUserId ? { ...msg, isRead: true } : msg
+                    )
+                );
+            }
+        } catch (error) {
+            console.error('Error marking messages as read:', error);
+        }
+    };
+
+    useEffect(() => {
+        markMessagesAsRead();
+    }, [chatMessages]);
+
+
     const handleScroll = () => {
         const container = messagesContainerRef.current;
         if (container) {
             const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 300;
+            console.log('Is near bottom:', isNearBottom);
             setIsFarFromBottom(!isNearBottom);
+
+            if (isNearBottom) {
+                console.log('Calling markMessagesAsRead...');
+                markMessagesAsRead();
+            }
         }
     };
 
@@ -100,31 +138,6 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
         }
     }, [chat, allChatMessages]);
 
-
-    const handleNewMessage = (newMessage: MessageProps) => {
-        setAllChatMessages((prev) => {
-            const chatId = newMessage.chatId;
-            const chatMessages = prev[chatId] || [];
-            const exists = chatMessages.some((message) => message.id === newMessage.id);
-            if (!exists) {
-                return {
-                    ...prev,
-                    [chatId]: [...chatMessages, newMessage],
-                };
-            }
-            return prev;
-        });
-
-        if (newMessage.chatId === chatIdRef.current) {
-            setChatMessages((prevMessages) => {
-                const exists = prevMessages.some((message) => message.id === newMessage.id);
-                if (!exists) {
-                    return [...prevMessages, newMessage];
-                }
-                return prevMessages;
-            });
-        }
-    };
 
     const handleEditMessageInList = (updatedMessage: MessageProps) => {
         setChatMessages((prevMessages) =>
@@ -204,7 +217,34 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
             if (chatId === chatIdRef.current) {
                 handleDeleteMessageInList(messageId);
             }
+
         }
+        if (data.type === 'messageRead' && data.messageId) {
+            setChatMessages((prevMessages) => {
+                const updatedMessages = prevMessages.map((msg) => {
+                    if (msg.id === data.messageId) {
+                        console.log(`Updating message ${msg.id} isRead to true`);
+                        return { ...msg, isRead: true };
+                    }
+                    return msg;
+                });
+                return updatedMessages;
+            });
+
+            setAllChatMessages((prev) => {
+                const chatId = chatIdRef.current;
+                if (!chatId) return prev;
+
+                return {
+                    ...prev,
+                    [chatId]: prev[chatId].map((msg) =>
+                        msg.id === data.messageId ? { ...msg, isRead: true } : msg
+                    ),
+                };
+            });
+        }
+
+
     }, [currentUserId, chatIdRef]);
 
 
@@ -216,6 +256,10 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
     const interlocutor = chat?.isGroup
         ? undefined
         : chat?.users?.find((user) => user.id !== currentUserId);
+
+    useEffect(() => {
+        console.log('Updated chatMessages:', chatMessages);
+    }, [chatMessages]);
 
     return (
         <Sheet
@@ -285,6 +329,9 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                                         content={message.content}
                                         createdAt={message.createdAt}
                                         attachment={message.attachment}
+                                        isRead={message.isRead ?? false}
+                                        isDelivered={message.isDelivered ?? false}
+                                        unread={message.unread}
                                         isEdited={message.isEdited}
                                         onEditMessage={handleEditMessage}
                                         messageCreatorId={messageCreatorId}
@@ -338,14 +385,13 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                         chatId={Number(chat?.id ?? 0)}
                         onSubmit={() => {
                             const newMessage: MessageProps = {
-                                id: (chatMessages.length + 1).toString(),
+                                id: (chatMessages.length + 1),
                                 user: chat?.users?.find((user) => user.id === currentUserId)!,
                                 userId: currentUserId!,
                                 chatId: chat?.id!,
                                 content: textAreaValue,
                                 createdAt: new Date().toISOString(),
                             };
-                            handleNewMessage(newMessage);
                             setEditingMessageId(null);
                         }}
                         editingMessage={

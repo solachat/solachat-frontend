@@ -29,6 +29,8 @@ type ChatBubbleProps = MessageProps & {
         username: string;
     };
     isGroupChat: boolean;
+    isRead: boolean;
+    isDelivered: boolean;
 };
 
 const isImageFile = (fileName: string) => {
@@ -54,7 +56,6 @@ const isLink = (text: string) => {
     return urlRegex.test(text.trim());
 };
 
-const isRead = false;
 
 const renderMessageContent = (text: string) => {
     const parts = text.split(/((?:https?:\/\/[^\s]+|(?:[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:[\/\w.-]*)?)(?=\s|$))/g);
@@ -94,7 +95,7 @@ const renderMessageContent = (text: string) => {
 
 export default function ChatBubble(props: ChatBubbleProps) {
     const { t } = useTranslation();
-    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat } = props;
+    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat, isRead } = props;
     const isSent = variant === 'sent';
     const formattedTime = new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -243,6 +244,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
         currentUserId = decodedToken.id || 0;
     }
 
+    useEffect(() => {
+        console.log(`Message ID: ${id}, isRead updated to: ${isRead}`);
+    }, [isRead]);
+
+
     return (
         <Box
             component="div"
@@ -390,7 +396,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 overflowWrap: 'break-word',
                                 whiteSpace: 'pre-wrap',
                                 display: 'inline-block',
-                                paddingRight: isEdited ? '100px' : '40px',
+                                paddingRight: isEdited ? '120px' : '60px',
                             }}
                         >
                             {renderMessageContent(content)}
@@ -417,7 +423,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 {t('edited')}
                             </Typography>
                         )}
-
                         <Typography
                             sx={{
                                 fontSize: '12px',
@@ -428,6 +433,13 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             }}
                         >
                             {formattedTime}
+                            {isSent && (
+                                isRead ? (
+                                    <DoneAllIcon sx={{ fontSize: '18px' }} />
+                                ) : (
+                                    <CheckIcon sx={{ fontSize: '18px' }} />
+                                )
+                            )}
                         </Typography>
                     </Stack>
 
@@ -467,7 +479,5 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 messageCreatorId={messageCreatorId}
             />
         </Box>
-
-
     );
 }

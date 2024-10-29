@@ -13,10 +13,26 @@ import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/joy/Avatar';
 import { useEffect, useState } from 'react';
 import { t } from 'i18next';
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import CheckIcon from "@mui/icons-material/Check";
 
-type NewMessageEvent = {
+type NewMessageEvent =
+    | {
     type: "newMessage";
-    message: MessageProps;
+    message: MessageProps; // Это должно быть сообщение
+}
+    | {
+    type: "editMessage";
+    message: MessageProps; // Это должно быть сообщение с обновленными данными
+}
+    | {
+    type: "deleteMessage";
+    messageId: number; // ID сообщения, которое нужно удалить
+    chatId: number; // ID чата, к которому принадлежит сообщение
+}
+    | {
+    type: "messageRead";
+    messageId: number; // ID прочитанного сообщения
 };
 
 type ChatListItemProps = {
@@ -70,13 +86,50 @@ export default function ChatListItem(props: ChatListItemProps) {
                         ? {
                             ...chat,
                             messages: [...chat.messages, messageData],
-                            lastMessage: messageData
+                            lastMessage: messageData,
                         }
                         : chat
                 )
             );
         }
+
+        if (newMessage?.type === "editMessage" && newMessage.message) {
+            const updatedMessage = newMessage.message;
+
+            setChats((prevChats) =>
+                prevChats.map((chat) =>
+                    chat.id === updatedMessage.chatId
+                        ? {
+                            ...chat,
+                            messages: chat.messages.map((msg) =>
+                                msg.id === updatedMessage.id ? { ...msg, ...updatedMessage } : msg
+                            ),
+                            lastMessage: updatedMessage,
+                        }
+                        : chat
+                )
+            );
+        }
+
+        if (newMessage?.type === "deleteMessage" && "messageId" in newMessage) {
+            const { messageId, chatId } = newMessage;
+
+            setChats((prevChats) =>
+                prevChats.map((chat) =>
+                    chat.id === chatId
+                        ? {
+                            ...chat,
+                            messages: chat.messages.filter((msg) => msg.id !== messageId), // Убедитесь, что messageId является числом
+                        }
+                        : chat
+                )
+            );
+        }
+
+
+
     }, [newMessage, id, setChats]);
+
 
     const handleClick = async () => {
         if (existingChat) {
@@ -185,18 +238,27 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     display: { xs: 'flex', sm: 'block' },
                                     justifyContent: { xs: 'flex-start' },
                                     mt: { xs: 1, sm: 0 },
+                                    alignItems: 'center',
                                 }}
                             >
-                                {lastMessage.unread && (
-                                    <CircleIcon sx={{ fontSize: 12 }} color="primary" />
-                                )}
                                 <Typography
                                     level="body-xs"
                                     noWrap
                                     sx={{
                                         textAlign: { xs: 'left', sm: 'right' },
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        marginLeft: 0,
                                     }}
                                 >
+                                    {lastMessage.isRead ? (
+                                        <>
+                                            <DoneAllIcon sx={{ fontSize: 15, marginRight: 0.5 }} />
+                                        </>
+                                    ) : (
+                                        <CheckIcon sx={{ fontSize: 15, marginRight: 0.5 }} />
+                                    )}
+
                                     {new Date(lastMessage.createdAt).toLocaleTimeString('en-GB', {
                                         hour: '2-digit',
                                         minute: '2-digit',
@@ -204,6 +266,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 </Typography>
                             </Box>
                         )}
+
                     </Stack>
                 </ListItemButton>
             </ListItem>

@@ -90,6 +90,13 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                         chatId: message.chatId,
                     });
                     break;
+                case 'messageRead':
+                        onMessage({
+                            type: 'messageRead',
+                            messageId: message.messageId,
+                            chatId: message.chatId,
+                        });
+                    break;
                 case 'chatCreated':
                     onMessage(message);
                     break;

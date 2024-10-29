@@ -109,7 +109,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     return (
         <CssVarsProvider>
             <Box sx={{ display: 'flex', maxWidth: '100%' }}>
-                {/* Кнопка меню для мобильных устройств */}
                 {!selectedChatId && (
                     <IconButton
                         sx={{ display: { xs: 'block', sm: 'none' }, position: 'absolute', zIndex: 10, left: '16px', top: '16px' }}
@@ -119,10 +118,8 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                     </IconButton>
                 )}
 
-                {/* Сайдбар */}
                 <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-                {/* Лист чатов */}
                 <Sheet
                     sx={{
                         borderRight: '1px solid',

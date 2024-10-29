@@ -406,3 +406,23 @@ export const rejectCall = async (fromUserId: number | null, toUserId: number | n
         throw error;
     }
 };
+
+export const updateMessageStatus = async (messageId: number, updates: { isRead: boolean }, token: string) => {
+    try {
+        const response = await axios.put(
+            `${API_URL}/api/messages/${messageId}/read`,
+            updates,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error updating message status:', error);
+        throw error;
+    }
+};
+
+
