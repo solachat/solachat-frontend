@@ -45,17 +45,25 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
 
         if (data.type === 'newMessage') {
             const newMessage = data.message;
-            setChats((prevChats) =>
-                prevChats.map((chat) =>
-                    chat.id === newMessage.chatId
-                        ? {
-                            ...chat,
-                            messages: [...chat.messages, newMessage],
-                            lastMessage: newMessage
-                        }
-                        : chat
-                )
-            );
+            setChats((prevChats) => {
+                return [
+                    ...prevChats
+                        .map((chat) =>
+                            chat.id === newMessage.chatId
+                                ? {
+                                    ...chat,
+                                    messages: [...chat.messages, newMessage],
+                                    lastMessage: newMessage
+                                }
+                                : chat
+                        )
+                        .sort((a, b) => {
+                            if (a.id === newMessage.chatId) return -1;
+                            if (b.id === newMessage.chatId) return 1;
+                            return 0;
+                        })
+                ];
+            });
         }
     }, []);
 
