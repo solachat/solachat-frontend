@@ -38,7 +38,7 @@ export default function AvatarUploadModal({ open, onClose, onSuccess }: AvatarUp
             const avatarUrl = response.data.avatar;
             setLoading(false);
             onSuccess(avatarUrl);
-            handleClose(); // Сбрасываем состояние после успешной загрузки
+            handleClose();
         } catch (error: any) {
             setLoading(false);
             setError(t('uploadFailed'));
@@ -50,7 +50,7 @@ export default function AvatarUploadModal({ open, onClose, onSuccess }: AvatarUp
         const selectedFile = event.target.files?.[0];
         if (selectedFile) {
             setFile(selectedFile);
-            setPreviewUrl(URL.createObjectURL(selectedFile)); // Создание ссылки для предпросмотра
+            setPreviewUrl(URL.createObjectURL(selectedFile));
         } else {
             setFile(null);
             setPreviewUrl(null);
@@ -59,22 +59,20 @@ export default function AvatarUploadModal({ open, onClose, onSuccess }: AvatarUp
     };
 
     const handleClose = () => {
-        setFile(null); // Сбрасываем выбранный файл
-        setPreviewUrl(null); // Сбрасываем предпросмотр
-        setError(null); // Сбрасываем ошибку
-        onClose(); // Закрываем модальное окно
+        setFile(null);
+        setPreviewUrl(null);
+        setError(null);
+        onClose();
     };
 
     return (
         <Modal
             open={open}
-            onClose={handleClose} // Используем новую функцию для сброса и закрытия
+            onClose={handleClose}
             sx={{
-                animation: 'fadeIn 0.5s',
-                '@keyframes fadeIn': {
-                    from: { opacity: 0 },
-                    to: { opacity: 1 },
-                },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
             }}
         >
             <Box
@@ -114,7 +112,7 @@ export default function AvatarUploadModal({ open, onClose, onSuccess }: AvatarUp
                         onChange={handleFileChange}
                         style={{
                             padding: '8px',
-                            borderRadius: '8px',
+                            borderRadius: '2px',
                             border: '1px solid #ccc',
                             marginBottom: '16px',
                         }}

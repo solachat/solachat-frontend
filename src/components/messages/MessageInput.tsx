@@ -72,6 +72,7 @@ export default function MessageInput(props: MessageInputProps) {
             return;
         }
 
+
         try {
             if (editingMessage && editingMessage.id) {
                 await editMessage(editingMessage.id, content, token);

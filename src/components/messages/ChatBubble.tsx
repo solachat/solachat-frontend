@@ -308,6 +308,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         display: 'inline-block',
                         fontSize: '14px',
                         lineHeight: '18px',
+                        position: 'relative',
                         '@media (max-width: 600px)': {
                             maxWidth: '85%',
                             width: 'auto',
@@ -393,12 +394,13 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 overflowWrap: 'break-word',
                                 whiteSpace: 'pre-wrap',
                                 display: 'inline-block',
-                                paddingRight: isEdited ? '120px' : '60px',
+                                paddingRight: isEdited && isSent ? '120px' : isEdited || isSent ? '60px' : '40px',
                             }}
                         >
                             {renderMessageContent(content)}
                         </Typography>
                     )}
+
 
                     <Stack
                         direction="row"
@@ -420,25 +422,29 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 {t('edited')}
                             </Typography>
                         )}
-                        <Typography
+                        <Box
                             sx={{
-                                fontSize: '12px',
-                                color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '2px'
+                                fontSize: '12px',
+                                color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
+                                gap: '2px',
                             }}
                         >
-                            {formattedTime}
+                            <Typography component="span" sx={{ fontSize: '12px' }}>
+                                {formattedTime}
+                            </Typography>
                             {isSent && (
                                 isRead ? (
-                                    <DoneAllIcon sx={{ fontSize: '18px' }} />
+                                    <DoneAllIcon sx={{ fontSize: '18px', marginLeft: '4px' }} />
                                 ) : (
-                                    <CheckIcon sx={{ fontSize: '18px' }} />
+                                    <CheckIcon sx={{ fontSize: '18px', marginLeft: '4px' }} />
                                 )
                             )}
-                        </Typography>
+                        </Box>
                     </Stack>
+
+
 
                     {!isImage && !isVideo && !isAudio && attachment && (
                         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>

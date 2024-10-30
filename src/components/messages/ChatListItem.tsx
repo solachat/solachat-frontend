@@ -10,7 +10,7 @@ import { createPrivateChat } from '../../api/api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/joy/Avatar';
-import { useEffect } from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import { t } from 'i18next';
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import CheckIcon from "@mui/icons-material/Check";
@@ -143,6 +143,10 @@ export default function ChatListItem(props: ChatListItemProps) {
         }
     }, [newMessage, id, setChats]);
 
+    const unreadMessages = messages.filter(
+        (msg) => msg.userId !== currentUserId && !msg.isRead
+    );
+    const unreadCount = unreadMessages.length;
 
     const handleClick = async () => {
         if (existingChat) {
@@ -242,40 +246,59 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 <Typography level="body-sm">{t('No messages')}</Typography>
                             )}
                         </Box>
+
+
                         {lastMessage && (
                             <Box
                                 sx={{
                                     lineHeight: 1.5,
-                                    textAlign: { xs: 'left', sm: 'right' },
-                                    display: { xs: 'flex', sm: 'block' },
-                                    justifyContent: { xs: 'flex-start' },
-                                    mt: { xs: 1, sm: 0 },
+                                    textAlign: 'center',
+                                    display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
+                                    position: 'relative',
                                 }}
                             >
                                 <Typography
                                     level="body-xs"
                                     noWrap
                                     sx={{
-                                        textAlign: { xs: 'left', sm: 'right' },
                                         display: 'flex',
                                         alignItems: 'center',
-                                        marginLeft: 0,
                                     }}
                                 >
-                                    {lastMessage.isRead ? (
-                                        <>
-                                            <DoneAllIcon sx={{ fontSize: 15, marginRight: 0.5 }} />
-                                        </>
-                                    ) : (
-                                        <CheckIcon sx={{ fontSize: 15, marginRight: 0.5 }} />
-                                    )}
-
+                                    {lastMessage.userId === currentUserId ? (
+                                        lastMessage.isRead ? (
+                                            <DoneAllIcon sx={{ fontSize: 15, mr: 0.5 }} />
+                                        ) : (
+                                            <CheckIcon sx={{ fontSize: 15, mr: 0.5 }} />
+                                        )
+                                    ) : null}
                                     {new Date(lastMessage.createdAt).toLocaleTimeString('en-GB', {
                                         hour: '2-digit',
                                         minute: '2-digit',
                                     })}
                                 </Typography>
+
+                                {unreadCount > 0 && lastMessage.userId !== currentUserId && (
+                                    <Box
+                                        sx={{
+                                            width: 20,
+                                            height: 20,
+                                            borderRadius: '50%',
+                                            backgroundColor: 'black',
+                                            color: 'white',
+                                            fontSize: 12,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            mt: 1,
+                                            ml: 0.3,
+                                        }}
+                                    >
+                                        {unreadCount}
+                                    </Box>
+                                )}
                             </Box>
                         )}
 

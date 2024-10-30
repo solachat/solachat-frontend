@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import GoogleIcon from '../core/GoogleIcon';
 import TelegramIcon from '../core/TelegramIcon';
 import { useNavigate } from 'react-router-dom';
-import PhantomConnectButton from '../core/PhantomConnectButton'; // Импортируем компонент PhantomConnectButton
+import PhantomConnectButton from '../core/PhantomConnectButton';
 import axios from 'axios';
 
 const ConnectButtons: React.FC = () => {
@@ -21,12 +21,10 @@ const ConnectButtons: React.FC = () => {
         navigate('/connect/google');
     };
 
-    // Функция для обработки подключения Phantom
     const handlePhantomConnect = async (walletAddress: string) => {
         console.log('Connected to Phantom with wallet address:', walletAddress);
         setWalletAddress(walletAddress);
 
-        // Здесь выполняем запрос на сервер для привязки кошелька к пользователю
         try {
             const token = localStorage.getItem('token');
             const response = await axios.put(

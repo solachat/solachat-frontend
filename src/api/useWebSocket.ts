@@ -100,6 +100,12 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                 case 'chatCreated':
                     onMessage(message);
                     break;
+                case 'USER_DISCONNECTED':
+                    onMessage(message);
+                    break;
+                case 'USER_CONNECTED':
+                    onMessage(message);
+                    break;
                 case 'chatDeleted':
                     onMessage(message);
                     break;

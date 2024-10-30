@@ -6,7 +6,7 @@ import Typography from '@mui/joy/Typography';
 import { Box, Input, List, Skeleton } from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChatListItem from './ChatListItem';
-import {ChatProps, MessageProps, UserProps} from '../core/types';
+import { ChatProps, UserProps } from '../core/types';
 import { searchUsers, fetchChatsFromServer } from '../../api/api';
 import { CssVarsProvider } from '@mui/joy/styles';
 import Sidebar from '../core/Sidebar';
@@ -35,7 +35,10 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     useWebSocket((data) => {
         if (data.type === 'chatCreated' || data.type === 'groupChatCreated') {
             const newChat = data.chat;
-            setChats((prevChats) => prevChats.some((chat) => chat.id === newChat.id) ? prevChats : [...prevChats, newChat]);
+            setChats((prevChats) => {
+                if (prevChats.some((chat) => chat.id === newChat.id)) return prevChats;
+                return [...prevChats, newChat].sort((a, b) => b.id - a.id);
+            });
         }
 
         if (data.type === 'chatDeleted') {
@@ -52,8 +55,8 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                             chat.id === newMessage.chatId
                                 ? {
                                     ...chat,
-                                    messages: [...chat.messages, newMessage],
-                                    lastMessage: newMessage
+                                    messages: [...(chat.messages || []), newMessage],
+                                    lastMessage: newMessage,
                                 }
                                 : chat
                         )
@@ -71,12 +74,37 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
             setChats((prevChats) =>
                 prevChats.map((chat) => ({
                     ...chat,
-                    messages: chat.messages.map((msg) =>
+                    messages: (chat.messages || []).map((msg) =>
                         msg.id === messageId ? { ...msg, isRead: true } : msg
                     ),
-                    lastMessage: chat.lastMessage?.id === messageId
-                        ? { ...chat.lastMessage, isRead: true } as MessageProps
-                        : chat.lastMessage,
+                    lastMessage:
+                        chat.lastMessage && chat.lastMessage.id === messageId
+                            ? { ...chat.lastMessage, isRead: true }
+                            : chat.lastMessage,
+                }))
+            );
+        }
+
+        if (data.type === 'USER_CONNECTED' && 'userId' in data) {
+            const userId = data.userId;
+            setChats((prevChats) =>
+                prevChats.map((chat) => ({
+                    ...chat,
+                    users: (chat.users || []).map((user) =>
+                        user.id === userId ? { ...user, online: true } : user
+                    ),
+                }))
+            );
+        }
+
+        if (data.type === 'USER_DISCONNECTED' && 'userId' in data) {
+            const userId = data.userId;
+            setChats((prevChats) =>
+                prevChats.map((chat) => ({
+                    ...chat,
+                    users: (chat.users || []).map((user) =>
+                        user.id === userId ? { ...user, online: false } : user
+                    ),
                 }))
             );
         }
@@ -89,7 +117,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 const token = localStorage.getItem('token');
                 if (!token) throw new Error('Authorization token is missing');
 
-                const chatsFromServer = await fetchChatsFromServer(currentUser.id, token);
+                const chatsFromServer: ChatProps[] = await fetchChatsFromServer(currentUser.id, token);
                 setChats(chatsFromServer || []);
             } catch (error) {
                 console.error(error);
@@ -111,16 +139,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
             setSearchResults([]);
         }
     };
-
-    React.useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (!document.querySelector('.Sidebar')?.contains(event.target as Node)) {
-                setIsSidebarOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     return (
         <CssVarsProvider>
@@ -164,9 +182,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                 justifyContent: 'flex-start',
                             }}
                         >
-                            <IconButton sx={{ display: { xs: 'block', sm: 'none' } }}>
-                                <MenuIcon />
-                            </IconButton>
                             <Input
                                 size="sm"
                                 startDecorator={<SearchRoundedIcon />}
@@ -183,7 +198,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                             />
                         </Box>
                     </Stack>
-
 
                     {searchResults.length > 0 ? (
                         <List>

@@ -12,7 +12,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
-import {updateMessageStatus} from "../../api/api";
+import { updateMessageStatus } from '../../api/api';
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
@@ -27,12 +27,9 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
     const [isFarFromBottom, setIsFarFromBottom] = useState<boolean>(false);
-    const [allChatMessages, setAllChatMessages] = useState<{ [key: number]: MessageProps[] }>({});
-    const { chatId } = useParams<{ chatId: string }>();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const chatIdRef = useRef<number | null>(null);
-    const [initialLoad, setInitialLoad] = useState(true);
 
     const scrollToBottom = (smooth: boolean = true) => {
         const container = messagesContainerRef.current;
@@ -54,11 +51,13 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                 .map(msg => msg.id);
 
             if (messageIds.length > 0) {
-                await Promise.all(messageIds.map(id => updateMessageStatus(Number(id), { isRead: true }, token)));
+                await Promise.all(messageIds.map(id =>
+                    updateMessageStatus(Number(id), { isRead: true }, token)
+                ));
 
                 setChatMessages(prevMessages =>
                     prevMessages.map(msg =>
-                        msg.userId !== currentUserId ? { ...msg, isRead: true } : msg
+                        messageIds.includes(msg.id) ? { ...msg, isRead: true } : msg
                     )
                 );
             }
@@ -96,31 +95,22 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
         scrollToBottom();
     }, [chatMessages]);
 
+    const chatMessagesRef = useRef<MessageProps[]>(chat?.messages || []);
+
     useEffect(() => {
-        if (chat) {
+        if (chat && chat.id !== chatIdRef.current) {
             chatIdRef.current = chat.id;
-
-            setAllChatMessages((prev) => {
-                const updatedMessages = {
-                    ...prev,
-                    [chat.id]: prev[chat.id] ? [...prev[chat.id]] : chat.messages || [],
-                };
-                return updatedMessages;
-            });
-
-            setChatMessages((prev) => {
-                const existingMessages = allChatMessages[chat.id] || chat.messages || [];
-                return [...existingMessages];
-            });
-
+            chatMessagesRef.current = chat.messages || [];
+            setChatMessages(chatMessagesRef.current); // Optional: Only if re-render is needed
             scrollToBottom(false);
-            setInitialLoad(false);
-        } else {
+        } else if (!chat) {
             console.log('No chat selected, clearing messages.');
-            setChatMessages([]);
+            chatMessagesRef.current = [];
+            setChatMessages([]); // Optional
             chatIdRef.current = null;
         }
     }, [chat]);
+
 
     useEffect(() => {
         const container = messagesContainerRef.current;
@@ -129,13 +119,6 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
             return () => container.removeEventListener('scroll', handleScroll);
         }
     }, []);
-
-    useEffect(() => {
-        if (chat) {
-            setChatMessages(allChatMessages[chat.id] || []);
-        }
-    }, [chat, allChatMessages]);
-
 
     const handleEditMessageInList = (updatedMessage: MessageProps) => {
         setChatMessages((prevMessages) =>
@@ -160,89 +143,33 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
 
         if (data.type === 'newMessage' && data.message) {
             const newMessage = data.message;
-
-            setAllChatMessages((prev) => {
-                const chatId = newMessage.chatId;
-                const chatMessages = prev[chatId] || [];
-                const exists = chatMessages.some((msg) => msg.id === newMessage.id);
-                if (!exists) {
-                    return {
-                        ...prev,
-                        [chatId]: [...chatMessages, newMessage],
-                    };
-                }
-                return prev;
-            });
-
             if (newMessage.chatId === chatIdRef.current) {
                 setChatMessages((prevMessages) => {
-                    const exists = prevMessages.some((msg) => msg.id === newMessage.id);
-                    if (!exists) {
+                    if (!prevMessages.some((msg) => msg.id === newMessage.id)) {
                         return [...prevMessages, newMessage];
                     }
                     return prevMessages;
                 });
             }
-
         } else if (data.type === 'editMessage' && data.message) {
             const updatedMessage = data.message;
-
-            setAllChatMessages((prev) => {
-                const chatId = updatedMessage.chatId;
-                const chatMessages = prev[chatId] || [];
-                return {
-                    ...prev,
-                    [chatId]: chatMessages.map((msg) =>
-                        msg.id === updatedMessage.id ? { ...msg, ...updatedMessage } : msg
-                    ),
-                };
-            });
-
             if (updatedMessage.chatId === chatIdRef.current) {
                 handleEditMessageInList(updatedMessage);
             }
-
         } else if (data.type === 'deleteMessage') {
             const { messageId, chatId } = data;
-
-            setAllChatMessages((prev) => {
-                return {
-                    ...prev,
-                    [chatId]: prev[chatId].filter((msg) => msg.id !== messageId),
-                };
-            });
-
             if (chatId === chatIdRef.current) {
                 handleDeleteMessageInList(messageId);
             }
-
         }
         if (data.type === 'messageRead' && data.messageId) {
-            setChatMessages((prevMessages) => {
-                const updatedMessages = prevMessages.map((msg) => {
-                    if (msg.id === data.messageId) {
-                        return { ...msg, isRead: true };
-                    }
-                    return msg;
-                });
-                return updatedMessages;
-            });
-
-            setAllChatMessages((prev) => {
-                const chatId = chatIdRef.current;
-                if (!chatId) return prev;
-
-                return {
-                    ...prev,
-                    [chatId]: prev[chatId].map((msg) =>
-                        msg.id === data.messageId ? { ...msg, isRead: true } : msg
-                    ),
-                };
-            });
+            setChatMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                    msg.id === data.messageId ? { ...msg, isRead: true } : msg
+                )
+            );
         }
-
     }, [currentUserId, chatIdRef]);
-
 
     const handleEditMessage = (messageId: number, content: string) => {
         setEditingMessageId(messageId);
@@ -303,8 +230,6 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                     <Stack spacing={2} sx={{ width: { xs: '100%', sm: '80%', md: '95%' } }}>
                         {chatMessages.map((message: MessageProps, index: number) => {
                             const isCurrentUser = message.userId === currentUserId;
-                            const messageCreatorId = message.userId;
-
                             return (
                                 <Stack
                                     key={index}
@@ -326,7 +251,7 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                                         unread={message.unread}
                                         isEdited={message.isEdited}
                                         onEditMessage={handleEditMessage}
-                                        messageCreatorId={messageCreatorId}
+                                        messageCreatorId={message.userId}
                                         isGroupChat={chat?.isGroup || false}
                                     />
                                 </Stack>
@@ -346,30 +271,10 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                             color: 'text.secondary',
                         }}
                     >
-                        {t('')}
+                        {t('No messages')}
                     </Typography>
                 )}
             </Box>
-
-
-            {/*{isFarFromBottom && (*/}
-            {/*    <IconButton*/}
-            {/*        sx={{*/}
-            {/*            position: 'fixed',*/}
-            {/*            right: 16,*/}
-            {/*            zIndex: 10,*/}
-            {/*            backgroundColor: 'primary.main',*/}
-            {/*            '&:hover': {*/}
-            {/*                backgroundColor: 'primary.dark',*/}
-            {/*            },*/}
-            {/*            width: { xs: 40, sm: 56 },*/}
-            {/*            height: { xs: 40, sm: 56 },*/}
-            {/*        }}*/}
-            {/*        onClick={() => scrollToBottom()}*/}
-            {/*    >*/}
-            {/*        <ArrowDownwardIcon />*/}
-            {/*    </IconButton>*/}
-            {/*)}*/}
 
             {chat && (
                 <Box sx={{ width: { xs: '100%', sm: '80%', md: '94%' }, margin: '0 auto' }}>
@@ -377,7 +282,7 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
                         chatId={Number(chat?.id ?? 0)}
                         onSubmit={() => {
                             const newMessage: MessageProps = {
-                                id: (chatMessages.length + 1),
+                                id: chatMessages.length + 1,
                                 user: chat?.users?.find((user) => user.id === currentUserId)!,
                                 userId: currentUserId!,
                                 chatId: chat?.id!,

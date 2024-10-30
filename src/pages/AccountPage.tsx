@@ -29,7 +29,7 @@ import GlobalStyles from '@mui/joy/GlobalStyles';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {Helmet} from "react-helmet-async";
-import {Checkbox} from "@mui/joy";
+import {CardActions, CardOverflow, Checkbox} from "@mui/joy";
 import Verified from '../components/core/Verified';
 
 import ConnectButtons from '../components/profile/ConnectButtons';
@@ -386,41 +386,30 @@ export default function AccountPage() {
                                         sx={{ pointerEvents: 'auto' }}
                                     />
                                 </FormControl>
-                                <Stack
-                                    direction={{ xs: 'column', sm: 'row' }}
-                                    spacing={2}
-                                    sx={{
-                                        mt: 2,
-                                        justifyContent: { xs: 'center', sm: 'flex-end' },
-                                        width: '100%',
-                                        '& > *': {
-                                            flexGrow: 1,
-                                            textAlign: 'center'
-                                        }
-                                    }}
-                                >
-                                    <Button variant="outlined" color="danger" onClick={() => setShowReportModal(true)}>
-                                        {t('report')}
-                                    </Button>
-                                    {isOwner && !isEditable && (
-                                        <Button variant="outlined" color="primary" onClick={() => setIsEditable(true)}>
-                                            {t('edit')}
-                                        </Button>
-                                    )}
-                                    {isEditable && (
-                                        <>
-                                            <Button variant="solid" color="success" onClick={handleSave}>
-                                                {t('save')}
-                                            </Button>
-                                            <Button variant="outlined" color="danger" onClick={() => setIsEditable(false)}>
-                                                {t('cancel')}
-                                            </Button>
-                                        </>
-                                    )}
-                                </Stack>
-
                             </Stack>
                         </Stack>
+                        <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+                            <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
+                            <Button variant="outlined" color="danger" onClick={() => setShowReportModal(true)}>
+                                {t('report')}
+                            </Button>
+                            {isOwner && !isEditable && (
+                                <Button variant="outlined" color="primary" onClick={() => setIsEditable(true)}>
+                                    {t('edit')}
+                                </Button>
+                            )}
+                            {isEditable && (
+                                <>
+                                    <Button variant="solid" color="success" onClick={handleSave}>
+                                        {t('save')}
+                                    </Button>
+                                    <Button variant="outlined" color="danger" onClick={() => setIsEditable(false)}>
+                                        {t('cancel')}
+                                    </Button>
+                                </>
+                            )}
+                            </CardActions>
+                        </CardOverflow>
                     </Card>
                     <ConnectButtons />
 
