@@ -36,6 +36,10 @@ export default function AvatarUploadModal({ open, onClose, onSuccess }: AvatarUp
             });
 
             const avatarUrl = response.data.avatar;
+            const newToken = response.data.token;
+
+            localStorage.setItem('token', newToken);
+
             setLoading(false);
             onSuccess(avatarUrl);
             handleClose();

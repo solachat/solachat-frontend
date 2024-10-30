@@ -37,6 +37,7 @@ import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
 import LanguageSwitcher from '../components/core/LanguageSwitcher';
 import AvatarUploadModal from '../components/profile/AvatarUploadModal';
 import ReportModal from "../components/profile/ReportModal";
+import WalletIcon from '@mui/icons-material/Wallet';
 
 export default function AccountPage() {
     const { t } = useTranslation();
@@ -47,6 +48,7 @@ export default function AccountPage() {
 
     const [isOwner, setIsOwner] = React.useState(false);
     const [shareEmail, setShareEmail] = React.useState(false);
+    const [sharePublicKey, setPublicKey] = React.useState(false);
     const [accountExists, setAccountExists] = React.useState(true);
     const [loading, setLoading] = React.useState(true);
     const [balance, setBalance] = React.useState(0);
@@ -103,6 +105,7 @@ export default function AccountPage() {
                 const data = response.data;
                 setProfileData(data);
                 setShareEmail(data.shareEmail);
+                setPublicKey(data.sharePublicKey);
                 setAccountExists(true);
                 setBalance(data.balance);
                 setTokenBalance(data.tokenBalance);
@@ -135,6 +138,7 @@ export default function AccountPage() {
                     email: profileData.email,
                     aboutMe: profileData.aboutMe,
                     shareEmail: shareEmail,
+                    sharePublicKey: sharePublicKey,
                     verified: profileData.verified,
                 },
                 {
@@ -332,7 +336,11 @@ export default function AccountPage() {
                                 </Stack>
                                 <FormControl>
                                     <FormLabel>{t('aboutMe')}</FormLabel>
-                                    <Input size="sm" value={profileData.aboutMe} onChange={(e) => setProfileData({ ...profileData, aboutMe: e.target.value })} disabled={!isEditable} />
+                                    <Input size="sm"
+                                           value={profileData.aboutMe}
+                                           onChange={(e) =>
+                                               setProfileData({ ...profileData, aboutMe: e.target.value })} disabled={!isEditable}
+                                    />
                                 </FormControl>
                                 <FormControl>
                                     <FormLabel sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -364,13 +372,31 @@ export default function AccountPage() {
                                 </FormControl>
                                 <FormControl>
                                     <FormLabel>
-                                        {t('wallet')} ({balance} SOL, {tokenBalance} {t('tokens')})
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            {t('wallet')}
+                                            {isOwner || sharePublicKey ? (
+                                                <> ({balance} SOL, {tokenBalance} {t('tokens')})</>
+                                            ) : null}
+                                            {isOwner && (
+                                                <>
+                                                    <Checkbox
+                                                        size="sm"
+                                                        checked={sharePublicKey}
+                                                        onChange={() => setPublicKey(!sharePublicKey)}
+                                                        disabled={!isEditable}
+                                                        sx={{ ml: 1 }}
+                                                    />
+                                                    {t('Share public key')}
+                                                </>
+                                            )}
+                                        </Box>
                                     </FormLabel>
                                     <Input
                                         size="sm"
-                                        value={profileData.public_key ? profileData.public_key : '-'}
+                                        value={isOwner || sharePublicKey ? profileData.public_key : '******'}
+                                        startDecorator={<WalletIcon />}
                                         endDecorator={
-                                            profileData.public_key ? (
+                                            (isOwner || sharePublicKey) && profileData.public_key ? (
                                                 <IconButton
                                                     variant="plain"
                                                     size="sm"
@@ -386,6 +412,7 @@ export default function AccountPage() {
                                         sx={{ pointerEvents: 'auto' }}
                                     />
                                 </FormControl>
+
                             </Stack>
                         </Stack>
                         <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>

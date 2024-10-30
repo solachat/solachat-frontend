@@ -269,9 +269,6 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 <Typography level="body-sm">{t('No messages')}</Typography>
                             )}
                         </Box>
-
-
-
                         {lastMessage && (
                             <Box
                                 sx={{
@@ -322,7 +319,6 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 )}
                             </Box>
                         )}
-
                     </Stack>
                 </ListItemButton>
             </ListItem>
