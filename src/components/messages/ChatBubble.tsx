@@ -244,8 +244,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
         currentUserId = decodedToken.id || 0;
     }
 
-
-
     return (
         <Box
             component="div"
@@ -444,8 +442,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         </Box>
                     </Stack>
 
-
-
                     {!isImage && !isVideo && !isAudio && attachment && (
                         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                             <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
@@ -467,7 +463,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 </Sheet>
             </Box>
 
-            {/* Контекстное меню */}
             <ContextMenu
                 anchorPosition={
                     anchorPosition !== null ? { top: anchorPosition.mouseY, left: anchorPosition.mouseX } : undefined

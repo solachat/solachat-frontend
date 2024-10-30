@@ -14,6 +14,7 @@ import {useCallback, useEffect, useState} from 'react';
 import { t } from 'i18next';
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import CheckIcon from "@mui/icons-material/Check";
+import {useTranslation} from "react-i18next";
 
 type NewMessageEvent =
     | {
@@ -58,29 +59,6 @@ const isVideo = (fileName: string) => {
     const videoExtensions = ['mp4', 'mov', 'avi', 'mkv'];
     const fileExtension = fileName.split('.').pop()?.toLowerCase();
     return videoExtensions.includes(fileExtension || '');
-};
-
-const getFormattedDate = (date: Date) => {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-        return date.toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    }
-    else if (date.toDateString() === yesterday.toDateString()) {
-        return date.toLocaleDateString('en-GB', { weekday: 'long' });
-    }
-    else {
-        return date.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        }).replace(/\//g, '.');
-    }
 };
 
 const fixFilePath = (filePath: string) => filePath.replace(/\\/g, '/').replace(/\.enc$/, '');
@@ -170,6 +148,58 @@ export default function ChatListItem(props: ChatListItemProps) {
         (msg) => msg.userId !== currentUserId && !msg.isRead
     );
     const unreadCount = unreadMessages.length;
+
+    const getFormattedDate = (date: Date, locale: string = 'en-GB') => {
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay() + 1);
+
+        const weekdayAbbreviations: Record<string, Record<string, string>> = {
+            'ru': {
+                Monday: 'Пн',
+                Tuesday: 'Вт',
+                Wednesday: 'Ср',
+                Thursday: 'Чт',
+                Friday: 'Пт',
+                Saturday: 'Сб',
+                Sunday: 'Вс',
+            },
+            'en': {
+                Monday: 'Mon',
+                Tuesday: 'Tue',
+                Wednesday: 'Wed',
+                Thursday: 'Thu',
+                Friday: 'Fri',
+                Saturday: 'Sat',
+                Sunday: 'Sun',
+            },
+        };
+
+        if (date.toDateString() === today.toDateString()) {
+            return date.toLocaleTimeString(locale, {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+        } else if (date >= startOfWeek) {
+            const weekdayInEnglish = date.toLocaleDateString('en', { weekday: 'long' });
+            const abbreviation = weekdayAbbreviations[locale]?.[weekdayInEnglish] || weekdayInEnglish;
+            return abbreviation;
+        } else {
+            return date.toLocaleDateString('default', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+            }).replace(/\//g, '.').replace(/-/g, '.');
+        }
+    };
+
+
+
+    const { i18n } = useTranslation();
+    const locale = i18n.language || 'en-GB';
 
     const handleClick = async () => {
         if (existingChat) {
@@ -295,7 +325,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                             <CheckIcon sx={{ fontSize: 15, mr: 0.5 }} />
                                         )
                                     ) : null}
-                                    {getFormattedDate(new Date(lastMessage.createdAt))}
+                                    {getFormattedDate(new Date(lastMessage.createdAt), locale)}
                                 </Typography>
 
                                 {unreadCount > 0 && lastMessage.userId !== currentUserId && (
