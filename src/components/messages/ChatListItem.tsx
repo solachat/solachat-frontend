@@ -60,6 +60,29 @@ const isVideo = (fileName: string) => {
     return videoExtensions.includes(fileExtension || '');
 };
 
+const getFormattedDate = (date: Date) => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+        return date.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    }
+    else if (date.toDateString() === yesterday.toDateString()) {
+        return date.toLocaleDateString('en-GB', { weekday: 'long' });
+    }
+    else {
+        return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        }).replace(/\//g, '.');
+    }
+};
+
 const fixFilePath = (filePath: string) => filePath.replace(/\\/g, '/').replace(/\.enc$/, '');
 
 export default function ChatListItem(props: ChatListItemProps) {
@@ -248,6 +271,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                         </Box>
 
 
+
                         {lastMessage && (
                             <Box
                                 sx={{
@@ -274,10 +298,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                             <CheckIcon sx={{ fontSize: 15, mr: 0.5 }} />
                                         )
                                     ) : null}
-                                    {new Date(lastMessage.createdAt).toLocaleTimeString('en-GB', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                    })}
+                                    {getFormattedDate(new Date(lastMessage.createdAt))}
                                 </Typography>
 
                                 {unreadCount > 0 && lastMessage.userId !== currentUserId && (
