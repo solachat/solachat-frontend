@@ -273,11 +273,12 @@ export default function MyProfile() {
                             ) : selectedChat ? (
                                 <MessagesPane
                                     chat={selectedChat}
+                                    chats={chats}
                                     members={selectedChat?.users || []}
                                     setSelectedChat={setSelectedChat}
                                 />
                             ) : (
-                                <MessagesPane chat={null} setSelectedChat={setSelectedChat}   />
+                                <MessagesPane chat={null} chats={chats} setSelectedChat={setSelectedChat}   />
                             )}
                         </Sheet>
                     </>

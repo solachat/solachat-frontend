@@ -17,11 +17,14 @@ import { updateMessageStatus } from '../../api/api';
 type MessagesPaneProps = {
     chat: ChatProps | null;
     members?: UserProps[];
+    chats: ChatProps[];
     setSelectedChat: (chat: ChatProps | null) => void;
 };
 
-export default function MessagesPane({ chat, members = [], setSelectedChat }: MessagesPaneProps) {
+export default function MessagesPane({ chat, chats, members = [], setSelectedChat }: MessagesPaneProps) {
     const { t } = useTranslation();
+    const [chatIdFromUrl, setChatIdFromUrl] = useState<string | undefined>();
+
     const [chatMessages, setChatMessages] = useState<MessageProps[]>(chat?.messages || []);
     const [textAreaValue, setTextAreaValue] = useState<string>('');
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -30,6 +33,8 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const chatIdRef = useRef<number | null>(null);
+    const { chatId } = useParams<{ chatId: string }>();
+
 
     const scrollToBottom = (smooth: boolean = true) => {
         const container = messagesContainerRef.current;
@@ -97,16 +102,47 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
 
     const chatMessagesRef = useRef<MessageProps[]>(chat?.messages || []);
 
+    const findChatById = (id: string | undefined) => {
+        return chats.find((chat) => chat.id === Number(id)) || null;
+    };
+
+    useEffect(() => {
+        const updateChatIdFromHash = () => {
+            let hash = window.location.hash.slice(1);
+
+            if (hash.startsWith('-')) {
+                hash = hash.slice(1);
+            }
+
+            setChatIdFromUrl(hash || undefined);
+        };
+
+        updateChatIdFromHash();
+        window.addEventListener('hashchange', updateChatIdFromHash);
+
+        return () => window.removeEventListener('hashchange', updateChatIdFromHash);
+    }, []);
+
+
+    useEffect(() => {
+        if (chatIdFromUrl) {
+            const chatFromUrl = findChatById(chatIdFromUrl);
+            if (chatFromUrl) {
+                setSelectedChat(chatFromUrl);
+            }
+        }
+    }, [chatIdFromUrl, chats, setSelectedChat]);
+
     useEffect(() => {
         if (chat && chat.id !== chatIdRef.current) {
             chatIdRef.current = chat.id;
             chatMessagesRef.current = chat.messages || [];
-            setChatMessages(chatMessagesRef.current); // Optional: Only if re-render is needed
+            setChatMessages(chatMessagesRef.current);
             scrollToBottom(false);
         } else if (!chat) {
             console.log('No chat selected, clearing messages.');
             chatMessagesRef.current = [];
-            setChatMessages([]); // Optional
+            setChatMessages([]);
             chatIdRef.current = null;
         }
     }, [chat]);
@@ -179,6 +215,11 @@ export default function MessagesPane({ chat, members = [], setSelectedChat }: Me
     const interlocutor = chat?.isGroup
         ? undefined
         : chat?.users?.find((user) => user.id !== currentUserId);
+
+    useEffect(() => {
+        console.log('Current chat:', chat);
+        console.log('Current chatId from URL:', chatId);
+    }, [chat, chatId]);
 
     return (
         <Sheet
