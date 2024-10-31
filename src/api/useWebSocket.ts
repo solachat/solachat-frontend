@@ -210,5 +210,5 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
         }
     }, [currentUserId, connectWebSocket, isConnected, ...dependencies]);
 
-    return { wsRef: wsRef.current, isConnecting };
+    return { wsRef: wsRef.current, isConnecting, connectWebSocket };
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import AspectRatio from '@mui/joy/AspectRatio';
@@ -38,6 +38,7 @@ import LanguageSwitcher from '../components/core/LanguageSwitcher';
 import AvatarUploadModal from '../components/profile/AvatarUploadModal';
 import ReportModal from "../components/profile/ReportModal";
 import WalletIcon from '@mui/icons-material/Wallet';
+import SecurityModal from "../components/profile/SecurityModal";
 
 export default function AccountPage() {
     const { t } = useTranslation();
@@ -62,6 +63,9 @@ export default function AccountPage() {
     const [showAvatarModal, setShowAvatarModal] = React.useState(false);
     const [reportLoading, setReportLoading] = React.useState(false);
     const [showReportModal, setShowReportModal] = React.useState(false);
+    const [usernameError, setUsernameError] = React.useState<string | null>(null);
+    const [openSnackbar, setOpenSnackbar] = React.useState(false);
+    const [showSecurityModal, setShowSecurityModal] = useState(false);
 
     const [profileData, setProfileData] = React.useState({
         username: '',
@@ -71,11 +75,15 @@ export default function AccountPage() {
         country: '',
         public_key: '',
         rating: 0,
-        lastLogin: '',
+        lastOnline: '',
         avatar: '',
         online: false,
         verified: false
     });
+
+    const handleOpenSecurityModal = () => setShowSecurityModal(true);
+    const handleCloseSecurityModal = () => setShowSecurityModal(false);
+
 
     React.useEffect(() => {
         const token = localStorage.getItem('token');
@@ -164,7 +172,25 @@ export default function AccountPage() {
             }, 5000);
         } catch (error) {
             console.error('Error updating profile:', error);
+
+            if (axios.isAxiosError(error)) {
+                if (error.response && error.response.status === 409) {
+                    setUsernameError(t('Username is already in use'));
+                    setOpenSnackbar(true);
+                }
+            } else {
+                console.error('Unexpected error:', error);
+            }
         }
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditable(false);
+        setUsernameError(null);
+        setProfileData((prevData) => ({
+            ...prevData,
+            username: username
+        }));
     };
 
     const handleAvatarUploadSuccess = (avatarUrl: string) => {
@@ -202,6 +228,7 @@ export default function AccountPage() {
             </CssVarsProvider>
         );
     }
+
 
     if (loading) {
         return (
@@ -317,7 +344,7 @@ export default function AccountPage() {
                                         {t('ratinguser')}
                                     </Typography>
                                     <Typography sx={{ color: 'text.secondary', mt: 1, visibility: profileData.online ? 'hidden' : 'visible' }}>
-                                        {t('lastLogin')}: {new Date(profileData.lastLogin).toLocaleString()}
+                                        {t('lastLogin')}: {new Date(profileData.lastOnline).toLocaleString()}
                                     </Typography>
 
 
@@ -327,49 +354,28 @@ export default function AccountPage() {
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: '100%' }}>
                                     <FormControl sx={{ flexGrow: 1 }}>
                                         <FormLabel>{t('username')}</FormLabel>
-                                        <Input size="sm" value={profileData.username} onChange={(e) => setProfileData({ ...profileData, username: e.target.value })} disabled={!isEditable} />
+                                        <Input
+                                            size="sm"
+                                            value={profileData.username}
+                                            onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
+                                            disabled={!isEditable}
+                                            error={Boolean(usernameError)}
+                                        />
+                                        {usernameError && (
+                                            <Typography color="danger" sx={{ mt: 0.5 }}>
+                                                {usernameError}
+                                            </Typography>
+                                        )}
                                     </FormControl>
-                                    <FormControl sx={{ flexGrow: 1 }}>
-                                        <FormLabel>{t('realname')}</FormLabel>
-                                        <Input size="sm" value={profileData.realname} onChange={(e) => setProfileData({ ...profileData, realname: e.target.value })} disabled={!isEditable} />
+                                    <FormControl>
+                                        <FormLabel>{t('aboutMe')}</FormLabel>
+                                        <Input size="sm"
+                                               value={profileData.aboutMe}
+                                               onChange={(e) =>
+                                                   setProfileData({ ...profileData, aboutMe: e.target.value })} disabled={!isEditable}
+                                        />
                                     </FormControl>
                                 </Stack>
-                                <FormControl>
-                                    <FormLabel>{t('aboutMe')}</FormLabel>
-                                    <Input size="sm"
-                                           value={profileData.aboutMe}
-                                           onChange={(e) =>
-                                               setProfileData({ ...profileData, aboutMe: e.target.value })} disabled={!isEditable}
-                                    />
-                                </FormControl>
-                                <FormControl>
-                                    <FormLabel sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        {t('email')}
-                                        {isOwner && (
-                                            <Box sx={{ ml: 1 }} />
-                                        )}
-                                        {isOwner && (
-                                            <Checkbox
-                                                size="sm"
-                                                checked={shareEmail}
-                                                onChange={() => setShareEmail(!shareEmail)}
-                                                disabled={!isEditable}
-                                            />
-                                        )}
-                                        {isOwner && t('shareEmail')}
-                                    </FormLabel>
-                                    <Input
-                                        size="sm"
-                                        type="email"
-                                        startDecorator={<EmailRoundedIcon />}
-                                        value={isOwner || shareEmail ? profileData.email : '******'}
-                                        onChange={(e) => isOwner && setProfileData({ ...profileData, email: e.target.value })}
-                                        disabled={!isOwner || !isEditable}
-                                        sx={{
-                                            width: '100%',
-                                        }}
-                                    />
-                                </FormControl>
                                 <FormControl>
                                     <FormLabel>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -417,24 +423,32 @@ export default function AccountPage() {
                         </Stack>
                         <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
                             <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
-                            <Button variant="outlined" color="danger" onClick={() => setShowReportModal(true)}>
-                                {t('report')}
-                            </Button>
+                                {!isOwner && (
+                                    <Button variant="outlined" color="danger" onClick={() => setShowReportModal(true)}>
+                                        {t('report')}
+                                    </Button>
+                                )}
+                                {isOwner && !isEditable && (
+                                    <Button variant="outlined" color="primary" onClick={handleOpenSecurityModal}>
+                                        {t('Security')}
+                                    </Button>
+                                )}
+                                <SecurityModal username={profileData.username} open={showSecurityModal} onClose={handleCloseSecurityModal} />
                             {isOwner && !isEditable && (
                                 <Button variant="outlined" color="primary" onClick={() => setIsEditable(true)}>
                                     {t('edit')}
                                 </Button>
                             )}
-                            {isEditable && (
-                                <>
-                                    <Button variant="solid" color="success" onClick={handleSave}>
-                                        {t('save')}
-                                    </Button>
-                                    <Button variant="outlined" color="danger" onClick={() => setIsEditable(false)}>
-                                        {t('cancel')}
-                                    </Button>
-                                </>
-                            )}
+                                {isEditable && (
+                                    <>
+                                        <Button variant="solid" color="success" onClick={handleSave}>
+                                            {t('save')}
+                                        </Button>
+                                        <Button variant="outlined" color="danger" onClick={handleCancelEdit}>
+                                            {t('cancel')}
+                                        </Button>
+                                    </>
+                                )}
                             </CardActions>
                         </CardOverflow>
                     </Card>

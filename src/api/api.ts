@@ -451,3 +451,40 @@ export const createFavoriteChat = async (token: string) => {
         throw new Error('Could not create or retrieve favorite chat');
     }
 };
+
+export const setupTotp = async (token: string): Promise<{ secret: string; otpauthUrl: string }> => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/users/setup-totp`,
+            {},
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error setting up TOTP:', error);
+        throw error;
+    }
+};
+
+
+export const verifyTotp = async (totpCode: string, token: string): Promise<{ success: boolean }> => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/users/verify-totp`,
+            { totpCode },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error verifying TOTP:', error);
+        throw error;
+    }
+};

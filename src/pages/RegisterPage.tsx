@@ -15,25 +15,31 @@ import Typography from '@mui/joy/Typography';
 import Stack from '@mui/joy/Stack';
 import Alert from '@mui/joy/Alert';
 import GoogleIcon from '../components/core/GoogleIcon';
-import TelegramIcon from '../components/core/TelegramIcon';
 import { Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Header } from '../components/core/ColorSchemeToggle';
 import axios from 'axios';
 import PhantomConnectButton from '../components/core/PhantomConnectButton';
-import EmailIcon from '@mui/icons-material/Email';
-import LockIcon from '@mui/icons-material/Lock';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
 import Person from '@mui/icons-material/Person';
 import { Helmet } from "react-helmet-async";
+import {useState} from "react";
+
+interface PhantomProvider extends Window {
+    solana?: {
+        isPhantom?: boolean;
+        publicKey?: {
+            toString(): string;
+        };
+        connect: () => Promise<{ publicKey: { toString: () => string } }>;
+        disconnect: () => Promise<void>;
+        signMessage?: (message: Uint8Array, encoding: string) => Promise<{ signature: Uint8Array }>;
+    };
+}
+
+declare let window: PhantomProvider;
 
 interface FormElements extends HTMLFormControlsCollection {
     username: HTMLInputElement;
-    realname: HTMLInputElement;
-    email: HTMLInputElement;
-    password: HTMLInputElement;
-    confirmPassword: HTMLInputElement;
-    persistent: HTMLInputElement;
 }
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
@@ -48,6 +54,7 @@ const RegisterPage: React.FC = () => {
     const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
     const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
     const [buttonColor, setButtonColor] = React.useState<string | undefined>(undefined);
+    const [signedMessage, setSignedMessage] = useState<{ message: string; signature: Uint8Array } | null>(null);
 
     const handleSubmit = async (event: React.FormEvent<SignUpFormElement>) => {
         event.preventDefault();
@@ -55,31 +62,20 @@ const RegisterPage: React.FC = () => {
 
         const userData = {
             username: formElements.username.value,
-            realname: formElements.realname.value,
-            email: formElements.email.value,
-            password: formElements.password.value,
-            confirmPassword: formElements.confirmPassword.value,
-            persistent: formElements.persistent.checked,
             lastlogin: new Date().toISOString(),
-            rating: '',
-            wallet: walletAddress || ''
+            message: signedMessage?.message,
+            signature: Array.from(signedMessage?.signature || []),
+            wallet: walletAddress
         };
-
-        if (userData.password !== userData.confirmPassword) {
-            setErrorMessage(t('passwordsDoNotMatch'));
-            setButtonColor('red');
-            setTimeout(() => setButtonColor(undefined), 1000);
-            return;
-        }
 
         try {
             const response = await axios.post(`${API_URL}/api/users/register`, userData);
             const token = response.data.token;
             localStorage.setItem('token', token);
-            if (userData.persistent) {
-                localStorage.setItem('persistent', 'true');
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
+                navigate('/account?username=' + encodeURIComponent(response.data.user.username));
             }
-            navigate('/login');
         } catch (error) {
             console.error('Registration failed', error);
             if (axios.isAxiosError(error)) {
@@ -91,10 +87,33 @@ const RegisterPage: React.FC = () => {
         }
     };
 
-    const handlePhantomConnect = (walletAddress: string) => {
-        setWalletAddress(walletAddress);
-        setErrorMessage(null);
+    const handlePhantomConnect = async () => {
+        if (window.solana?.isPhantom) {
+            try {
+                const { publicKey } = await window.solana.connect();
+                const walletAddress = publicKey.toString();
+
+                if (!window.solana.signMessage) {
+                    throw new Error("Phantom Wallet doesn't support signMessage");
+                }
+
+                const message = `Sign this message to confirm registration. Nonce: ${Math.random()}`;
+
+                const encodedMessage = new TextEncoder().encode(message);
+                const { signature } = await window.solana.signMessage(encodedMessage, 'utf8');
+
+                setWalletAddress(walletAddress);
+                setSignedMessage({ message, signature });
+                setErrorMessage(null);
+            } catch (error) {
+                console.error('Ошибка при подключении Phantom:', error);
+                setErrorMessage('Ошибка при подключении кошелька');
+            }
+        } else {
+            setErrorMessage('Phantom Wallet не найден. Пожалуйста, установите его.');
+        }
     };
+
 
     return (
         <CssVarsProvider defaultMode="dark" disableTransitionOnChange>
@@ -190,58 +209,6 @@ const RegisterPage: React.FC = () => {
                                     }}
                                 />
                             </FormControl>
-                            <FormControl required>
-                                <FormLabel>{t('realName')}</FormLabel>
-                                <Input
-                                    type="text"
-                                    name="realname"
-                                    startDecorator={<Person />}
-                                    sx={{
-                                        '& .MuiInputBase-input': {
-                                            pl: '32px',
-                                        },
-                                    }}
-                                />
-                            </FormControl>
-                            <FormControl required>
-                                <FormLabel>{t('email')}</FormLabel>
-                                <Input
-                                    type="email"
-                                    name="email"
-                                    startDecorator={<EmailIcon />}
-                                    sx={{
-                                        '& .MuiInputBase-input': {
-                                            pl: '32px',
-                                        },
-                                    }}
-                                />
-                            </FormControl>
-                            <FormControl required>
-                                <FormLabel>{t('password')}</FormLabel>
-                                <Input
-                                    type="password"
-                                    name="password"
-                                    startDecorator={<LockIcon />}
-                                    sx={{
-                                        '& .MuiInputBase-input': {
-                                            pl: '32px',
-                                        },
-                                    }}
-                                />
-                            </FormControl>
-                            <FormControl required>
-                                <FormLabel>{t('confirmPassword')}</FormLabel>
-                                <Input
-                                    type="password"
-                                    name="confirmPassword"
-                                    startDecorator={<LockOpenIcon />}
-                                    sx={{
-                                        '& .MuiInputBase-input': {
-                                            pl: '32px',
-                                        },
-                                    }}
-                                />
-                            </FormControl>
                             <Stack gap={4} sx={{ mt: 2 }}>
                                 <Box
                                     sx={{
@@ -271,14 +238,6 @@ const RegisterPage: React.FC = () => {
                         </Divider>
                         <PhantomConnectButton onConnect={handlePhantomConnect} />
                         <Stack gap={4} sx={{ mb: 2 }}>
-                            <Button
-                                variant="soft"
-                                color="neutral"
-                                fullWidth
-                                startDecorator={<TelegramIcon />}
-                            >
-                                {t('continueWithTelegram')}
-                            </Button>
                             <Button
                                 variant="soft"
                                 color="neutral"

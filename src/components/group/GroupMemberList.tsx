@@ -8,8 +8,8 @@ type GroupMemberListProps = {
     currentUserRole: 'owner' | 'admin' | 'member';
     onRoleChange: (userId: number, newRole: 'owner' | 'admin' | 'member') => void;
     onRemoveUser: (userId: number) => void;
-    chatId: number; // Добавляем chatId
-    token: string;  // Добавляем token для API запросов
+    chatId: number;
+    token: string;
 };
 
 export default function GroupMemberList({ users, currentUserRole, onRoleChange, onRemoveUser, chatId, token }: GroupMemberListProps) {

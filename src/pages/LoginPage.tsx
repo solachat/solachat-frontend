@@ -18,70 +18,97 @@ import {Link as RouterLink, useNavigate} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import GoogleIcon from '../components/core/GoogleIcon';
 import {Header} from "../components/core/ColorSchemeToggle";
-import TelegramIcon from "../components/core/TelegramIcon";
-import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
 import Alert from "@mui/joy/Alert";
-import {set} from "lodash";
+import PhantomConnectButton from "../components/core/PhantomConnectButton";
+import {useState} from "react";
 
-interface FormElements extends HTMLFormControlsCollection {
-    email: HTMLInputElement;
-    password: HTMLInputElement;
-    persistent: HTMLInputElement;
+interface PhantomProvider extends Window {
+    solana?: {
+        isPhantom?: boolean;
+        publicKey?: {
+            toString(): string;
+        };
+        connect: () => Promise<{ publicKey: { toString: () => string } }>;
+        disconnect: () => Promise<void>;
+        signMessage?: (message: Uint8Array, encoding: string) => Promise<{ signature: Uint8Array }>;
+    };
 }
 
-interface SignInFormElement extends HTMLFormElement {
-    readonly elements: FormElements;
-}
+declare let window: PhantomProvider;
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
 const Login = () => {
     const {t} = useTranslation();
     const navigate = useNavigate();
-    const [isConnected, setIsConnected] = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+    const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
+    const [totpCode, setTotpCode] = useState<string>('');
 
-    const handleLogin = async (event: React.FormEvent<SignInFormElement>) => {
-        event.preventDefault();
-        const formElements = event.currentTarget.elements;
-        const data = {
-            email: formElements.email.value,
-            password: formElements.password.value,
-            persistent: formElements.persistent.checked,
-            lastlogin: new Date().toISOString(),
-        };
-
-
+    const handleLogin = async (walletAddress: string, message: string, signature: number[]) => {
         try {
             const response = await axios.post(`${API_URL}/api/users/login`, {
-                email: data.email,
-                password: data.password,
-                lastlogin: data.lastlogin,
+                walletAddress,
+                message,
+                signature,
             });
 
-
-            if (response.data.token && response.data.user) {
-                const userData = response.data.user;
+            if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
-
-                navigate('/account?username=' + encodeURIComponent(userData.username));
+                navigate('/account?username=' + encodeURIComponent(response.data.user.username));
             } else {
-                setErrorMessage('Invalid email or password');
+                setErrorMessage('Ошибка аутентификации');
             }
         } catch (err) {
             console.error('Login failed', err);
-            if (axios.isAxiosError(err)) {
-                if (err.response && err.response.status === 401) {
-                    setErrorMessage(t('login.unauthorized'));
-                } else {
-                    setErrorMessage(t('login.errorOccurred'));
-                }
-            } else {
-                setErrorMessage(t('login.errorOccurred'));
-            }
+            setErrorMessage('Ошибка при входе с помощью Phantom Wallet');
         }
     };
+
+    const handleLoginWithTotp = async () => {
+        try {
+            const response = await axios.post(`${API_URL}/api/users/login`, { totpCode });
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
+                navigate('/account?username=' + encodeURIComponent(response.data.user.username));
+            } else {
+                setErrorMessage('Ошибка аутентификации');
+            }
+        } catch (err) {
+            console.error('Login failed', err);
+            setErrorMessage('Ошибка при входе с использованием TOTP кода');
+        }
+    };
+
+
+    const handlePhantomConnect = async () => {
+        try {
+            if (!window.solana?.isPhantom) {
+                setErrorMessage('Phantom Wallet не найден. Пожалуйста, установите его.');
+                return;
+            }
+
+            const { publicKey } = await window.solana.connect();
+            const walletAddress = publicKey.toString();
+            setWalletAddress(walletAddress);
+
+            const message = `Sign this message to confirm login. Nonce: ${Math.random()}`;
+            const encodedMessage = new TextEncoder().encode(message);
+
+            if (!window.solana.signMessage) {
+                throw new Error("Phantom Wallet не поддерживает подписание сообщений.");
+            }
+
+            const { signature } = await window.solana.signMessage(encodedMessage, 'utf8');
+
+            await handleLogin(walletAddress, message, Array.from(signature));
+        } catch (error) {
+            console.error('Ошибка подключения к Phantom:', error);
+            setErrorMessage('Ошибка при подключении к Phantom Wallet');
+        }
+    };
+
 
     return (
         <CssVarsProvider defaultMode="dark" disableTransitionOnChange>
@@ -163,52 +190,25 @@ const Login = () => {
                                     {errorMessage}
                                 </Alert>
                             )}
-                            <form onSubmit={handleLogin}>
-                                <FormControl required>
-                                    <FormLabel>{t('email')}</FormLabel>
-                                    <Input
-                                        type="email"
-                                        name="email"
-                                        startDecorator={<EmailIcon/>}
-                                        sx={{
-                                            '& .MuiInputBase-input': {
-                                                pl: '32px',
-                                            },
-                                        }}
-                                    />
-                                </FormControl>
-                                <FormControl required>
-                                    <FormLabel>{t('password')}</FormLabel>
-                                    <Input
-                                        type="password"
-                                        name="password"
-                                        startDecorator={<LockIcon/>}
-                                        sx={{
-                                            '& .MuiInputBase-input': {
-                                                pl: '32px',
-                                            },
-                                        }}
-                                    />
-                                </FormControl>
-                                <Stack gap={4} sx={{mt: 2}}>
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                        }}
-                                    >
-                                        <Checkbox size="sm" label={t('rememberMe')} name="persistent"/>
-                                        <Link component={RouterLink} to="/forgotpassword" level="title-sm">
-                                            {t('forgotPassword')}
-                                        </Link>
-                                    </Box>
-                                    <Button type="submit" fullWidth>
-                                        {t('signInButton')}
-                                    </Button>
-                                </Stack>
-                            </form>
                         </Stack>
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            handleLoginWithTotp(); // При отправке формы вызываем вход через TOTP
+                        }}>
+                            <FormControl required>
+                                <FormLabel>{t('TOTP Code')}</FormLabel>
+                                <Input
+                                    type="text"
+                                    name="totpCode"
+                                    value={totpCode}
+                                    onChange={(e) => setTotpCode(e.target.value)}
+                                    startDecorator={<LockIcon/>}
+                                />
+                            </FormControl>
+                            <Button type="submit" fullWidth>
+                                {t('signInButton')}
+                            </Button>
+                        </form>
                         <Divider
                             sx={(theme) => ({
                                 [theme.getColorSchemeSelector('light')]: {
@@ -218,15 +218,8 @@ const Login = () => {
                         >
                             {t('or')}
                         </Divider>
+                        <PhantomConnectButton onConnect={handlePhantomConnect}/>
                         <Stack gap={4} sx={{mb: 2}}>
-                            <Button
-                                variant="soft"
-                                color="neutral"
-                                fullWidth
-                                startDecorator={<TelegramIcon/>}
-                            >
-                                {t('continueWithTelegram')}
-                            </Button>
                             <Button
                                 variant="soft"
                                 color="neutral"

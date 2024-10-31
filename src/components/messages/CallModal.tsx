@@ -13,7 +13,6 @@ type CallModalProps = {
     sender: {
         id: number;
         username: string;
-        realname: string;
         avatar: string;
         online: boolean;
         role: string;
@@ -189,7 +188,7 @@ export default function CallModal({
             >
                 <Avatar
                     src={sender.avatar}
-                    alt={sender.realname}
+                    alt={sender.username}
                     sx={{
                         width: 140,
                         height: 140,
@@ -197,7 +196,7 @@ export default function CallModal({
                     }}
                 />
                 <Typography fontWeight="lg" fontSize="xl" id="call-modal-title">
-                    {sender.realname}
+                    {sender.username}
                 </Typography>
                 <Typography level="body-md" sx={{ marginBottom: 6 }}>
                     {status === 'incoming' && !isCallActive
