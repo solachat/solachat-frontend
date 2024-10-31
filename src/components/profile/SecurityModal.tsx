@@ -24,8 +24,8 @@ interface SecurityModalProps {
 
 const SecurityModal: React.FC<SecurityModalProps> = ({ open, onClose, username }) => {
     const { t } = useTranslation();
-    const [confirmationOpen, setConfirmationOpen] = useState(true); // Первое окно
-    const [totpModalOpen, setTotpModalOpen] = useState(false); // Второе окно
+    const [confirmationOpen, setConfirmationOpen] = useState(true);
+    const [totpModalOpen, setTotpModalOpen] = useState(false);
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
     const [secret, setSecret] = useState<string>('');
     const [totpCode, setTotpCode] = useState<string>('');
@@ -81,19 +81,13 @@ const SecurityModal: React.FC<SecurityModalProps> = ({ open, onClose, username }
         <>
             <Modal open={confirmationOpen && open} onClose={onClose} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <Card variant="outlined" sx={{ width: '100%', maxWidth: 400, boxShadow: 3, borderRadius: 2, p: 3 }}>
-                    {/* Заголовок */}
                     <Typography component="h2" sx={{ fontSize: '1.25rem', fontWeight: 600, textAlign: 'center'}}>
                         {t('Enable Two-Factor Authentication')}
                     </Typography>
-                    {/* Разделительная линия */}
                     <Divider sx={{ my: 2 }} />
-
-                    {/* Вопрос о подтверждении */}
                     <Typography id="confirmation-title" sx={{ fontSize: '1rem', mb: 3, textAlign: 'center', color: 'text.secondary' }}>
                         {t('Are you sure you want to start the procedure?')}
                     </Typography>
-
-                    {/* Кнопки подтверждения */}
                     <Stack direction="row" spacing={2} justifyContent="center">
                         <Button onClick={() => { setConfirmationOpen(false); setTotpModalOpen(true); }} variant="solid" color="primary" sx={{ width: '100%' }}>
                             {t('Yes, Continue')}
@@ -106,7 +100,6 @@ const SecurityModal: React.FC<SecurityModalProps> = ({ open, onClose, username }
             </Modal>
 
 
-            {/* Второе модальное окно с TOTP */}
             <Modal open={totpModalOpen && open} onClose={onClose} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <Card variant="outlined" sx={{ width: '100%', maxWidth: 400, boxShadow: 3, borderRadius: 2, p: 3, backgroundColor: 'background.paper' }}>
                     <Typography component="h2" sx={{ fontSize: '1.25rem', fontWeight: 600, mb: 1, textAlign: 'center' }}>

@@ -84,6 +84,7 @@ export default function MessageInput(props: MessageInputProps) {
                 await sendMessage(chatId, formData, token);
             }
 
+
             setEditorState(EditorState.createEmpty());
             setUploadedFiles([]);
         } catch (error) {
@@ -98,6 +99,18 @@ export default function MessageInput(props: MessageInputProps) {
     const removeUploadedFile = useCallback((index: number) => {
         setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     }, []);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            editorRef.current?.focus();
+        }, 0);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
+        editorRef.current?.focus();
+    });
 
     return (
         <Box sx={{ position: 'relative', px: 3, pb: 1 }}>
@@ -170,9 +183,8 @@ export default function MessageInput(props: MessageInputProps) {
                         <Box
                             sx={{
                                 flexGrow: 1,
-                                minHeight: 'auto',
-                                cursor: 'text',
-                                paddingLeft: '10px',
+
+
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
