@@ -4,7 +4,6 @@ import Textarea from '@mui/joy/Textarea';
 const CustomTextarea = styled(Textarea)({
     flexGrow: 1,
     minHeight: 'auto',
-    padding: '8px',
     resize: 'none',
     backgroundColor: 'var(--joy-palette-background-level1)',
     maxWidth: '100%',
