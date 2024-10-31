@@ -102,6 +102,12 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                             chatId: message.chatId,
                         });
                     break;
+                case 'userKickedFromChat':
+                    onMessage(message);
+                    break;
+                case 'userAddedToChat':
+                    onMessage(message);
+                    break;
                 case 'chatCreated':
                     onMessage(message);
                     break;

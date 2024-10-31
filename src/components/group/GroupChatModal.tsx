@@ -3,7 +3,7 @@ import { Box, Button, Modal, Input, Stack, IconButton, Typography, Avatar } from
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import { searchUsers, createGroupChat } from '../../api/api'; // вызов API для создания группы
+import { searchUsers, createGroupChat } from '../../api/api';
 import { UserProps } from '../core/types';
 import CloseIcon from '@mui/icons-material/Close';
 import { toast } from 'react-toastify';
@@ -17,7 +17,7 @@ type GroupChatModalProps = {
 };
 
 export default function GroupChatModal({ open, onClose }: GroupChatModalProps) {
-    const { t } = useTranslation(); // Инициализация перевода
+    const { t } = useTranslation();
     const [groupName, setGroupName] = React.useState('');
     const [avatar, setAvatar] = React.useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);

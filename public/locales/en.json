@@ -202,5 +202,15 @@
   "forward": "Forward",
   "login.invalidCredentials": "Invalid email or password",
   "login.unauthorized": "Authorization failed. Please check your credentials.",
-  "login.errorOccurred": "An error occurred. Please try again later."
+  "login.errorOccurred": "An error occurred. Please try again later.",
+  "chatSettings": {
+    "title": "Chat Settings",
+    "groupNameLabel": "Group Name",
+    "groupNamePlaceholder": "Enter a new name",
+    "saveChanges": "Save Changes",
+    "back": "Back",
+    "noChanges": "No changes made.",
+    "preparingUpdate": "Preparing to update settings",
+    "updateFailed": "Failed to update settings"
+  }
 }
