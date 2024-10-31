@@ -21,6 +21,8 @@ import {Header} from "../components/core/ColorSchemeToggle";
 import TelegramIcon from "../components/core/TelegramIcon";
 import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
+import Alert from "@mui/joy/Alert";
+import {set} from "lodash";
 
 interface FormElements extends HTMLFormControlsCollection {
     email: HTMLInputElement;
@@ -38,6 +40,7 @@ const Login = () => {
     const {t} = useTranslation();
     const navigate = useNavigate();
     const [isConnected, setIsConnected] = React.useState(false);
+    const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
     const handleLogin = async (event: React.FormEvent<SignInFormElement>) => {
         event.preventDefault();
@@ -62,46 +65,23 @@ const Login = () => {
                 const userData = response.data.user;
                 localStorage.setItem('token', response.data.token);
 
-                alert('Login successful');
-
                 navigate('/account?username=' + encodeURIComponent(userData.username));
             } else {
-                alert('Invalid email or password');
+                setErrorMessage('Invalid email or password');
             }
         } catch (err) {
             console.error('Login failed', err);
-            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-            alert('Login failed: ' + errorMessage);
-        }
-    };
-
-    const connectPhantom = async () => {
-        try {
-            const {solana} = window;
-            if (solana && solana.isPhantom) {
-                const response = await solana.connect();
-                const walletAddress = response.publicKey.toString();
-
-                const loginResponse = await axios.post(`${API_URL}/api/users/phantom-login`, {
-                    wallet: walletAddress,
-                });
-
-                if (loginResponse.data.token) {
-                    localStorage.setItem('token', loginResponse.data.token);
-                    setIsConnected(true);
-                    navigate(`/account?username=${loginResponse.data.user.username}`);
+            if (axios.isAxiosError(err)) {
+                if (err.response && err.response.status === 401) {
+                    setErrorMessage(t('login.unauthorized'));
                 } else {
-                    alert('Failed to login with Phantom');
+                    setErrorMessage(t('login.errorOccurred'));
                 }
             } else {
-                alert(t('phantomNotFound'));
+                setErrorMessage(t('login.errorOccurred'));
             }
-        } catch (error) {
-            console.error('Connection to Phantom failed:', error);
-            alert(t('phantomConnectFailed'));
         }
     };
-
 
     return (
         <CssVarsProvider defaultMode="dark" disableTransitionOnChange>
@@ -178,6 +158,11 @@ const Login = () => {
                                     </Link>
                                 </Typography>
                             </Stack>
+                            {errorMessage && (
+                                <Alert color="danger">
+                                    {errorMessage}
+                                </Alert>
+                            )}
                             <form onSubmit={handleLogin}>
                                 <FormControl required>
                                     <FormLabel>{t('email')}</FormLabel>

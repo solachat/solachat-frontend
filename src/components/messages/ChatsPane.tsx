@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import Stack from '@mui/joy/Stack';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
-import { Box, Input, List, Skeleton } from '@mui/joy';
+import {Box, CircularProgress, Input, List, Skeleton} from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChatListItem from './ChatListItem';
 import { ChatProps, UserProps } from '../core/types';
@@ -32,7 +32,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
     const navigate = useNavigate();
 
-    useWebSocket((data) => {
+    const { wsRef, isConnecting } = useWebSocket((data) => {
         if (data.type === 'chatCreated' || data.type === 'groupChatCreated') {
             const newChat = data.chat;
             setChats((prevChats) => {
@@ -184,7 +184,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                         >
                             <Input
                                 size="sm"
-                                startDecorator={<SearchRoundedIcon />}
+                                startDecorator={isConnecting ? <CircularProgress size="sm" /> : <SearchRoundedIcon />}
                                 placeholder={t('Search')}
                                 value={searchTerm}
                                 onChange={handleSearchChange}
@@ -254,7 +254,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                 </List>
                             ) : (
                                 <Typography sx={{ textAlign: 'center', mt: 3 }}>
-                                    {t('startcommunicate')}
+                                    {t('')}
                                 </Typography>
                             )}
                         </>

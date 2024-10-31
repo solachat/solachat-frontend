@@ -13,6 +13,7 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
     const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const [isConnecting, setIsConnecting] = useState(true);
 
     const sendHeartbeat = useCallback(() => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -38,9 +39,12 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
     const connectWebSocket = useCallback(() => {
         if (isConnected || wsRef.current) return;
 
+        setIsConnecting(true);
+
         const token = localStorage.getItem('token');
         if (!token) {
             toast.error('Authorization token is missing');
+            setIsConnecting(false);
             return;
         }
 
@@ -50,6 +54,7 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
         ws.onopen = () => {
             console.log('WebSocket connection opened');
             setIsConnected(true);
+            setIsConnecting(false);
 
             if (reconnectTimeout.current) {
                 clearTimeout(reconnectTimeout.current);
@@ -165,6 +170,7 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
         ws.onclose = (event) => {
             console.error('WebSocket connection closed with code', event.code, 'reason:', event.reason);
             setIsConnected(false);
+            setIsConnecting(false);
             if (heartbeatInterval.current) {
                 clearInterval(heartbeatInterval.current);
                 heartbeatInterval.current = null;
@@ -204,5 +210,5 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
         }
     }, [currentUserId, connectWebSocket, isConnected, ...dependencies]);
 
-    return wsRef.current;
+    return { wsRef: wsRef.current, isConnecting };
 };

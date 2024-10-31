@@ -81,10 +81,12 @@ const RegisterPage: React.FC = () => {
             }
             navigate('/login');
         } catch (error) {
-            if (error instanceof Error) {
-                setErrorMessage(`Registration failed: ${error.message}`);
+            console.error('Registration failed', error);
+            if (axios.isAxiosError(error)) {
+                const errorMessage = error.response?.data?.message || t('registrationFailed');
+                setErrorMessage(errorMessage);
             } else {
-                setErrorMessage('Registration failed');
+                setErrorMessage(t('registrationFailed'));
             }
         }
     };

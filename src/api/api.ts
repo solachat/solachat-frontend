@@ -125,7 +125,6 @@ export const updateUserStatus = async (userId: number, isOnline: boolean, token:
         console.log(`User status updated to ${isOnline ? 'online' : 'offline'}`);
     } catch (error) {
         console.error('Failed to update user status:', error);
-        toast.error('Failed to update user status');
         throw error;
     }
 };
@@ -425,4 +424,30 @@ export const updateMessageStatus = async (messageId: number, updates: { isRead: 
     }
 };
 
+export const createFavoriteChat = async (token: string) => {
+    try {
+        if (!token) {
+            throw new Error('Authorization token is missing');
+        }
 
+        const response = await axios.post(
+            `${API_URL}/api/chats/chats/favorite`,
+            {},
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        console.log('Favorite chat created or retrieved successfully:', response.data);
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            console.error('Error creating or retrieving favorite chat:', error.response?.data || error.message);
+        } else {
+            console.error('Unexpected error creating or retrieving favorite chat:', error);
+        }
+        throw new Error('Could not create or retrieve favorite chat');
+    }
+};

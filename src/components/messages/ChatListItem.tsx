@@ -15,6 +15,7 @@ import { t } from 'i18next';
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import CheckIcon from "@mui/icons-material/Check";
 import {useTranslation} from "react-i18next";
+import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 
 type NewMessageEvent =
     | {
@@ -73,6 +74,7 @@ export default function ChatListItem(props: ChatListItemProps) {
     const navigate = useNavigate();
 
     const existingChat = chats.find((chat: ChatProps) => chat.id === Number(id));
+    const isFavorite = existingChat?.isFavorite || false;
 
     const lastMessage = messages[messages.length - 1] || null;
 
@@ -241,14 +243,40 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 sx={{ width: { xs: 48, sm: 48 }, height: { xs: 48, sm: 48 } }}
                             />
                         ) : (
-                            <AvatarWithStatus
-                                online={sender?.online}
-                                src={sender?.avatar}
-                                alt={sender?.realname}
-                                sx={{ width: { xs: 48, sm: 48 }, height: { xs: 48, sm: 48 }, fontSize: { xs: 16, sm: 24 } }}
-                            >
-                                {(!sender?.avatar && sender?.realname) ? sender.realname[0].toUpperCase() : null}
-                            </AvatarWithStatus>
+                            <Box sx={{ position: 'relative', width: 48, height: 48 }}>
+                                <AvatarWithStatus
+                                    online={sender?.online}
+                                    src={sender?.avatar}
+                                    alt={sender?.realname}
+                                    sx={{
+                                        width: { xs: 48, sm: 48 },
+                                        height: { xs: 48, sm: 48 },
+                                        fontSize: { xs: 16, sm: 24 },
+                                    }}
+                                >
+                                    {(!sender?.avatar && sender?.realname)
+                                        ? sender.realname[0].toUpperCase()
+                                        : null}
+                                </AvatarWithStatus>
+                                {isFavorite && (
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            bottom: -2,
+                                            right: -2,
+                                            backgroundColor: '#007bff', // синий фон
+                                            borderRadius: '50%',
+                                            width: 24,
+                                            height: 24,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
+                                        <BookmarkBorderIcon sx={{ color: 'white', fontSize: 16 }} />
+                                    </Box>
+                                )}
+                            </Box>
                         )}
 
                         <Box sx={{ flex: 1 }}>

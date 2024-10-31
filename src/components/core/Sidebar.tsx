@@ -11,16 +11,13 @@ import Sheet from '@mui/joy/Sheet';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
 import GroupChatModal from '../group/GroupChatModal';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useNavigate } from 'react-router-dom';
 import QuestionAnswerRoundedIcon from '@mui/icons-material/QuestionAnswerRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
-import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
-import CallRoundedIcon from '@mui/icons-material/CallRounded';
-import VideoLibraryRoundedIcon from '@mui/icons-material/VideoLibraryRounded';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { DarkModeSwitch } from './ColorSchemeToggle';
 import { LanguageSwitcherWithText } from "./LanguageSwitcher";
+import { createFavoriteChat } from '../../api/api';
 
 interface DecodedToken {
     username: string;
@@ -104,6 +101,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         setIsGroupModalOpen(false);
     };
 
+    const handleCreateFavoriteChat = async () => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const favoriteChat = await createFavoriteChat(token);
+            } catch (error) {
+                console.error('Error creating favorite chat:', error);
+            }
+        }
+    };
+
     return (
         <>
             <Sheet
@@ -158,48 +166,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                             '--ListItem-radius': (theme) => theme.vars.radius.sm,
                         }}
                     >
-                        {/* Music section */}
-                        {/*<ListItem>*/}
-                        {/*    <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>*/}
-                        {/*        <MusicNoteRoundedIcon />*/}
-                        {/*        <ListItemContent>*/}
-                        {/*            <Typography level="title-sm">{t('Music')}</Typography>*/}
-                        {/*        </ListItemContent>*/}
-                        {/*    </ListItemButton>*/}
-                        {/*</ListItem>*/}
-
-                        {/* Call section */}
-                        {/*<ListItem>*/}
-                        {/*    <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>*/}
-                        {/*        <CallRoundedIcon />*/}
-                        {/*        <ListItemContent>*/}
-                        {/*            <Typography level="title-sm">{t('Call')}</Typography>*/}
-                        {/*        </ListItemContent>*/}
-                        {/*    </ListItemButton>*/}
-                        {/*</ListItem>*/}
-
-                        {/*<ListItem>*/}
-                        {/*    <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>*/}
-                        {/*        <AutoAwesomeIcon />*/}
-                        {/*        <ListItemContent>*/}
-                        {/*            <Typography level="title-sm">*/}
-                        {/*                {t('GPT')}*/}
-                        {/*            </Typography>*/}
-                        {/*        </ListItemContent>*/}
-                        {/*    </ListItemButton>*/}
-                        {/*</ListItem>*/}
-
-
-                        {/* Clips section */}
-                        {/*<ListItem>*/}
-                        {/*    <ListItemButton disabled={true} sx={{ opacity: 0.5, cursor: 'not-allowed' }}>*/}
-                        {/*        <VideoLibraryRoundedIcon />*/}
-                        {/*        <ListItemContent>*/}
-                        {/*            <Typography level="title-sm">{t('Clips')}</Typography>*/}
-                        {/*        </ListItemContent>*/}
-                        {/*    </ListItemButton>*/}
-                        {/*</ListItem>*/}
-
                         {/* Messages section */}
                         <ListItem nested>
                             <Toggler
@@ -232,6 +198,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                     <ListItem>
                                         <ListItemButton onClick={handleCreateGroupClick}>
                                             {t('Create a Group')}
+                                        </ListItemButton>
+                                    </ListItem>
+                                    <ListItem>
+                                        <ListItemButton onClick={handleCreateFavoriteChat}>
+                                            {t('Saved Messages')}
                                         </ListItemButton>
                                     </ListItem>
                                 </List>

@@ -267,8 +267,7 @@ export default function MyProfile() {
                                 <Typography sx={{ textAlign: 'center', color: 'red' }}>{error}</Typography>
                             ) : loading ? (
                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                                    <Typography>{t('Loading chats')}</Typography>
-                                    <CircularProgress sx={{ marginTop: 2 }} />
+
                                 </Box>
                             ) : selectedChat ? (
                                 <MessagesPane

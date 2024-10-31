@@ -32,6 +32,7 @@ export type ChatProps = {
     users: UserProps[];
     messages: MessageProps[];
     isGroup?: boolean;
+    isFavorite?: boolean;
     groupAvatar?: string;
     name?: string;
     avatar?: string

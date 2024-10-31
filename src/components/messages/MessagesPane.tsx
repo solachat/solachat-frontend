@@ -312,7 +312,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                             color: 'text.secondary',
                         }}
                     >
-                        {t('No messages')}
+                        {t('')}
                     </Typography>
                 )}
             </Box>
