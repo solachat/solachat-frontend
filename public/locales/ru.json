@@ -260,5 +260,11 @@
   "No messages": "Нет сообщений",
   "Dark Mode": "Ночной режим",
   "Language": "Язык",
-  "Loading chats": "Загрузка чатов"
+  "Loading chats": "Загрузка чатов",
+  "Share public key": "Делиться кошельком",
+  "login.invalidCredentials": "Неверный email или пароль",
+  "login.unauthorized": "Авторизация не удалась. Пожалуйста, проверьте свои данные.",
+  "login.errorOccurred": "Произошла ошибка. Пожалуйста, попробуйте позже.",
+  "registrationFailed": "Регистрация не удалась. Пожалуйста, попробуйте позже.",
+  "Username is already in use": "Имя пользователя уже используется"
 }

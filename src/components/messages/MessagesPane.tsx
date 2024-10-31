@@ -330,6 +330,9 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                                 content: textAreaValue,
                                 createdAt: new Date().toISOString(),
                             };
+                            setChatMessages([...chatMessages, newMessage]);
+                            setTextAreaValue('');
+                            setEditingMessageId(null);
                             setEditingMessageId(null);
                         }}
                         editingMessage={

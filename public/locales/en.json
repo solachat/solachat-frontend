@@ -199,5 +199,8 @@
   "finalNote": "Together, let's build the future of decentralized finance with SolaCoin.",
   "delete": "Delete",
   "copy": "Copy",
-  "forward": "Forward"
+  "forward": "Forward",
+  "login.invalidCredentials": "Invalid email or password",
+  "login.unauthorized": "Authorization failed. Please check your credentials.",
+  "login.errorOccurred": "An error occurred. Please try again later."
 }
