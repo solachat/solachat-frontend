@@ -125,8 +125,6 @@ export default function MessagesPaneHeader({
                                 {members.length} {members.length === 1 ? 'member' : 'members'}
                             </Typography>
                         )}
-
-                        {!isGroup && <Typography level="body-sm">{sender?.username}</Typography>}
                     </div>
                 </Stack>
 

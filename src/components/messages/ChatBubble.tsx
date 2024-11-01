@@ -7,7 +7,7 @@ import Typography from '@mui/joy/Typography';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
 import DownloadIcon from '@mui/icons-material/Download';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
-import { IconButton, Slider } from '@mui/joy';
+import {CircularProgress, IconButton, Slider} from '@mui/joy';
 import { useTranslation } from 'react-i18next';
 import { deleteMessage } from '../../api/api';
 import ContextMenu from './ContextMenu';
@@ -98,6 +98,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat, isRead } = props;
     const isSent = variant === 'sent';
     const formattedTime = new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const handleImageLoad = () => {
+        setImageLoading(false);
+    };
 
     const [isImageOpen, setIsImageOpen] = useState(false);
     const [isVideoOpen, setIsVideoOpen] = useState(false);
@@ -111,6 +114,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const [currentVideoTime, setCurrentVideoTime] = useState(0);
     const [currentVolume, setCurrentVolume] = useState(1);
     const [isMuted, setIsMuted] = useState(false);
+    const [imageLoading, setImageLoading] = useState(true);
 
     const messageVideoRef = useRef<HTMLVideoElement>(null);
     const modalVideoRef = useRef<HTMLVideoElement>(null);
@@ -126,44 +130,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const isVideo = isVideoFile(attachment?.fileName || '');
     const isAudio = isAudioFile(attachment?.fileName || '');
 
-    const handlePlayPause = () => {
-        if (!audioRef.current) return;
-        if (isPlaying) {
-            audioRef.current.pause();
-        } else {
-            audioRef.current.play();
-        }
-        setIsPlaying(!isPlaying);
-    };
-
-    const handleAudioTimeUpdate = () => {
-        if (audioRef.current) {
-            setCurrentAudioTime(audioRef.current.currentTime);
-            setDuration(audioRef.current.duration || 0);
-        }
-    };
-
-    const handleVolumeChange = (event: Event, newValue: number | number[]) => {
-        const newVolume = Array.isArray(newValue) ? newValue[0] : newValue;
-        setVolume(newVolume);
-        if (audioRef.current) {
-            audioRef.current.volume = newVolume;
-        }
-    };
-
     const handleImageClick = () => {
         setImageSrc(getAttachmentUrl());
         setIsImageOpen(true);
-    };
-
-    const handleVideoClick = () => {
-        setVideoSrc(getAttachmentUrl());
-        if (messageVideoRef.current) {
-            setCurrentVideoTime(messageVideoRef.current.currentTime);
-            setCurrentVolume(messageVideoRef.current.volume);
-            setIsMuted(messageVideoRef.current.muted);
-        }
-        setIsVideoOpen(true);
     };
 
     const handleClose = () => {
@@ -356,18 +325,38 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 cursor: 'pointer',
                                 overflow: 'hidden',
                                 mb: content ? 1 : 0,
+                                position: 'relative',
                             }}
                             onClick={handleImageClick}
                         >
+                            {imageLoading && (
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        width: '100px',
+                                        height: '100px',
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        backgroundColor: '#f0f0f0', // Цвет фона placeholder
+                                        borderRadius: '4px',
+                                        zIndex: 1,
+                                    }}
+                                >
+                                    <CircularProgress />
+                                </Box>
+                            )}
                             <img
                                 src={getAttachmentUrl()}
                                 alt="attachment"
+                                onLoad={handleImageLoad}
                                 style={{
                                     width: '100%',
                                     maxWidth: '700px',
                                     maxHeight: '500px',
                                     objectFit: 'contain',
                                     borderRadius: 0,
+                                    opacity: imageLoading ? 0 : 1,
                                 }}
                             />
                         </Box>
@@ -392,22 +381,24 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 overflowWrap: 'break-word',
                                 whiteSpace: 'pre-wrap',
                                 display: 'inline-block',
-                                paddingRight: isEdited && isSent ? '120px' : isEdited || isSent ? '60px' : '40px',
+                                paddingRight: isEdited && isSent ? '120px' : isEdited || isSent ? '60px' : '35px',
                             }}
                         >
                             {renderMessageContent(content)}
                         </Typography>
                     )}
 
-
                     <Stack
                         direction="row"
-                        spacing={1}
+                        spacing={0.5}
                         sx={{
                             position: 'absolute',
                             bottom: '4px',
                             right: '10px',
                             alignItems: 'center',
+                            backgroundColor: (isImage && !content) || (isVideo && !content) ? 'rgba(0, 0, 0, 0.4)' : 'transparent',
+                            padding: (isImage && !content) || (isVideo && !content) ? '2px 6px' : '0px',
+                            borderRadius: (isImage && !content) || (isVideo && !content) ? '10px' : '0px',
                         }}
                     >
                         {isEdited && (
@@ -426,7 +417,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 alignItems: 'center',
                                 fontSize: '12px',
                                 color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
-                                gap: '2px',
+                                gap: '1px',
                             }}
                         >
                             <Typography component="span" sx={{ fontSize: '12px' }}>
@@ -477,23 +468,45 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         justifyContent: 'center',
                         zIndex: 999,
                         cursor: 'pointer',
+                        animation: 'fade-in 0.3s ease-in-out',
                     }}
                     onClick={handleClose}
                 >
-                    <img
-                        src={imageSrc}
-                        alt="attachment-preview"
-                        style={{
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                            objectFit: 'contain',
-                            borderRadius: '12px',
-                        }}
-                    />
+                    <Box sx={{ position: 'relative', display: 'inline-flex', maxWidth: '90%', maxHeight: '90%' }}>
+                        <img
+                            src={imageSrc}
+                            alt="attachment-preview"
+                            style={{
+                                width: '100%',
+                                height: 'auto',
+                                objectFit: 'contain',
+                                borderRadius: '12px',
+                                animation: 'fade-in 0.3s ease-in-out',
+                            }}
+                        />
+                        {content && (
+                            <Typography
+                                sx={{
+                                    position: 'absolute',
+                                    bottom: '5px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    color: 'white',
+                                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                    textAlign: 'center',
+                                    padding: '8px',
+                                    wordWrap: 'break-word',
+                                    display: 'inline-block',
+                                    borderRadius: '10px',
+                                }}
+                            >
+                                {content}
+                            </Typography>
+                        )}
+                    </Box>
                 </Box>
             )}
 
-            {/* Модальное окно для видео */}
             {isVideoOpen && videoSrc && (
                 <Box
                     sx={{

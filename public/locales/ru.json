@@ -67,7 +67,7 @@
   "shareEmail": "Делиться почтой",
   "shareCountry": "Делиться страной",
   "shareTimezone": "Делиться часовым поясом",
-  "lastLogin": "Был в сети",
+  "lastLogin": "Был(а) в сети",
   "Apply Filters": "Применить фильтры",
   "Home": "На главную",
   "Open": "Открыть",
@@ -276,5 +276,19 @@
     "noChanges": "Изменения не были внесены.",
     "preparingUpdate": "Подготовка к обновлению настроек",
     "updateFailed": "Не удалось обновить настройки"
-  }
+  },
+  "error": {
+    "phantomNotSupportSignMessage": "Phantom Wallet не поддерживает подписание сообщений.",
+    "connectingPhantom": "Ошибка при подключении к Phantom:",
+    "connectingWallet": "Ошибка при подключении кошелька",
+    "phantomNotFound": "Phantom Wallet не найден. Пожалуйста, установите его.",
+    "connectingMetaMask": "Ошибка подключения к MetaMask:",
+    "connectMetaMaskFailed": "Не удалось подключиться к MetaMask.",
+    "metaMaskNotFound": "MetaMask не найден. Установите MetaMask для подключения."
+  },
+  "message": {
+    "confirmRegistration": "Подпишите это сообщение для подтверждения регистрации. Нонc: {{nonce}}"
+  },
+  "connectMetaMask": "Подключить Metamask",
+  "metaMaskConnected": "Подключен Metamask"
 }
