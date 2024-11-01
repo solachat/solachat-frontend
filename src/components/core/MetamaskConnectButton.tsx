@@ -1,35 +1,35 @@
 import React, { useState } from 'react';
 import { Button, CircularProgress, Alert } from '@mui/joy';
-import PhantomIconPurple from './PhantomIconPurple';
 import { useTranslation } from 'react-i18next';
+import MetamaskIcon from "./MetamaskIcon";
 
-interface PhantomConnectButtonProps {
+interface MetamaskConnectButtonProps {
     onConnect: (walletAddress: string) => void;
 }
 
-const PhantomConnectButton: React.FC<PhantomConnectButtonProps> = ({ onConnect }) => {
+const MetamaskConnectButton: React.FC<MetamaskConnectButtonProps> = ({ onConnect }) => {
     const [isConnected, setIsConnected] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { t } = useTranslation();
 
-    const connectPhantom = async () => {
+    const connectMetaMask = async () => {
         setLoading(true);
         setError(null);
 
         try {
-            const { solana } = window;
-            if (solana && solana.isPhantom) {
-                const response = await solana.connect();
-                const walletAddress = response.publicKey.toString();
+            const { ethereum } = window as any;
+            if (ethereum && ethereum.isMetaMask) {
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                const walletAddress = accounts[0];
                 setIsConnected(true);
                 onConnect(walletAddress);
             } else {
-                setError(t('phantomNotFound'));
+                setError(t('metaMaskNotFound'));
             }
         } catch (error) {
-            console.error('Connection to Phantom failed:', error);
-            setError(t('phantomConnectFailed'));
+            console.error('Connection to MetaMask failed:', error);
+            setError(t('metaMaskConnectFailed'));
         } finally {
             setLoading(false);
         }
@@ -38,28 +38,29 @@ const PhantomConnectButton: React.FC<PhantomConnectButtonProps> = ({ onConnect }
     return (
         <>
             {error && (
-                <Alert color="danger" variant="soft" sx={{ mb: 2 }}>
+                <Alert color="danger" variant="soft">
                     {error}
                 </Alert>
             )}
             <Button
-                onClick={connectPhantom}
+                onClick={connectMetaMask}
                 fullWidth
                 variant="soft"
                 color="neutral"
-                startDecorator={loading ? <CircularProgress size="sm" /> : <PhantomIconPurple />}
+                startDecorator={loading ? <CircularProgress size="sm" /> : <MetamaskIcon />}
                 disabled={loading || isConnected}
                 sx={{
+
                     transition: 'background-color 0.3s ease',
                     '&:hover': {
                         backgroundColor: isConnected ? 'success.lightBg' : 'primary.lightBg',
                     },
                 }}
             >
-                {loading ? t('connecting') : isConnected ? t('phantomConnected') : t('connectPhantom')}
+                {loading ? t('connecting') : isConnected ? t('metaMaskConnected') : t('connectMetaMask')}
             </Button>
         </>
     );
 };
 
-export default PhantomConnectButton;
+export default MetamaskConnectButton;

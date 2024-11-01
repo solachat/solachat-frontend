@@ -127,6 +127,8 @@
   "phantomWalletRequired": "Phantom wallet required!",
   "phantomConnected": "Connected Phantom",
   "connectPhantom": "Connect Phantom",
+  "metaMaskConnected": "Connected Metamask",
+  "connectMetaMask": "Connect Metamask",
   "phantomNotFound": "Phantom wallet not found! Please, install it.",
   "phantomConnectFailed": "Phantom Wallet connect failed",
   "loading": "Loading...",
@@ -199,5 +201,30 @@
   "finalNote": "Together, let's build the future of decentralized finance with SolaCoin.",
   "delete": "Delete",
   "copy": "Copy",
-  "forward": "Forward"
+  "forward": "Forward",
+  "login.invalidCredentials": "Invalid email or password",
+  "login.unauthorized": "Authorization failed. Please check your credentials.",
+  "login.errorOccurred": "An error occurred. Please try again later.",
+  "chatSettings": {
+    "title": "Chat Settings",
+    "groupNameLabel": "Group Name",
+    "groupNamePlaceholder": "Enter a new name",
+    "saveChanges": "Save Changes",
+    "back": "Back",
+    "noChanges": "No changes made.",
+    "preparingUpdate": "Preparing to update settings",
+    "updateFailed": "Failed to update settings"
+  },
+  "error": {
+    "phantomNotSupportSignMessage": "Phantom Wallet does not support message signing.",
+    "connectingPhantom": "Error connecting to Phantom:",
+    "connectingWallet": "Error connecting to wallet",
+    "phantomNotFound": "Phantom Wallet not found. Please install it.",
+    "connectingMetaMask": "Error connecting to MetaMask:",
+    "connectMetaMaskFailed": "Failed to connect to MetaMask.",
+    "metaMaskNotFound": "MetaMask not found. Please install MetaMask to connect."
+  },
+  "message": {
+    "confirmRegistration": "Sign this message to confirm registration. Nonce: {{nonce}}"
+  }
 }

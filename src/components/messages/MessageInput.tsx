@@ -1,20 +1,19 @@
 import * as React from 'react';
-import { Editor, EditorState, getDefaultKeyBinding, ContentState } from 'draft-js';
-import 'draft-js/dist/Draft.css';
 import Box from '@mui/joy/Box';
 import FormControl from '@mui/joy/FormControl';
-import { IconButton, Stack, Typography, Avatar } from '@mui/joy';
+import { IconButton, Stack, Typography, Avatar, Textarea } from '@mui/joy';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import FileUploadModal from './FileUploadModal';
 import { sendMessage, editMessage } from '../../api/api';
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from 'react-i18next';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import CustomTextarea from "./CustomTextarea";
 
 export type UploadedFileData = {
     file: File;
@@ -31,33 +30,18 @@ export default function MessageInput(props: MessageInputProps) {
     const { t } = useTranslation();
     const { chatId, editingMessage, setEditingMessage, onSubmit } = props;
 
-    const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
-    const editorRef = useRef<Editor | null>(null);
-    const [isFileUploadOpen, setFileUploadOpen] = useState(false);
+    const [message, setMessage] = useState("");
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
+    const [isFileUploadOpen, setFileUploadOpen] = useState(false);
 
     useEffect(() => {
         if (editingMessage?.content) {
-            const contentState = ContentState.createFromText(editingMessage.content);
-            setEditorState(EditorState.createWithContent(contentState));
+            setMessage(editingMessage.content);
         } else {
-            setEditorState(EditorState.createEmpty());
+            setMessage("");
         }
         setUploadedFiles([]);
-    }, [chatId, editingMessage]);
-
-    const handleEditorChange = useCallback((newState: EditorState) => {
-        setEditorState(newState);
-    }, []);
-
-    const keyBindingFn = (e: React.KeyboardEvent): string | null => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleClick();
-            return 'submit-message';
-        }
-        return getDefaultKeyBinding(e);
-    };
+    }, [editingMessage, chatId]);
 
     const handleClick = async () => {
         const token = localStorage.getItem('token');
@@ -66,12 +50,11 @@ export default function MessageInput(props: MessageInputProps) {
             return;
         }
 
-        const content = editorState.getCurrentContent().getPlainText().trim();
+        const content = message.trim();
         if (content === '' && uploadedFiles.length === 0) {
             console.warn('Cannot send an empty message');
             return;
         }
-
 
         try {
             if (editingMessage && editingMessage.id) {
@@ -84,7 +67,7 @@ export default function MessageInput(props: MessageInputProps) {
                 await sendMessage(chatId, formData, token);
             }
 
-            setEditorState(EditorState.createEmpty());
+            setMessage("");
             setUploadedFiles([]);
         } catch (error) {
             console.error('Error sending or editing message:', error);
@@ -98,6 +81,13 @@ export default function MessageInput(props: MessageInputProps) {
     const removeUploadedFile = useCallback((index: number) => {
         setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     }, []);
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleClick();
+        }
+    };
 
     return (
         <Box sx={{ position: 'relative', px: 3, pb: 1 }}>
@@ -167,38 +157,29 @@ export default function MessageInput(props: MessageInputProps) {
                         >
                             <AttachFileIcon />
                         </IconButton>
-                        <Box
+                        <CustomTextarea
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder={t('writeMessage')}
+                            onKeyDown={handleKeyDown}
                             sx={{
                                 flexGrow: 1,
                                 minHeight: 'auto',
-                                cursor: 'text',
-                                paddingLeft: '10px',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                maxWidth: '100%',
 
+                                resize: 'none',
+                                maxWidth: '100%',
+                                border: 'none',
+                                outline: 'none',
+                                boxShadow: 'none',
+                                '--Textarea-focusedHighlight': 'transparent',
+                                '&:focus': {
+                                    outline: 'none',
+                                    boxShadow: 'none',
+                                },
                             }}
-                            onClick={() => editorRef.current?.focus()}
-                        >
-                            <Box
-                                sx={{
-                                    width: '100%',
-                                    maxWidth: { xs: '150px', sm: '800px' },
-                                    minWidth: { xs: '100%', sm: '300px' },
-                                }}
-                            >
-                                <Editor
-                                    editorState={editorState}
-                                    keyBindingFn={keyBindingFn}
-                                    onChange={handleEditorChange}
-                                    placeholder={t('writeMessage')}
-                                    ref={editorRef}
-                                    spellCheck={true}
-                                    stripPastedStyles={true}
-                                />
-                            </Box>
-                        </Box>
+                        />
+
+
                         <IconButton
                             size="sm"
                             sx={{ ml: 1 }}
@@ -207,7 +188,7 @@ export default function MessageInput(props: MessageInputProps) {
                         </IconButton>
                         <IconButton
                             size="sm"
-                            color={editorState.getCurrentContent().getPlainText().trim() !== '' || uploadedFiles.length > 0 ? 'primary' : 'neutral'}
+                            color={message.trim() !== '' || uploadedFiles.length > 0 ? 'primary' : 'neutral'}
                             onClick={handleClick}
                             sx={{ ml: 1 }}
                         >

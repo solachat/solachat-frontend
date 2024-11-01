@@ -198,8 +198,6 @@ export default function ChatListItem(props: ChatListItemProps) {
         }
     };
 
-
-
     const { i18n } = useTranslation();
     const locale = i18n.language || 'en-GB';
 
@@ -247,15 +245,15 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 <AvatarWithStatus
                                     online={sender?.online}
                                     src={sender?.avatar}
-                                    alt={sender?.realname}
+                                    alt={sender?.username}
                                     sx={{
                                         width: { xs: 48, sm: 48 },
                                         height: { xs: 48, sm: 48 },
                                         fontSize: { xs: 16, sm: 24 },
                                     }}
                                 >
-                                    {(!sender?.avatar && sender?.realname)
-                                        ? sender.realname[0].toUpperCase()
+                                    {(!sender?.avatar && sender?.username)
+                                        ? sender.username[0].toUpperCase()
                                         : null}
                                 </AvatarWithStatus>
                                 {isFavorite && (
@@ -264,7 +262,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                             position: 'absolute',
                                             bottom: -2,
                                             right: -2,
-                                            backgroundColor: '#007bff', // синий фон
+                                            backgroundColor: '#007bff',
                                             borderRadius: '50%',
                                             width: 24,
                                             height: 24,
@@ -281,7 +279,7 @@ export default function ChatListItem(props: ChatListItemProps) {
 
                         <Box sx={{ flex: 1 }}>
                             <Typography level="body-md" fontSize={{ xs: 'sm', sm: 'md' }}>
-                                {isGroup ? existingChat?.name || 'Group Chat' : `${sender?.realname || 'No Name'} (${sender?.username || 'No Username'})`}
+                                {isGroup ? existingChat?.name || 'Group Chat' : `${sender?.username || 'No Name'}`}
                             </Typography>
                             {lastMessage ? (
                                 <Typography
@@ -310,11 +308,6 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         </Box>
                                     ) : lastMessage.attachment && isVideo(lastMessage.attachment.fileName) ? (
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <img
-                                                src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath.replace('.mp4', '-thumbnail.jpg'))}`}
-                                                alt="video preview"
-                                                style={{ width: '20px', height: '20px', marginRight: '8px' }}
-                                            />
                                             <span>{lastMessage.attachment.fileName}</span>
                                         </Box>
                                     ) : lastMessage.attachment ? (

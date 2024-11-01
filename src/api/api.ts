@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { toast } from 'react-toastify';
 import {jwtDecode} from "jwt-decode";
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
@@ -147,7 +146,6 @@ export const deleteChat = async (chatId: number, token: string) => {
         return data;
     } catch (error) {
         console.error('Error deleting chat:', error);
-        toast.error('Failed to delete chat');
         throw new Error('Could not delete chat');
     }
 };
@@ -189,7 +187,6 @@ export const addUsersToGroupChat = async (chatId: number, newUserIds: number[], 
         return response.data;
     } catch (error) {
         console.error('Error adding users to group:', error);
-        toast.error('Failed to add users');
         throw error;
     }
 };
@@ -211,7 +208,6 @@ export const assignRoleInChat = async (chatId: number, userId: number, role: 'ad
         return response.data;
     } catch (error) {
         console.error('Error assigning role:', error);
-        toast.error('Failed to assign role');
         throw error;
     }
 };
@@ -255,14 +251,12 @@ export const createGroupChat = async (
         return groupId;
     } catch (error) {
         console.error('Error creating group:', error);
-        toast.error('Failed to create group');
         return null;
     }
 };
 
 export const removeUserFromChat = async (chatId: number, userId: number, token: string) => {
     try {
-        console.log("Отправляем запрос с данными:", { chatId, userIdToKick: userId });
         const response = await axios.post(
             `${API_URL}/api/chats/${chatId}/kick-user`,
             { userIdToKick: userId },
@@ -275,7 +269,6 @@ export const removeUserFromChat = async (chatId: number, userId: number, token: 
         return response.data;
     } catch (error) {
         console.error('Error removing user:', error);
-        toast.error('Failed to remove user');
         throw error;
     }
 };
@@ -304,7 +297,6 @@ export const updateChatSettings = async (chatId: number, groupName?: string, ava
         return response.data;
     } catch (error) {
         console.error('Error updating chat settings:', error);
-        toast.error('Failed to update chat settings');
         throw error;
     }
 };
@@ -323,7 +315,6 @@ export const deleteMessage = async (messageId: number) => {
         return response.data;
     } catch (error) {
         console.error('Error deleting message:', error);
-        toast.error('Failed to delete message');
         throw new Error('Could not delete message');
     }
 };
@@ -387,7 +378,6 @@ export const initiateGroupCall = async (fromUserId: number, participantUserIds: 
         return response.data;
     } catch (error) {
         console.error('Error initiating group call:', error);
-        toast.error('Failed to initiate group call');
         throw new Error('Could not initiate group call');
     }
 };
@@ -449,5 +439,42 @@ export const createFavoriteChat = async (token: string) => {
             console.error('Unexpected error creating or retrieving favorite chat:', error);
         }
         throw new Error('Could not create or retrieve favorite chat');
+    }
+};
+
+export const setupTotp = async (token: string): Promise<{ secret: string; otpauthUrl: string }> => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/users/setup-totp`,
+            {},
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error setting up TOTP:', error);
+        throw error;
+    }
+};
+
+
+export const verifyTotp = async (totpCode: string, token: string): Promise<{ success: boolean }> => {
+    try {
+        const response = await axios.post(
+            `${API_URL}/api/users/verify-totp`,
+            { totpCode },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error verifying TOTP:', error);
+        throw error;
     }
 };

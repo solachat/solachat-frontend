@@ -1,6 +1,5 @@
 export type UserProps = {
     id: number;
-    realname: string;
     username: string;
     avatar: string;
     online: boolean;

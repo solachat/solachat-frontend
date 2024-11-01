@@ -93,7 +93,7 @@ export default function MessagesPaneHeader({
                     <Avatar
                         size="lg"
                         src={isGroup ? groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
-                        alt={isGroup ? chatName : sender?.realname}
+                        alt={isGroup ? chatName : sender?.username}
                         onClick={handleAvatarClick}
                         sx={{ cursor: 'pointer' }}
                     />
@@ -116,7 +116,7 @@ export default function MessagesPaneHeader({
                             }}
                             onClick={handleAvatarClick}
                         >
-                            {isGroup ? chatName : sender?.realname}
+                            {isGroup ? chatName : sender?.username}
                             {sender?.verified && <Verified sx={{ ml: 1 }} />}
                         </Typography>
 
@@ -125,8 +125,6 @@ export default function MessagesPaneHeader({
                                 {members.length} {members.length === 1 ? 'member' : 'members'}
                             </Typography>
                         )}
-
-                        {!isGroup && <Typography level="body-sm">{sender?.username}</Typography>}
                     </div>
                 </Stack>
 

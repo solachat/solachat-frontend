@@ -7,11 +7,11 @@ import { assignRoleInChat, removeUserFromChat } from '../../api/api';
 
 type GroupUserItemProps = {
     user: UserProps;
-    currentUserRole: 'owner' | 'admin' | 'member'; // Роль текущего пользователя
-    onRoleChange: (userId: number, newRole: 'owner' | 'admin' | 'member') => void; // Функция изменения роли
-    onRemoveUser: (userId: number) => void; // Функция удаления пользователя
-    chatId: number; // Добавляем chatId
-    token: string; // Токен для авторизации
+    currentUserRole: 'owner' | 'admin' | 'member';
+    onRoleChange: (userId: number, newRole: 'owner' | 'admin' | 'member') => void;
+    onRemoveUser: (userId: number) => void;
+    chatId: number;
+    token: string;
 };
 
 function GroupUserItem({ user, currentUserRole, onRoleChange, onRemoveUser, chatId, token }: GroupUserItemProps) {
@@ -47,7 +47,7 @@ function GroupUserItem({ user, currentUserRole, onRoleChange, onRemoveUser, chat
                     sx={{ width: 40, height: 40 }}
                 />
                 <Box>
-                    <Typography>{user.realname || user.username}</Typography>
+                    <Typography>{user.username}</Typography>
                     <Typography
                         level="body-sm"
                         sx={{

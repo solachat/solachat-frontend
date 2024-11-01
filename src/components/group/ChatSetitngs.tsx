@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Box, Avatar, Typography, Button, Stack, Input } from '@mui/joy';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { updateChatSettings } from '../../api/api';
 
 type ChatSettingsProps = {
@@ -11,6 +12,7 @@ type ChatSettingsProps = {
 };
 
 export default function ChatSettings({ chatId, currentGroupName, currentAvatar, onCloseSettings }: ChatSettingsProps) {
+    const { t } = useTranslation();
     const [groupName, setGroupName] = useState(currentGroupName);
     const [avatar, setAvatar] = useState<File | null>(null);
 
@@ -19,11 +21,11 @@ export default function ChatSettings({ chatId, currentGroupName, currentAvatar, 
         const isAvatarChanged = avatar !== null;
 
         if (!isNameChanged && !isAvatarChanged) {
-            console.log('No changes made.');
+            console.log(t('chatSettings.noChanges'));
             return;
         }
 
-        console.log('Preparing to update settings:', {
+        console.log(t('chatSettings.preparingUpdate'), {
             chatId,
             groupName: isNameChanged ? groupName : undefined,
             avatar: isAvatarChanged ? avatar : null,
@@ -33,7 +35,7 @@ export default function ChatSettings({ chatId, currentGroupName, currentAvatar, 
             await updateChatSettings(chatId, isNameChanged ? groupName : undefined, isAvatarChanged ? avatar : null);
             onCloseSettings();
         } catch (error) {
-            console.error('Failed to update settings:', error);
+            console.error(t('chatSettings.updateFailed'), error);
         }
     };
 
@@ -46,7 +48,7 @@ export default function ChatSettings({ chatId, currentGroupName, currentAvatar, 
     return (
         <Box sx={{ padding: '16px 24px' }}>
             <Typography fontSize="lg" fontWeight="lg" mb={2}>
-                Настройки чата
+                {t('chatSettings.title')}
             </Typography>
 
             <Stack spacing={2}>
@@ -57,11 +59,11 @@ export default function ChatSettings({ chatId, currentGroupName, currentAvatar, 
                         onClick={() => document.getElementById('avatar-input')?.click()}
                     />
                     <Stack sx={{ flex: 1 }}>
-                        <Typography>Название группы</Typography>
+                        <Typography>{t('chatSettings.groupNameLabel')}</Typography>
                         <Input
                             value={groupName}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGroupName(e.target.value)}
-                            placeholder="Введите новое название"
+                            placeholder={t('chatSettings.groupNamePlaceholder')}
                         />
                     </Stack>
                 </Box>
@@ -74,11 +76,11 @@ export default function ChatSettings({ chatId, currentGroupName, currentAvatar, 
                 />
 
                 <Button onClick={handleUpdateSettings} variant="outlined">
-                    Сохранить изменения
+                    {t('chatSettings.saveChanges')}
                 </Button>
 
                 <Button onClick={onCloseSettings} variant="plain">
-                    Назад
+                    {t('chatSettings.back')}
                 </Button>
             </Stack>
         </Box>

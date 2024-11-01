@@ -51,7 +51,6 @@ export default function MyProfile() {
             return {
                 id: decodedToken.id as number,
                 username: decodedToken.username as string,
-                realname: decodedToken.realname as string,
                 avatar: decodedToken.avatar as string,
                 online: true,
                 verified: false,
@@ -225,7 +224,7 @@ export default function MyProfile() {
                 title={selectedChat
                     ? (selectedChat.isGroup
                             ? selectedChat.name ?? 'Unnamed Group'
-                            : selectedChat.users.find(user => user.id !== currentUser?.id)?.realname ?? 'Unnamed User'
+                            : selectedChat.users.find(user => user.id !== currentUser?.id)?.username ?? 'Unnamed User'
                     )
                     : 'Messenger'}
             />
@@ -302,7 +301,6 @@ export default function MyProfile() {
                         sender={{
                             id: callModalState.fromUserId!,
                             username: callModalState.fromUsername || 'User',
-                            realname: callModalState.fromUsername || 'User',
                             avatar: callModalState.fromAvatar || 'avatar.png',
                             online: true,
                             role: 'member',

@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { BrowserRouter as Router, Route, Routes, Link as RouterLink } from 'react-router-dom';
 import { CssVarsProvider } from '@mui/joy/styles';
 import Box from '@mui/joy/Box';
 import CssBaseline from '@mui/joy/CssBaseline';
