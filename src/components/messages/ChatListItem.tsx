@@ -198,8 +198,6 @@ export default function ChatListItem(props: ChatListItemProps) {
         }
     };
 
-
-
     const { i18n } = useTranslation();
     const locale = i18n.language || 'en-GB';
 
@@ -310,11 +308,6 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         </Box>
                                     ) : lastMessage.attachment && isVideo(lastMessage.attachment.fileName) ? (
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <img
-                                                src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath.replace('.mp4', '-thumbnail.jpg'))}`}
-                                                alt="video preview"
-                                                style={{ width: '20px', height: '20px', marginRight: '8px' }}
-                                            />
                                             <span>{lastMessage.attachment.fileName}</span>
                                         </Box>
                                     ) : lastMessage.attachment ? (

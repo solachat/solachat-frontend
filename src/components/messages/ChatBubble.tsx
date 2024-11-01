@@ -463,6 +463,70 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 </Sheet>
             </Box>
 
+            {isImageOpen && imageSrc && (
+                <Box
+                    sx={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 999,
+                        cursor: 'pointer',
+                    }}
+                    onClick={handleClose}
+                >
+                    <img
+                        src={imageSrc}
+                        alt="attachment-preview"
+                        style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                            borderRadius: '12px',
+                        }}
+                    />
+                </Box>
+            )}
+
+            {/* Модальное окно для видео */}
+            {isVideoOpen && videoSrc && (
+                <Box
+                    sx={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 999,
+                        cursor: 'pointer',
+                    }}
+                    onClick={handleClose}
+                >
+                    <video
+                        ref={modalVideoRef}
+                        src={videoSrc}
+                        style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            borderRadius: '12px',
+                        }}
+                        controls
+                        onPlay={syncVideoWithModal}
+                        onTimeUpdate={updateVideoState}
+                        onVolumeChange={updateVideoState}
+                    />
+                </Box>
+            )}
+
             <ContextMenu
                 anchorPosition={
                     anchorPosition !== null ? { top: anchorPosition.mouseY, left: anchorPosition.mouseX } : undefined

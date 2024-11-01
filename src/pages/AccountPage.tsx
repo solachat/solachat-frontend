@@ -344,8 +344,9 @@ export default function AccountPage() {
                                         {t('ratinguser')}
                                     </Typography>
                                     <Typography sx={{ color: 'text.secondary', mt: 1, visibility: profileData.online ? 'hidden' : 'visible' }}>
-                                        {t('lastLogin')}: {new Date(profileData.lastOnline).toLocaleString()}
+                                        {t('lastLogin')}: {new Date(profileData.lastOnline).toLocaleDateString()} {new Date(profileData.lastOnline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </Typography>
+
 
 
                                 </Box>
