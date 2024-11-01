@@ -346,9 +346,6 @@ export default function AccountPage() {
                                     <Typography sx={{ color: 'text.secondary', mt: 1, visibility: profileData.online ? 'hidden' : 'visible' }}>
                                         {t('lastLogin')}: {new Date(profileData.lastOnline).toLocaleDateString()} {new Date(profileData.lastOnline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </Typography>
-
-
-
                                 </Box>
                             </Stack>
                             <Stack spacing={2} sx={{ flexGrow: 1, width: '100%' }}>

@@ -22,6 +22,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import Alert from "@mui/joy/Alert";
 import PhantomConnectButton from "../components/core/PhantomConnectButton";
 import {useState} from "react";
+import MetamaskConnectButton from "../components/core/MetamaskConnectButton";
 
 interface PhantomProvider extends Window {
     solana?: {
@@ -35,7 +36,12 @@ interface PhantomProvider extends Window {
     };
 }
 
-declare let window: PhantomProvider;
+declare let window: PhantomProvider & {
+    ethereum?: {
+        isMetaMask?: boolean;
+        request: (options: { method: string; params?: any[] }) => Promise<any>;
+    };
+};
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
@@ -45,6 +51,7 @@ const Login = () => {
     const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
     const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
     const [totpCode, setTotpCode] = useState<string>('');
+    const [signedMessage, setSignedMessage] = useState<{ message: string; signature: string } | null>(null);
 
     const handleLogin = async (walletAddress: string, message: string, signature: number[]) => {
         try {
@@ -85,7 +92,7 @@ const Login = () => {
     const handlePhantomConnect = async () => {
         try {
             if (!window.solana?.isPhantom) {
-                setErrorMessage('Phantom Wallet не найден. Пожалуйста, установите его.');
+                setErrorMessage(t('error.phantomNotFound'));
                 return;
             }
 
@@ -93,22 +100,47 @@ const Login = () => {
             const walletAddress = publicKey.toString();
             setWalletAddress(walletAddress);
 
-            const message = `Sign this message to confirm login. Nonce: ${Math.random()}`;
+            const message = t('message.confirmLogin', { nonce: Math.random() });
             const encodedMessage = new TextEncoder().encode(message);
 
             if (!window.solana.signMessage) {
-                throw new Error("Phantom Wallet не поддерживает подписание сообщений.");
+                throw new Error(t("error.phantomNotSupportSignMessage"));
             }
 
             const { signature } = await window.solana.signMessage(encodedMessage, 'utf8');
 
             await handleLogin(walletAddress, message, Array.from(signature));
         } catch (error) {
-            console.error('Ошибка подключения к Phantom:', error);
-            setErrorMessage('Ошибка при подключении к Phantom Wallet');
+            console.error(t("error.connectingPhantom"), error);
+            setErrorMessage(t("error.connectingWallet"));
         }
     };
 
+    const handleMetaMaskConnect = async () => {
+        if (window.ethereum && window.ethereum.isMetaMask) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const walletAddress = accounts[0];
+                const message = t("message.confirmRegistration", { nonce: Math.random() });
+
+                const signature = await window.ethereum.request({
+                    method: 'personal_sign',
+                    params: [message, walletAddress],
+                });
+
+                setWalletAddress(walletAddress);
+                setSignedMessage({ message, signature });
+                setErrorMessage(null);
+
+                await handleLogin(walletAddress, message, signature);
+            } catch (error) {
+                console.error(t("error.connectingMetaMask"), error);
+                setErrorMessage(t("error.connectMetaMaskFailed"));
+            }
+        } else {
+            setErrorMessage(t("error.metaMaskNotFound"));
+        }
+    };
 
     return (
         <CssVarsProvider defaultMode="dark" disableTransitionOnChange>
@@ -193,7 +225,7 @@ const Login = () => {
                         </Stack>
                         <form onSubmit={(e) => {
                             e.preventDefault();
-                            handleLoginWithTotp(); // При отправке формы вызываем вход через TOTP
+                            handleLoginWithTotp();
                         }}>
                             <FormControl required>
                                 <FormLabel>{t('TOTP Code')}</FormLabel>
@@ -219,16 +251,7 @@ const Login = () => {
                             {t('or')}
                         </Divider>
                         <PhantomConnectButton onConnect={handlePhantomConnect}/>
-                        <Stack gap={4} sx={{mb: 2}}>
-                            <Button
-                                variant="soft"
-                                color="neutral"
-                                fullWidth
-                                startDecorator={<GoogleIcon/>}
-                            >
-                                {t('continueWithGoogle')}
-                            </Button>
-                        </Stack>
+                        <MetamaskConnectButton onConnect={handleMetaMaskConnect} />
                     </Box>
                     <Box component="footer" sx={{py: 3}}>
                         <Typography level="body-xs" textAlign="center">

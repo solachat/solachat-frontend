@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CssVarsProvider } from '@mui/joy/styles';
 import GlobalStyles from '@mui/joy/GlobalStyles';
@@ -22,7 +22,7 @@ import axios from 'axios';
 import PhantomConnectButton from '../components/core/PhantomConnectButton';
 import Person from '@mui/icons-material/Person';
 import { Helmet } from "react-helmet-async";
-import {useState} from "react";
+import MetamaskConnectButton from "../components/core/MetamaskConnectButton";
 
 interface PhantomProvider extends Window {
     solana?: {
@@ -36,7 +36,12 @@ interface PhantomProvider extends Window {
     };
 }
 
-declare let window: PhantomProvider;
+declare let window: PhantomProvider & {
+    ethereum?: {
+        isMetaMask?: boolean;
+        request: (options: { method: string; params?: any[] }) => Promise<any>;
+    };
+};
 
 interface FormElements extends HTMLFormControlsCollection {
     username: HTMLInputElement;
@@ -53,8 +58,7 @@ const RegisterPage: React.FC = () => {
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
     const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
-    const [buttonColor, setButtonColor] = React.useState<string | undefined>(undefined);
-    const [signedMessage, setSignedMessage] = useState<{ message: string; signature: Uint8Array } | null>(null);
+    const [signedMessage, setSignedMessage] = useState<{ message: string; signature: string } | null>(null);
 
     const handleSubmit = async (event: React.FormEvent<SignUpFormElement>) => {
         event.preventDefault();
@@ -64,8 +68,8 @@ const RegisterPage: React.FC = () => {
             username: formElements.username.value,
             lastlogin: new Date().toISOString(),
             message: signedMessage?.message,
-            signature: Array.from(signedMessage?.signature || []),
-            wallet: walletAddress
+            signature: signedMessage?.signature,
+            wallet: walletAddress,
         };
 
         try {
@@ -94,26 +98,52 @@ const RegisterPage: React.FC = () => {
                 const walletAddress = publicKey.toString();
 
                 if (!window.solana.signMessage) {
-                    throw new Error("Phantom Wallet doesn't support signMessage");
+                    throw new Error(t("error.phantomNotSupportSignMessage"));
                 }
 
-                const message = `Sign this message to confirm registration. Nonce: ${Math.random()}`;
-
+                const message = t("message.confirmRegistration", { nonce: Math.random() });
                 const encodedMessage = new TextEncoder().encode(message);
+
                 const { signature } = await window.solana.signMessage(encodedMessage, 'utf8');
+
+                const signatureBase64 = btoa(String.fromCharCode(...Array.from(signature)));
+
+                setWalletAddress(walletAddress);
+                setSignedMessage({ message, signature: signatureBase64 });
+                setErrorMessage(null);
+
+            } catch (error) {
+                console.error(t("error.connectingPhantom"), error);
+                setErrorMessage(t("error.connectingWallet"));
+            }
+        } else {
+            setErrorMessage(t("error.phantomNotFound"));
+        }
+    };
+
+    const handleMetaMaskConnect = async () => {
+        if (window.ethereum && window.ethereum.isMetaMask) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const walletAddress = accounts[0];
+                const message = t("message.confirmRegistration", { nonce: Math.random() });
+
+                const signature = await window.ethereum.request({
+                    method: 'personal_sign',
+                    params: [message, walletAddress],
+                });
 
                 setWalletAddress(walletAddress);
                 setSignedMessage({ message, signature });
                 setErrorMessage(null);
             } catch (error) {
-                console.error('Ошибка при подключении Phantom:', error);
-                setErrorMessage('Ошибка при подключении кошелька');
+                console.error(t("error.connectingMetaMask"), error);
+                setErrorMessage(t("error.connectMetaMaskFailed"));
             }
         } else {
-            setErrorMessage('Phantom Wallet не найден. Пожалуйста, установите его.');
+            setErrorMessage(t("error.metaMaskNotFound"));
         }
     };
-
 
     return (
         <CssVarsProvider defaultMode="dark" disableTransitionOnChange>
@@ -237,16 +267,7 @@ const RegisterPage: React.FC = () => {
                             {t('or')}
                         </Divider>
                         <PhantomConnectButton onConnect={handlePhantomConnect} />
-                        <Stack gap={4} sx={{ mb: 2 }}>
-                            <Button
-                                variant="soft"
-                                color="neutral"
-                                fullWidth
-                                startDecorator={<GoogleIcon />}
-                            >
-                                {t('continueWithGoogle')}
-                            </Button>
-                        </Stack>
+                        <MetamaskConnectButton onConnect={handleMetaMaskConnect} />
                     </Box>
 
                     <Box component="footer" sx={{ py: 3 }}>
