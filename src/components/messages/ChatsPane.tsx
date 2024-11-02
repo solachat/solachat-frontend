@@ -90,11 +90,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                 }
                                 : chat
                         )
-                        .sort((a, b) => {
-                            if (a.id === chatId) return -1;
-                            if (b.id === chatId) return 1;
-                            return 0;
-                        }),
                 ];
             });
         }
