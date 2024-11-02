@@ -156,6 +156,7 @@ export default function ChatListItem(props: ChatListItemProps) {
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
 
+
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay() + 1);
 
@@ -185,18 +186,21 @@ export default function ChatListItem(props: ChatListItemProps) {
                 hour: '2-digit',
                 minute: '2-digit',
             });
+        } else if (date.toDateString() === yesterday.toDateString()) {
+            return locale === 'ru' ? 'Вчера' : 'Yesterday';
         } else if (date >= startOfWeek) {
             const weekdayInEnglish = date.toLocaleDateString('en', { weekday: 'long' });
             const abbreviation = weekdayAbbreviations[locale]?.[weekdayInEnglish] || weekdayInEnglish;
             return abbreviation;
         } else {
-            return date.toLocaleDateString('default', {
+            return date.toLocaleDateString(locale, {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric',
             }).replace(/\//g, '.').replace(/-/g, '.');
         }
     };
+
 
     const { i18n } = useTranslation();
     const locale = i18n.language || 'en-GB';

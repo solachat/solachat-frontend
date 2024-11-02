@@ -370,7 +370,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         <Typography
                             sx={{
                                 fontSize: { xs: '14px', sm: '14px' },
-                                lineHeight: 1.6,
                                 color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-primary)',
                                 marginLeft: isImage || isVideo || isAudio ? '12px' : '0px',
                                 marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',
@@ -381,7 +380,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 overflowWrap: 'break-word',
                                 whiteSpace: 'pre-wrap',
                                 display: 'inline-block',
-                                paddingRight: isEdited && isSent ? '120px' : isEdited || isSent ? '60px' : '35px',
+                                paddingRight: isEdited && isSent ? '110px' : isEdited || isSent ? '60px' : '35px',
                             }}
                         >
                             {renderMessageContent(content)}
@@ -417,7 +416,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 alignItems: 'center',
                                 fontSize: '12px',
                                 color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
-                                gap: '1px',
                             }}
                         >
                             <Typography component="span" sx={{ fontSize: '12px' }}>
@@ -425,9 +423,19 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             </Typography>
                             {isSent && (
                                 isRead ? (
-                                    <DoneAllIcon sx={{ fontSize: '18px', marginLeft: '4px' }} />
+                                    <DoneAllIcon
+                                        sx={{
+                                            fontSize: '18px',
+                                            marginLeft: { xs: '0', sm: '4px' },
+                                        }}
+                                    />
                                 ) : (
-                                    <CheckIcon sx={{ fontSize: '18px', marginLeft: '4px' }} />
+                                    <CheckIcon
+                                        sx={{
+                                            fontSize: '18px',
+                                            marginLeft: { xs: '0', sm: '4px' },
+                                        }}
+                                    />
                                 )
                             )}
                         </Box>
@@ -494,7 +502,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                     color: 'white',
                                     backgroundColor: 'rgba(0, 0, 0, 0.6)',
                                     textAlign: 'center',
-                                    padding: '8px',
+                                    padding: '6px',
                                     wordWrap: 'break-word',
                                     display: 'inline-block',
                                     borderRadius: '10px',

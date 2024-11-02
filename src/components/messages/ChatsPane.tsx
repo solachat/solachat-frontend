@@ -69,6 +69,60 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
             });
         }
 
+        if (data.type === 'deleteMessage') {
+            const messageIdToDelete = data.messageId;
+            const chatId = data.chatId;
+
+            setChats((prevChats) => {
+                return [
+                    ...prevChats
+                        .map((chat) =>
+                            chat.id === chatId
+                                ? {
+                                    ...chat,
+                                    messages: (chat.messages || []).filter(
+                                        (msg) => msg.id !== messageIdToDelete
+                                    ),
+                                    lastMessage:
+                                        chat.lastMessage && chat.lastMessage.id === messageIdToDelete
+                                            ? undefined
+                                            : chat.lastMessage,
+                                }
+                                : chat
+                        )
+                        .sort((a, b) => {
+                            if (a.id === chatId) return -1;
+                            if (b.id === chatId) return 1;
+                            return 0;
+                        }),
+                ];
+            });
+        }
+
+        if (data.type === 'editMessage') {
+            const editedMessage = data.message;
+            const chatId = data.message.chatId;
+
+            setChats((prevChats) => {
+                return prevChats.map((chat) =>
+                    chat.id === chatId
+                        ? {
+                            ...chat,
+                            messages: (chat.messages || []).map((msg) =>
+                                msg.id === editedMessage.id ? { ...msg, ...editedMessage } : msg
+                            ),
+                            lastMessage:
+                                chat.lastMessage && chat.lastMessage.id === editedMessage.id
+                                    ? { ...chat.lastMessage, ...editedMessage }
+                                    : chat.lastMessage,
+                        }
+                        : chat
+                );
+            });
+        }
+
+
+
         if (data.type === 'messageRead' && data.messageId) {
             const messageId = data.messageId;
             setChats((prevChats) =>
