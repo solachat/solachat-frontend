@@ -225,6 +225,8 @@
     "metaMaskNotFound": "MetaMask not found. Please install MetaMask to connect."
   },
   "message": {
-    "confirmRegistration": "Sign this message to confirm registration. Nonce: {{nonce}}"
-  }
+    "confirmRegistration": "Sign this message to confirm registration. Nonce: {{nonce}}",
+    "confirmLogin": "Sign this message to confirm login. Nonce: {{nonce}}"
+  },
+  "metaMaskNotFound": "MetaMask not found. Please install MetaMask to connect."
 }

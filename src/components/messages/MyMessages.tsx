@@ -5,7 +5,7 @@ import MessagesPane from './MessagesPane';
 import ChatsPane from './ChatsPane';
 import {ChatProps, MessageProps, UserProps} from '../core/types';
 import { fetchChatsFromServer } from '../../api/api';
-import { CircularProgress, Typography } from '@mui/joy';
+import { Typography } from '@mui/joy';
 import { useTranslation } from 'react-i18next';
 import { JwtPayload } from 'jsonwebtoken';
 import { jwtDecode } from 'jwt-decode';
@@ -111,7 +111,6 @@ export default function MyProfile() {
     };
 
     const handleWebSocketMessage = (message: any) => {
-        console.log('Received WebSocket message:', message);
 
         switch (message.type) {
             case 'newMessage':
@@ -159,10 +158,7 @@ export default function MyProfile() {
                     callId: null,
                     status: null,
                 });
-                console.log('Call rejected, closing modal.');
                 break;
-            default:
-                console.warn('Unknown message type:', message.type);
         }
     };
 

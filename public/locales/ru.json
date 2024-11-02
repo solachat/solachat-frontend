@@ -287,8 +287,10 @@
     "metaMaskNotFound": "MetaMask не найден. Установите MetaMask для подключения."
   },
   "message": {
-    "confirmRegistration": "Подпишите это сообщение для подтверждения регистрации. Нонc: {{nonce}}"
+    "confirmRegistration": "Подпишите это сообщение для подтверждения регистрации. Нонc: {{nonce}}",
+    "confirmLogin": "Подпишите это сообщение для логина. Нонс: {{nonce}}"
   },
   "connectMetaMask": "Подключить Metamask",
-  "metaMaskConnected": "Подключен Metamask"
+  "metaMaskConnected": "Подключен Metamask",
+  "metaMaskNotFound": "MetaMask не найден. Установите MetaMask для подключения."
 }

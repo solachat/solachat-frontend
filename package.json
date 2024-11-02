@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@craco/craco": "^7.1.0",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@fontsource/inter": "^5.0.18",
     "@fontsource/roboto": "^5.0.13",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@metamask/detect-provider": "^2.0.0",
     "@mui/icons-material": "^5.15.19",
     "@mui/joy": "^5.0.0-beta.36",
     "@mui/lab": "^5.0.0-alpha.170",
@@ -25,7 +27,8 @@
     "@types/socket.io-client": "^1.4.36",
     "axios": "^1.7.2",
     "buffer": "^6.0.3",
-    "crypto-browserify": "^3.12.0",
+    "canvas": "^2.11.2",
+    "crypto-browserify": "^3.12.1",
     "dotenv": "^16.4.5",
     "draft-js": "^0.11.7",
     "ethers": "^6.13.0",
@@ -35,20 +38,27 @@
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "os-browserify": "^0.3.0",
+    "otplib": "^12.0.1",
     "path-browserify": "^1.0.1",
+    "process": "^0.11.10",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-easy-crop": "^5.1.0",
     "react-helmet-async": "^2.0.5",
     "react-i18next": "^14.1.2",
+    "react-quill": "^2.0.0",
     "react-router-dom": "^6.23.1",
     "react-scripts": "5.0.1",
     "react-toastify": "^10.0.5",
+    "react-transition-group": "^4.4.5",
     "socket.io-client": "^4.8.0",
     "stream-browserify": "^3.0.0",
     "styled-components": "^6.1.11",
     "telegram-login-widget": "^0.1.12",
     "typescript": "^4.9.5",
     "util": "^0.12.5",
+    "wavesurfer.js": "^7.8.7",
     "web-vitals": "^2.1.4"
   },
   "peerDependencies": {
@@ -56,9 +66,9 @@
     "react-dom": "^18.3.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "stop": "react-scripts stop"
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test"
   },
   "eslintConfig": {
     "extends": [
@@ -79,14 +89,17 @@
     ]
   },
   "devDependencies": {
+    "@solana/web3.js": "^1.95.4",
     "@types/axios": "^0.14.0",
     "@types/draft-js": "^0.11.18",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/jwt-decode": "^2.2.1",
     "@types/lodash": "^4.17.10",
+    "@types/qrcode": "^1.5.5",
     "@types/react-virtualized": "^9.21.30",
     "@types/react-window": "^1.8.8",
-    "framer-motion": "^11.9.0",
+    "framer-motion": "^11.11.9",
+    "gsap": "^3.12.5",
     "lodash": "^4.17.21",
     "react-virtualized": "^9.22.5",
     "react-window": "^1.8.10"

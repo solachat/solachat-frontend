@@ -4,7 +4,6 @@ import IconButton from '@mui/joy/IconButton';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
-import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
 import { UserProps } from '../core/types';
 import { useTranslation } from 'react-i18next';
 import MessagesMenu from './MessagesMenu';
@@ -32,7 +31,7 @@ export default function MessagesPaneHeader({
                                                members = [],
                                                onBack
                                            }: MessagesPaneHeaderProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
     const [isCallModalOpen, setIsCallModalOpen] = React.useState(false);
     const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
@@ -54,6 +53,20 @@ export default function MessagesPaneHeader({
             setIsGroupModalOpen(true);
         } else if (sender?.username) {
             window.location.href = `/account?username=${sender.username}`;
+        }
+    };
+
+    const getMemberLabel = (count: number, locale: string = 'en') => {
+        if (locale === 'ru') {
+            if (count % 10 === 1 && count % 100 !== 11) {
+                return 'участник';
+            } else if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) {
+                return 'участника';
+            } else {
+                return 'участников';
+            }
+        } else {
+            return count === 1 ? 'member' : 'members';
         }
     };
 
@@ -122,18 +135,18 @@ export default function MessagesPaneHeader({
 
                         {isGroup && (
                             <Typography level="body-sm">
-                                {members.length} {members.length === 1 ? 'member' : 'members'}
+                                {members.length} {getMemberLabel(members.length, i18n.language)}
                             </Typography>
                         )}
                     </div>
                 </Stack>
 
                 <Stack direction="row" spacing={1} alignItems="center">
-                    {receiverId && (
-                        <IconButton size="sm" sx={{ opacity: 0.5, cursor: 'not-allowed' }} onClick={() => setIsCallModalOpen(true)}>
-                            <PhoneInTalkRoundedIcon />
-                        </IconButton>
-                    )}
+                    {/*{receiverId && (*/}
+                    {/*    <IconButton size="sm" sx={{ opacity: 0.5, cursor: 'not-allowed' }} onClick={() => setIsCallModalOpen(true)}>*/}
+                    {/*        <PhoneInTalkRoundedIcon />*/}
+                    {/*    </IconButton>*/}
+                    {/*)}*/}
 
                     <MessagesMenu
                         chatId={chatId}

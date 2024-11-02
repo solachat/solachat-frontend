@@ -140,7 +140,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             setChatMessages(chatMessagesRef.current);
             scrollToBottom(false);
         } else if (!chat) {
-            console.log('No chat selected, clearing messages.');
             chatMessagesRef.current = [];
             setChatMessages([]);
             chatIdRef.current = null;
@@ -175,7 +174,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
     };
 
     useWebSocket((data) => {
-        console.log('Received WebSocket message:', data);
 
         if (data.type === 'newMessage' && data.message) {
             const newMessage = data.message;
@@ -216,10 +214,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         ? undefined
         : chat?.users?.find((user) => user.id !== currentUserId);
 
-    useEffect(() => {
-        console.log('Current chat:', chat);
-        console.log('Current chatId from URL:', chatId);
-    }, [chat, chatId]);
 
     return (
         <Sheet

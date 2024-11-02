@@ -200,11 +200,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                             {t('Create a Group')}
                                         </ListItemButton>
                                     </ListItem>
-                                    <ListItem>
-                                        <ListItemButton onClick={handleCreateFavoriteChat}>
-                                            {t('Saved Messages')}
-                                        </ListItemButton>
-                                    </ListItem>
+                                    {/*<ListItem>*/}
+                                    {/*    <ListItemButton onClick={handleCreateFavoriteChat}>*/}
+                                    {/*        {t('Saved Messages')}*/}
+                                    {/*    </ListItemButton>*/}
+                                    {/*</ListItem>*/}
                                 </List>
                             </Toggler>
                         </ListItem>

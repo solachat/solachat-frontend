@@ -15,7 +15,6 @@ export const searchUsers = async (searchTerm: string) => {
 
 export const createPrivateChat = async (currentUserId: number, userId: number, token: string) => {
     try {
-        console.log("Creating chat between:", currentUserId, "and", userId);
 
         if (!token) {
             throw new Error('Authorization token is missing');
@@ -74,7 +73,6 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
                 },
             }
         );
-        console.log('Chats fetched successfully:', response.data);
         return response.data;
     } catch (error: any) {
         console.error('Error fetching chats:', error.response?.data || error.message);
@@ -84,7 +82,6 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
 
 export const sendMessage = async (chatId: number, formData: FormData, token: string) => {
     try {
-        console.time('Message Sending');
         const response = await axios.post(
             `${API_URL}/api/messages/${chatId}`,
             formData,
@@ -95,7 +92,6 @@ export const sendMessage = async (chatId: number, formData: FormData, token: str
                 },
             }
         );
-        console.timeEnd('Message Sending');
         return response.data;
     } catch (error) {
         console.error('Error sending message:', error);
@@ -121,7 +117,6 @@ export const updateUserStatus = async (userId: number, isOnline: boolean, token:
                 },
             }
         );
-        console.log(`User status updated to ${isOnline ? 'online' : 'offline'}`);
     } catch (error) {
         console.error('Failed to update user status:', error);
         throw error;
@@ -162,7 +157,6 @@ export const editMessage = async (messageId: number, content: string, token: str
             }
         );
 
-        console.log('Message edited successfully:', response.data);
         return response.data;
     } catch (error) {
         console.error('Error editing message:', error);
@@ -234,12 +228,6 @@ export const createGroupChat = async (
 
         allUserIds.forEach(id => formData.append('selectedUsers[]', id.toString()));
 
-        console.log('Отправляемые данные:', {
-            groupName,
-            avatar,
-            selectedUsers: allUserIds,
-        });
-
         const response = await axios.post(`${API_URL}/api/chats/group`, formData, {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -247,7 +235,6 @@ export const createGroupChat = async (
         });
 
         const groupId = response.data.id;
-        console.log('Group created with ID:', groupId);
         return groupId;
     } catch (error) {
         console.error('Error creating group:', error);
@@ -286,7 +273,6 @@ export const updateChatSettings = async (chatId: number, groupName?: string, ava
             formData.append('avatar', avatar);
         }
 
-        console.log('Chat settings being sent:', { groupName, avatar });
 
         const response = await axios.put(`${API_URL}/api/chats/${chatId}/settings`, formData, {
             headers: {
@@ -374,7 +360,6 @@ export const initiateGroupCall = async (fromUserId: number, participantUserIds: 
                 },
             }
         );
-        console.log('Group call initiated successfully:', response.data);
         return response.data;
     } catch (error) {
         console.error('Error initiating group call:', error);
@@ -430,7 +415,6 @@ export const createFavoriteChat = async (token: string) => {
             }
         );
 
-        console.log('Favorite chat created or retrieved successfully:', response.data);
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {

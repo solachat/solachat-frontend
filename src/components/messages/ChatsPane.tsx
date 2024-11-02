@@ -152,6 +152,20 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                     </IconButton>
                 )}
 
+                {isSidebarOpen && (
+                    <Box
+                        onClick={() => setIsSidebarOpen(false)}
+                        sx={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                            zIndex: 9,
+                        }}
+                    />
+                )}
                 <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
                 <Sheet
@@ -172,6 +186,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                         p={2}
                         sx={{
                             flexDirection: { xs: 'column', sm: 'row' },
+                            ml: { xs: 5, sm: 0 },
                         }}
                     >
                         <Box
@@ -192,7 +207,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                 sx={{
                                     flex: 1,
                                     fontSize: '14px',
-                                    maxWidth: { xs: '80%', sm: '100%' },
+                                    maxWidth: { xs: '90%', sm: '100%' },
                                     ml: 1,
                                 }}
                             />
@@ -220,16 +235,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                         <>
                             {loadingChats ? (
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 4 }}>
-                                    {[1, 2, 3].map((index) => (
-                                        <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                                            <Skeleton variant="circular" width={48} height={48} sx={{ ml: 1, mr: 1 }} />
-                                            <Box sx={{ flexGrow: 1 }}>
-                                                <Skeleton variant="text" width={100} sx={{ mb: 1 }} />
-                                                <Skeleton variant="text" width="80%" />
-                                            </Box>
-                                            <Skeleton variant="text" width={35} sx={{ mr: 1, mt: 0.5 }} />
-                                        </Box>
-                                    ))}
                                 </Box>
                             ) : chats.length > 0 ? (
                                 <List>

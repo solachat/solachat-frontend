@@ -40,7 +40,7 @@ const App: React.FC = () => {
                         <Route path="/contacts" element={<ContactsPage />} />
                         <Route path="/chat" element={<PrivateRoute element={<MyMessages />} />} />
                         <Route path="/chatOrLogin" element={
-                            localStorage.getItem('token') ? <Navigate to="/chat" /> : <Navigate to="/access-denied" />
+                            localStorage.getItem('token') ? <Navigate to="/chat" /> : <Navigate to="/login" />
                         } />
 
                         {underDevelopmentRoutes.map((route) => (

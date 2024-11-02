@@ -450,7 +450,7 @@ export default function AccountPage() {
                             </CardActions>
                         </CardOverflow>
                     </Card>
-                    <ConnectButtons />
+                    {/*<ConnectButtons />*/}
 
                     <ReportModal
                         open={showReportModal}

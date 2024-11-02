@@ -104,10 +104,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
 
     const [isImageOpen, setIsImageOpen] = useState(false);
     const [isVideoOpen, setIsVideoOpen] = useState(false);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [currentAudioTime, setCurrentAudioTime] = useState(0);
-    const [duration, setDuration] = useState(0);
-    const [volume, setVolume] = useState(1);
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [videoSrc, setVideoSrc] = useState<string | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ mouseX: number; mouseY: number } | null>(null);
@@ -123,7 +119,12 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const getAttachmentUrl = () => {
         if (!attachment) return '';
         const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
-        return `${baseUrl}/${attachment.filePath.replace(/\\/g, '/')}?cache-control=max-age=3600`;
+
+        const cleanedPath = attachment.filePath
+            .replace(/\\/g, '/')
+            .replace(/\.enc|\.decrypted/g, '');
+
+        return `${cleanedPath}`;
     };
 
     const isImage = isImageFile(attachment?.fileName || '');
@@ -177,7 +178,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const handleDelete = async () => {
         try {
             await deleteMessage(Number(id));
-            console.log('Message deleted');
         } catch (error) {
             console.error('Failed to delete message:', error);
         }
@@ -338,7 +338,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                         display: 'flex',
                                         justifyContent: 'center',
                                         alignItems: 'center',
-                                        backgroundColor: '#f0f0f0', // Цвет фона placeholder
+                                        backgroundColor: '#f0f0f0',
                                         borderRadius: '4px',
                                         zIndex: 1,
                                     }}

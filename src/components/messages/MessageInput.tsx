@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Box from '@mui/joy/Box';
 import FormControl from '@mui/joy/FormControl';
-import { IconButton, Stack, Typography, Avatar, Textarea } from '@mui/joy';
+import { IconButton, Stack, Typography, Avatar } from '@mui/joy';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -12,7 +12,6 @@ import { useState, useCallback, useEffect } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from 'react-i18next';
-import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import CustomTextarea from "./CustomTextarea";
 
 export type UploadedFileData = {
@@ -179,13 +178,6 @@ export default function MessageInput(props: MessageInputProps) {
                             }}
                         />
 
-
-                        <IconButton
-                            size="sm"
-                            sx={{ ml: 1 }}
-                        >
-                            <EmojiEmotionsIcon />
-                        </IconButton>
                         <IconButton
                             size="sm"
                             color={message.trim() !== '' || uploadedFiles.length > 0 ? 'primary' : 'neutral'}
