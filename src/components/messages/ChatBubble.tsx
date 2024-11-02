@@ -111,6 +111,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const [currentVolume, setCurrentVolume] = useState(1);
     const [isMuted, setIsMuted] = useState(false);
     const [imageLoading, setImageLoading] = useState(true);
+    const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const messageVideoRef = useRef<HTMLVideoElement>(null);
     const modalVideoRef = useRef<HTMLVideoElement>(null);
@@ -170,6 +171,22 @@ export default function ChatBubble(props: ChatBubbleProps) {
         });
     };
 
+    const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
+        longPressTimeout.current = setTimeout(() => {
+            const touch = event.touches[0];
+            setAnchorPosition({
+                mouseX: touch.clientX,
+                mouseY: touch.clientY,
+            });
+        }, 200);
+    };
+
+    const handleTouchEnd = () => {
+        if (longPressTimeout.current) {
+            clearTimeout(longPressTimeout.current);
+        }
+    };
+
     const handleEdit = () => {
         onEditMessage(Number(id), content);
         setAnchorPosition(null);
@@ -225,6 +242,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 flexDirection: 'column',
                 alignItems: isSent ? 'flex-end' : 'flex-start',
             }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             onContextMenu={handleContextMenu}
         >
             <Box
@@ -356,6 +375,10 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                     maxHeight: '500px',
                                     objectFit: 'contain',
                                     borderRadius: 0,
+                                    borderTopLeftRadius: '8px',
+                                    borderTopRightRadius: '8px',
+                                    borderBottomLeftRadius: '0px',
+                                    borderBottomRightRadius: '0px',
                                     opacity: imageLoading ? 0 : 1,
                                 }}
                             />
@@ -380,7 +403,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 overflowWrap: 'break-word',
                                 whiteSpace: 'pre-wrap',
                                 display: 'inline-block',
-                                paddingRight: isEdited && isSent ? '110px' : isEdited || isSent ? '60px' : '35px',
+                                paddingRight: isEdited && isSent ? '120px' : isEdited || isSent ? '90px' : '40px',
                             }}
                         >
                             {renderMessageContent(content)}
@@ -426,14 +449,14 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                     <DoneAllIcon
                                         sx={{
                                             fontSize: '18px',
-                                            marginLeft: { xs: '0', sm: '4px' },
+                                            marginLeft: { xs: '1px', sm: '4px' },
                                         }}
                                     />
                                 ) : (
                                     <CheckIcon
                                         sx={{
                                             fontSize: '18px',
-                                            marginLeft: { xs: '0', sm: '4px' },
+                                            marginLeft: { xs: '1px', sm: '4px' },
                                         }}
                                     />
                                 )

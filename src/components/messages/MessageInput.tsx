@@ -32,6 +32,7 @@ export default function MessageInput(props: MessageInputProps) {
     const [message, setMessage] = useState("");
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
     const [isFileUploadOpen, setFileUploadOpen] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     useEffect(() => {
         if (editingMessage?.content) {
@@ -88,8 +89,66 @@ export default function MessageInput(props: MessageInputProps) {
         }
     };
 
+    const handlePaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
+        const items = event.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].kind === 'file') {
+                const file = items[i].getAsFile();
+                if (file) {
+                    handleFileSelect(file);
+                }
+            }
+        }
+    };
+
+    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        const files = event.dataTransfer.files;
+        setIsDragging(false);
+        if (files && files.length > 0) {
+            Array.from(files).forEach((file) => handleFileSelect(file));
+            event.dataTransfer.clearData();
+        }
+    };
+
+    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+    };
+
+    const handleDragEnter = () => {
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = () => {
+        setIsDragging(false);
+    };
     return (
-        <Box sx={{ position: 'relative', px: 3, pb: 1 }}>
+        <Box
+            sx={{ position: 'relative', px: 3, pb: 1 }}
+            onPaste={handlePaste}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+        >
+            {isDragging && (
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.25rem',
+                        zIndex: 20,
+                    }}
+                >
+                    {t('Drop your files here')}
+                </Box>
+            )}
             <FormControl sx={{ position: 'sticky', zIndex: 10 }}>
                 <Stack
                     direction="column"
