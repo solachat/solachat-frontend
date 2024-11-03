@@ -7,7 +7,7 @@ import Typography from '@mui/joy/Typography';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
 import DownloadIcon from '@mui/icons-material/Download';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
-import {CircularProgress, IconButton, Slider} from '@mui/joy';
+import {CircularProgress, IconButton} from '@mui/joy';
 import { useTranslation } from 'react-i18next';
 import { deleteMessage } from '../../api/api';
 import ContextMenu from './ContextMenu';

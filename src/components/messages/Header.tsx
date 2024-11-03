@@ -2,7 +2,6 @@ import * as React from 'react';
 import Box from '@mui/joy/Box';
 import Stack from '@mui/joy/Stack';
 import IconButton from '@mui/joy/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
 import Typography from '@mui/joy/Typography';
 import LanguageSwitcher from '../core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../core/ColorSchemeToggle';

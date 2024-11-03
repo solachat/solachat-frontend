@@ -14,7 +14,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from 'react-i18next';
 import CustomTextarea from "./CustomTextarea";
 import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
-import EmojiPickerPopover from "./EmojiPickerPopover"; // Импорт кастомного меню эмодзи
+import EmojiPickerPopover from "./EmojiPickerPopover";
 
 export type UploadedFileData = {
     file: File;

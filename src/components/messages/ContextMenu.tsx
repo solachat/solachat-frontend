@@ -6,7 +6,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ForwardIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { styled } from '@mui/material/styles';
-import { useTranslation } from 'react-i18next'; // Импортируем хук
+import { useTranslation } from 'react-i18next';
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
     '&:hover': {

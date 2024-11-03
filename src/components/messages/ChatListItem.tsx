@@ -10,12 +10,12 @@ import { createPrivateChat } from '../../api/api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/joy/Avatar';
-import {useCallback, useEffect, useState} from 'react';
 import { t } from 'i18next';
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import CheckIcon from "@mui/icons-material/Check";
 import {useTranslation} from "react-i18next";
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
+import Verified from "../core/Verified";
 
 type NewMessageEvent =
     | {
@@ -216,7 +216,14 @@ export default function ChatListItem(props: ChatListItemProps) {
 
                         <Box sx={{ flex: 1 }}>
                             <Typography level="body-md" fontSize={{ xs: 'sm', sm: 'md' }}>
-                                {isGroup ? existingChat?.name || 'Group Chat' : `${sender?.username || 'No Name'}`}
+                                {isGroup ? (
+                                    existingChat?.name || 'Group Chat'
+                                ) : (
+                                    <>
+                                        {sender?.username || 'No Name'}
+                                        {sender?.verified && <Verified sx={{ fontSize: 16, verticalAlign: 'middle', ml: 0.5 }} />}
+                                    </>
+                                )}
                             </Typography>
                             {lastMessage ? (
                                 <Typography

@@ -44,12 +44,11 @@ export default function CallModal({
                                   }: CallModalProps) {
     const [isWaiting, setIsWaiting] = useState(false);
     const [isCallActive, setIsCallActive] = useState(false);
-    const [localStream, setLocalStream] = useState<MediaStream | null>(null); // Локальный поток
-    const peerConnectionRef = useRef<RTCPeerConnection | null>(null); // WebRTC соединение
+    const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+    const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
     const ringToneRef = useRef<HTMLAudioElement | null>(null);
-    const remoteAudioRef = useRef<HTMLAudioElement | null>(null); // Аудио для другой стороны
+    const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
 
-    // Конфигурация для WebRTC соединения
     const configuration = {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' }, // STUN сервер
@@ -100,7 +99,6 @@ export default function CallModal({
             ringToneRef.current?.pause();
 
             if (ws && ws.readyState === WebSocket.OPEN) {
-                // Отправляем сообщение о принятии звонка
                 ws.send(JSON.stringify({
                     type: 'callAnswer',
                     fromUserId: sender.id,
@@ -108,25 +106,21 @@ export default function CallModal({
                     callId: callId,
                 }));
 
-                // Создаем WebRTC соединение
+
                 const peerConnection = new RTCPeerConnection(configuration);
                 peerConnectionRef.current = peerConnection;
 
-                // Получаем доступ к микрофону
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 setLocalStream(stream);
 
-                // Добавляем локальные треки в peer connection
                 stream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, stream);
                 });
 
-                // Ожидаем получение offer от звонящего через WebSocket
                 ws.onmessage = async (message) => {
                     const data = JSON.parse(message.data);
 
                     if (data.type === 'offer') {
-                        // Устанавливаем remoteDescription на основе offer
                         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
 
                         // Создаем answer и отправляем его звонящему
@@ -138,7 +132,6 @@ export default function CallModal({
                             answer: peerConnection.localDescription,
                         }));
                     } else if (data.type === 'ice-candidate') {
-                        // Добавляем полученные ICE кандидаты
                         await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
                     }
                 };
@@ -152,7 +145,6 @@ export default function CallModal({
                     }
                 };
 
-                // Когда получаем трек от другой стороны
                 peerConnection.ontrack = (event) => {
                     if (remoteAudioRef.current) {
                         remoteAudioRef.current.srcObject = event.streams[0];
