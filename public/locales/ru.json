@@ -292,5 +292,11 @@
   },
   "connectMetaMask": "Подключить Metamask",
   "metaMaskConnected": "Подключен Metamask",
-  "metaMaskNotFound": "MetaMask не найден. Установите MetaMask для подключения."
+  "metaMaskNotFound": "MetaMask не найден. Установите MetaMask для подключения.",
+  "fileUpload": {
+    "uploadFile": "Загрузите файл",
+    "preview": "предварительный просмотр",
+    "selectFile": "Выберите файл",
+    "attachFile": "Прикрепить файл"
+  }
 }

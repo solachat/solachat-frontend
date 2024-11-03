@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useRef, useState } from 'react';
 
 type WebRTCProps = {
-    ws: WebSocket;  // WebSocket для обмена сигналами
+    ws: WebSocket;
     onClose: () => void;
 };
 
@@ -12,7 +12,6 @@ export default function WebRTCCall({ ws, onClose }: WebRTCProps) {
     const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
     const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
-    // Конфигурация для ICE серверов (STUN/TURN)
     const configuration = {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },

@@ -154,7 +154,7 @@
   "english": "English",
   "russian": "Russian",
   "chinese": "Chinese",
-  "edited": "Edited",
+  "edited": "edited",
   "myMessages": "My messages",
   "participant": "member",
   "participants_two": "members",
@@ -228,5 +228,11 @@
     "confirmRegistration": "Sign this message to confirm registration. Nonce: {{nonce}}",
     "confirmLogin": "Sign this message to confirm login. Nonce: {{nonce}}"
   },
-  "metaMaskNotFound": "MetaMask not found. Please install MetaMask to connect."
+  "metaMaskNotFound": "MetaMask not found. Please install MetaMask to connect.",
+  "fileUpload": {
+    "uploadFile": "Upload a file",
+    "preview": "preview",
+    "selectFile": "Select File",
+    "attachFile": "Attach File"
+  }
 }

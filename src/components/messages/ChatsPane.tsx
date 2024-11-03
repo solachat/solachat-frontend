@@ -115,7 +115,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 );
             });
         }
-        
+
         if (data.type === 'messageRead' && data.messageId) {
             const messageId = data.messageId;
             setChats((prevChats) =>
