@@ -40,7 +40,7 @@ const isImageFile = (fileName: string) => {
 };
 
 const isVideoFile = (fileName: string) => {
-    const videoExtensions = ['mp4', 'webm', 'ogg'];
+    const videoExtensions = ['mp4', 'webm', 'ogg', "mov"];
     const fileExtension = fileName.split('.').pop()?.toLowerCase();
     return videoExtensions.includes(fileExtension || '');
 };
@@ -314,7 +314,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 maxWidth: '100%',
                                 cursor: 'pointer',
                                 overflow: 'hidden',
-                                mb: content ? 2 : 0,
+                                mb: content ? 1 : 0,
+                                borderRadius: content ? '0px' : '12px',
                             }}
                         >
                             <video
@@ -326,6 +327,10 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                     maxHeight: '500px',
                                     objectFit: 'contain',
                                     borderRadius: 0,
+                                    borderTopLeftRadius: content ? '12px' : '0px',
+                                    borderTopRightRadius: content ? '12px' : '0px',
+                                    borderBottomLeftRadius: content ? '0px' : '12px',
+                                    borderBottomRightRadius: content ? '0px' : '12px',
                                 }}
                                 controls
                                 onTimeUpdate={updateVideoState}
@@ -345,6 +350,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 overflow: 'hidden',
                                 mb: content ? 1 : 0,
                                 position: 'relative',
+                                borderRadius: content ? '0px' : '12px',
                             }}
                             onClick={handleImageClick}
                         >
@@ -374,16 +380,16 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                     maxWidth: '700px',
                                     maxHeight: '500px',
                                     objectFit: 'contain',
-                                    borderRadius: 0,
-                                    borderTopLeftRadius: '8px',
-                                    borderTopRightRadius: '8px',
-                                    borderBottomLeftRadius: '0px',
-                                    borderBottomRightRadius: '0px',
+                                    borderTopLeftRadius: content ? '12px' : '0px',
+                                    borderTopRightRadius: content ? '12px' : '0px',
+                                    borderBottomLeftRadius: content ? '0px' : '12px',
+                                    borderBottomRightRadius: content ? '0px' : '12px',
                                     opacity: imageLoading ? 0 : 1,
                                 }}
                             />
                         </Box>
                     )}
+
 
                     {isAudio && !isVideo && (
                         <CustomAudioPlayer audioSrc={getAttachmentUrl()} isSent={isSent} />
@@ -398,25 +404,26 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',
                                 textAlign: 'left',
                                 transition: 'color 0.3s ease',
-                                maxWidth: { xs: '300px', md: '480px' },
+
                                 wordWrap: 'break-word',
                                 overflowWrap: 'break-word',
                                 whiteSpace: 'pre-wrap',
                                 display: 'inline-block',
-                                paddingRight: isEdited && isSent ? '120px' : isEdited || isSent ? '90px' : '40px',
+                                paddingRight: isEdited
+                                    ? (isSent ? '115px' : '90px')
+                                    : (isSent ? '60px' : '40px'),
                             }}
                         >
                             {renderMessageContent(content)}
                         </Typography>
                     )}
-
                     <Stack
                         direction="row"
                         spacing={0.5}
                         sx={{
                             position: 'absolute',
                             bottom: '4px',
-                            right: '10px',
+                            right:  '10px',
                             alignItems: 'center',
                             backgroundColor: (isImage && !content) || (isVideo && !content) ? 'rgba(0, 0, 0, 0.4)' : 'transparent',
                             padding: (isImage && !content) || (isVideo && !content) ? '2px 6px' : '0px',
@@ -463,7 +470,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             )}
                         </Box>
                     </Stack>
-
                     {!isImage && !isVideo && !isAudio && attachment && (
                         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                             <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
