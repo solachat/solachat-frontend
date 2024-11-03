@@ -13,6 +13,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from 'react-i18next';
 import CustomTextarea from "./CustomTextarea";
+import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
+import EmojiPickerPopover from "./EmojiPickerPopover"; // Импорт кастомного меню эмодзи
 
 export type UploadedFileData = {
     file: File;
@@ -33,6 +35,7 @@ export default function MessageInput(props: MessageInputProps) {
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
     const [isFileUploadOpen, setFileUploadOpen] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // Устанавливаем элемент якоря для меню
 
     useEffect(() => {
         if (editingMessage?.content) {
@@ -72,6 +75,15 @@ export default function MessageInput(props: MessageInputProps) {
         } catch (error) {
             console.error('Error sending or editing message:', error);
         }
+    };
+
+    const handleEmojiSelect = (emoji: string) => {
+        setMessage((prev) => prev + emoji);
+        setAnchorEl(null); // Закрываем меню после выбора эмодзи
+    };
+
+    const toggleEmojiMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(anchorEl ? null : event.currentTarget);
     };
 
     const handleFileSelect = useCallback((file: File) => {
@@ -115,13 +127,7 @@ export default function MessageInput(props: MessageInputProps) {
         event.preventDefault();
     };
 
-    const handleDragEnter = () => {
-        setIsDragging(true);
-    };
 
-    const handleDragLeave = () => {
-        setIsDragging(false);
-    };
     return (
         <Box
             sx={{ position: 'relative', px: 3, pb: 1 }}
@@ -223,7 +229,6 @@ export default function MessageInput(props: MessageInputProps) {
                             sx={{
                                 flexGrow: 1,
                                 minHeight: 'auto',
-
                                 resize: 'none',
                                 maxWidth: '100%',
                                 border: 'none',
@@ -237,6 +242,16 @@ export default function MessageInput(props: MessageInputProps) {
                             }}
                         />
 
+                        <Box sx={{ position: 'relative', display: 'inline-block' }}>
+                            <IconButton onClick={toggleEmojiMenu}>
+                                <EmojiEmotionsIcon />
+                            </IconButton>
+                            <EmojiPickerPopover
+                                onEmojiSelect={handleEmojiSelect}
+                                anchorEl={anchorEl}
+                                onClose={() => setAnchorEl(null)}
+                            />
+                        </Box>
                         <IconButton
                             size="sm"
                             color={message.trim() !== '' || uploadedFiles.length > 0 ? 'primary' : 'neutral'}

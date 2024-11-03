@@ -18,7 +18,6 @@ import CustomAudioPlayer from '../core/CustomAudioPlayer';
 import CheckIcon from "@mui/icons-material/Check";
 
 type DecodedToken = JwtPayload & { id?: number };
-const isDelivered = true;
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
@@ -116,6 +115,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const messageVideoRef = useRef<HTMLVideoElement>(null);
     const modalVideoRef = useRef<HTMLVideoElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
+    const [isClosing, setIsClosing] = useState(false);
 
     const getAttachmentUrl = () => {
         if (!attachment) return '';
@@ -138,12 +138,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
     };
 
     const handleClose = () => {
-        setIsImageOpen(false);
-        setIsVideoOpen(false);
+        setIsClosing(true);
         setTimeout(() => {
-            setImageSrc(null);
-            setVideoSrc(null);
-        }, 300);
+            setIsImageOpen(false);
+            setIsClosing(false);
+        }, 100);
     };
 
     const syncVideoWithModal = () => {
@@ -404,7 +403,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',
                                 textAlign: 'left',
                                 transition: 'color 0.3s ease',
-
                                 wordWrap: 'break-word',
                                 overflowWrap: 'break-word',
                                 whiteSpace: 'pre-wrap',
@@ -448,7 +446,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
                             }}
                         >
-                            <Typography component="span" sx={{ fontSize: '12px' }}>
+                            <Typography component="span" sx={{ fontSize: '12px', color: isSent ? 'var(--joy-palette-common-white)' : 'inherit' }}>
                                 {formattedTime}
                             </Typography>
                             {isSent && (
@@ -505,7 +503,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         justifyContent: 'center',
                         zIndex: 999,
                         cursor: 'pointer',
-                        animation: 'fade-in 0.3s ease-in-out',
+                        animation: `${isClosing ? 'fade-out' : 'fade-in'} 0.2s ease-in-out`,
                     }}
                     onClick={handleClose}
                 >
@@ -517,8 +515,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 width: '100%',
                                 height: 'auto',
                                 objectFit: 'contain',
-                                borderRadius: '12px',
-                                animation: 'fade-in 0.3s ease-in-out',
+
                             }}
                         />
                         {content && (
