@@ -35,7 +35,7 @@ export default function MessageInput(props: MessageInputProps) {
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
     const [isFileUploadOpen, setFileUploadOpen] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // Устанавливаем элемент якоря для меню
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     useEffect(() => {
         if (editingMessage?.content) {

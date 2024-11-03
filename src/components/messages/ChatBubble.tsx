@@ -406,6 +406,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 wordWrap: 'break-word',
                                 overflowWrap: 'break-word',
                                 whiteSpace: 'pre-wrap',
+                                maxWidth: { xs: '280px', md: '600px' },
                                 display: 'inline-block',
                                 paddingRight: isEdited
                                     ? (isSent ? '115px' : '90px')

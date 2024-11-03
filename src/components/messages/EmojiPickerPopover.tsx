@@ -1,4 +1,3 @@
-// EmojiPickerPopover.tsx
 import React from 'react';
 import Popover from '@mui/material/Popover';
 import Box from '@mui/joy/Box';
