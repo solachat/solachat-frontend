@@ -14,7 +14,6 @@ import Input from '@mui/joy/Input';
 import Typography from '@mui/joy/Typography';
 import Stack from '@mui/joy/Stack';
 import Alert from '@mui/joy/Alert';
-import GoogleIcon from '../components/core/GoogleIcon';
 import { Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Header } from '../components/core/ColorSchemeToggle';
@@ -239,7 +238,7 @@ const RegisterPage: React.FC = () => {
                                     }}
                                 />
                             </FormControl>
-                            <Stack gap={4} sx={{ mt: 2 }}>
+                            <Stack>
                                 <Box
                                     sx={{
                                         display: 'flex',
@@ -247,10 +246,7 @@ const RegisterPage: React.FC = () => {
                                         alignItems: 'center',
                                     }}
                                 >
-                                    <Checkbox size="sm" label={t('rememberMe')} name="persistent" />
-                                    <Link component={RouterLink} to="/forgotpassword" level="title-sm">
-                                        {t('forgotPassword')}
-                                    </Link>
+
                                 </Box>
                                 <Button type="submit" fullWidth>
                                     {t('signUp')}

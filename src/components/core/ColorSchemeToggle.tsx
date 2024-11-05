@@ -105,7 +105,7 @@ export function Header({ sx, ...props }: HeaderProps) {
                 <IconButton variant="soft" size="sm">
                     <SolanaIcon />
                 </IconButton>
-                <Typography component="h1">SolaCoin</Typography>
+                <Typography component="h1">SolaChat</Typography>
             </Box>
             <Box sx={{ gap: 2, display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
                 <ColorSchemeToggle />
