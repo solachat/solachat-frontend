@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import {useLocation, useNavigate, useParams} from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import AspectRatio from '@mui/joy/AspectRatio';
 import Box from '@mui/joy/Box';
@@ -16,7 +16,6 @@ import Link from '@mui/joy/Link';
 import Card from '@mui/joy/Card';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import StarIcon from '@mui/icons-material/Star';
 import Alert from '@mui/joy/Alert';
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
@@ -32,7 +31,6 @@ import {Helmet} from "react-helmet-async";
 import {CardActions, CardOverflow, Checkbox} from "@mui/joy";
 import Verified from '../components/core/Verified';
 
-import ConnectButtons from '../components/profile/ConnectButtons';
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
 import LanguageSwitcher from '../components/core/LanguageSwitcher';
 import AvatarUploadModal from '../components/profile/AvatarUploadModal';
@@ -45,7 +43,9 @@ export default function AccountPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
-    const username = queryParams.get('username') || 'defaultUsername';
+    const username = queryParams.get('username') || null;
+    const publicKey = queryParams.get('publicKey') || null;
+    console.log('PublicKey: ', publicKey);
 
     const [isOwner, setIsOwner] = React.useState(false);
     const [shareEmail, setShareEmail] = React.useState(false);
@@ -69,7 +69,6 @@ export default function AccountPage() {
 
     const [profileData, setProfileData] = React.useState({
         username: '',
-        realname: '',
         email: '',
         aboutMe: '',
         country: '',
@@ -83,45 +82,50 @@ export default function AccountPage() {
 
     const handleOpenSecurityModal = () => setShowSecurityModal(true);
     const handleCloseSecurityModal = () => setShowSecurityModal(false);
+    const { identifier } = useParams<{ identifier: string }>();
 
+
+    const isPublicKey = (id: string) => {
+        if (id.startsWith('0x') && id.length === 42) return true;
+        const base58Pattern = /^[A-HJ-NP-Za-km-z1-9]+$/;
+        if (base58Pattern.test(id) && (id.length >= 32 && id.length <= 44)) return true;
+
+        return false;
+    };
 
     React.useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const decodedToken = jwtDecode<{ username: string }>(token);
-                const currentUsername = decodedToken?.username;
-                setIsOwner(currentUsername === username);
-            } catch (error) {
-                console.error("Invalid token", error);
-            }
+        if (!identifier) {
+            console.error("Identifier is undefined");
+            setAccountExists(false);
+            setLoading(false);
+            return;
         }
-
-        setAccountExists(true);
-        setLoading(true);
 
         const fetchProfile = async () => {
             try {
                 const token = localStorage.getItem('token');
+                const queryParam = isPublicKey(identifier)
+                    ? `public_key=${identifier}`
+                    : `username=${identifier}`;
 
-                const response = await axios.get(`${API_URL}/api/users/profile?username=${username}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                console.log(`Fetching profile with query: ${queryParam}`);
+
+                const response = await axios.get(`${API_URL}/api/users/profile?${queryParam}`, {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
                 const data = response.data;
+                console.log("Profile data:", data);
+
                 setProfileData(data);
-                setShareEmail(data.shareEmail);
-                setPublicKey(data.sharePublicKey);
                 setAccountExists(true);
                 setBalance(data.balance);
                 setTokenBalance(data.tokenBalance);
+                setPublicKey(data.sharePublicKey);
 
-                setShowAlert(true);
-                setTimeout(() => {
-                    setShowAlert(false);
-                }, 5000);
+                const decodedToken = token ? jwtDecode<{ publicKey: string }>(token) : null;
+                const currentPublicKey = decodedToken?.publicKey || null;
+                setIsOwner(currentPublicKey === data.public_key);
             } catch (error) {
                 console.error("Error fetching profile:", error);
                 setAccountExists(false);
@@ -131,22 +135,32 @@ export default function AccountPage() {
         };
 
         fetchProfile();
-    }, [username, API_URL]);
+    }, [identifier, API_URL]);
 
     const handleSave = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const originalUsername = queryParams.get('username') || profileData.username;
+        const token = localStorage.getItem('token');
 
+        if (!token) {
+            console.error("No token found");
+            return;
+        }
+
+        try {
+            const publicKey = profileData.public_key;
+
+            if (!publicKey) {
+                console.error("Public key is undefined");
+                return;
+            }
+
+            console.log(token)
             const response = await axios.put(
-                `${API_URL}/api/users/profile/${originalUsername}`,
+                `${API_URL}/api/users/profile/${publicKey}`,
                 {
                     newUsername: profileData.username,
-                    realname: profileData.realname,
-                    email: profileData.email,
                     aboutMe: profileData.aboutMe,
                     shareEmail: shareEmail,
-                    sharePublicKey: sharePublicKey,
+                    sharePublicKey: Boolean(sharePublicKey),
                     verified: profileData.verified,
                 },
                 {
@@ -161,15 +175,13 @@ export default function AccountPage() {
 
             localStorage.setItem('token', newToken);
 
-            if (updatedProfile.username !== originalUsername) {
-                navigate(`/account?username=${updatedProfile.username}`);
+            if (updatedProfile.public_key !== publicKey) {
+                navigate(`/account?public_key=${updatedProfile.public_key}`);
             }
 
             setIsEditable(false);
             setShowAlert(true);
-            setTimeout(() => {
-                setShowAlert(false);
-            }, 5000);
+            setTimeout(() => setShowAlert(false), 5000);
         } catch (error) {
             console.error('Error updating profile:', error);
 
@@ -189,7 +201,8 @@ export default function AccountPage() {
         setUsernameError(null);
         setProfileData((prevData) => ({
             ...prevData,
-            username: username
+            username: username ?? '-',
+            aboutMe: ''
         }));
     };
 
@@ -228,7 +241,6 @@ export default function AccountPage() {
             </CssVarsProvider>
         );
     }
-
 
     if (loading) {
         return (
@@ -277,10 +289,73 @@ export default function AccountPage() {
         );
     }
 
+    const ExpandablePublicKey = ({
+                                     publicKey,
+                                 }: {
+        publicKey: string;
+    }) => {
+        const [isExpanded, setIsExpanded] = useState(false);
+
+        const handleToggle = () => {
+            setIsExpanded(!isExpanded);
+        };
+
+        return (
+            <Box
+                sx={{
+                    cursor: 'pointer',
+                    maxWidth: isExpanded ? '100%' : '250px', // Ограничение ширины
+                    overflow: 'hidden',
+                    whiteSpace: isExpanded ? 'normal' : 'nowrap', // Раскрытие текста
+                    textOverflow: isExpanded ? 'clip' : 'ellipsis',
+                    transition: 'max-width 0.3s ease',
+                    display: 'inline',
+                }}
+                onClick={handleToggle}
+            >
+                {publicKey}
+            </Box>
+        );
+    };
+
+    const ProfileHeader = ({
+                               publicKey,
+                               verified,
+                           }: {
+        publicKey: string;
+        verified?: boolean;
+    }) => {
+        return (
+            <Typography
+                level="h2"
+                component="h1"
+                sx={{
+                    mt: 1,
+                    mb: 2,
+                    fontSize: { xs: '20px', sm: '24px' },
+                    fontWeight: 'bold',
+                    lineHeight: 1.2,
+                    textAlign: 'center',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem', // Расстояние между элементами
+                    flexWrap: 'wrap', // Чтобы текст переносился
+                }}
+            >
+                Profile
+                <ExpandablePublicKey publicKey={publicKey} />
+                {verified && (
+                    <Verified sx={{ fontSize: 20, verticalAlign: 'middle' }} />
+                )}
+            </Typography>
+        );
+    };
+
+
     return (
         <CssVarsProvider defaultMode="dark">
             <Helmet>
-                <title>{`${t('profile')} ${username}`}</title>
+                <title>{`${t('profile')} ${profileData.public_key}`}</title>
             </Helmet>
             <CssBaseline/>
             <GlobalStyles
@@ -290,26 +365,80 @@ export default function AccountPage() {
                     },
                 }}
             />
+
             <Box sx={{ flex: 1, width: '100%' }}>
-                <Box sx={{ top: { sm: -100, md: -110 }, bgcolor: 'background.body', zIndex: 9995 }}>
+                <Box
+                    sx={{
+                        top: { sm: -100, md: -110 },
+                        bgcolor: 'background.body',
+                        zIndex: 9995,
+                    }}
+                >
                     <Box sx={{ px: { xs: 2, md: 6 }, textAlign: 'center' }}>
-                        <Breadcrumbs size="sm" aria-label="breadcrumbs" separator={<ChevronRightRoundedIcon />} sx={{ justifyContent: 'center' }}>
+                        <Breadcrumbs
+                            size="sm"
+                            aria-label="breadcrumbs"
+                            separator={<ChevronRightRoundedIcon />}
+                            sx={{ justifyContent: 'center' }}
+                        >
                             <Link underline="none" color="neutral" href="/" aria-label="Home">
                                 <HomeRoundedIcon />
                             </Link>
-                            <Typography>{t('myProfile')} {username}</Typography>
+                            <Typography
+                                sx={{
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    fontSize: { xs: '14px', md: '16px' },
+                                    color: 'text.secondary',
+                                }}
+                            >
+                                {t('myProfile')}
+                            </Typography>
                         </Breadcrumbs>
-                        <Typography level="h2" component="h1" sx={{ mt: 1, mb: 2 }}>
-                            {t('profile')} {username} {profileData.verified && <Verified sx={{ fontSize: 24, verticalAlign: 'middle' }} />}
+                        <Typography
+                            level="h2"
+                            component="h1"
+                            sx={{
+                                mt: 1,
+                                mb: 2,
+                                fontSize: { xs: '20px', sm: '24px' },
+                                fontWeight: 'bold',
+                                lineHeight: 1.2,
+                                textAlign: 'center',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                flexWrap: 'wrap',
+                            }}
+                        >
+                            {t('profile')}{' '}
+                            <ExpandablePublicKey
+                                publicKey={profileData.public_key}
+                            />
+                            {profileData.verified && (
+                                <Verified sx={{ fontSize: 20, verticalAlign: 'middle' }} />
+                            )}
                         </Typography>
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: { xs: 2, md: 6 }, gap: 2 }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            px: { xs: 2, md: 6 },
+                            gap: 2,
+                        }}
+                    >
                         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
                             <ColorSchemeToggle />
                         </Box>
                         <LanguageSwitcher />
                     </Box>
                 </Box>
+
+
                 <Stack spacing={4} sx={{ maxWidth: '800px', mx: 'auto', px: { xs: 2, md: 6 }, py: { xs: 2, md: 3 } }}>
                     <Card>
                         <Box sx={{ mb: 1 }}>
@@ -457,7 +586,7 @@ export default function AccountPage() {
                         onClose={() => setShowReportModal(false)}
                         onSubmit={handleReportSubmit}
                         loading={reportLoading}
-                        username={username}
+                        username={username || 'defaultUsername'}
                     />
 
                     <AvatarUploadModal

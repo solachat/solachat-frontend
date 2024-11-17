@@ -1,11 +1,13 @@
 export type UserProps = {
     id: number;
-    username: string;
+    username?: string;
+    public_key: string;
     avatar: string;
     online: boolean;
     role: string;
     verified: boolean;
 };
+
 
 export type MessageProps = {
     id: number;

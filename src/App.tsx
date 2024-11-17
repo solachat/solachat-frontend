@@ -33,7 +33,8 @@ const App: React.FC = () => {
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/register" element={<RegisterPage />} />
-                        <Route path="/account" element={<MyAccount />} />
+                        <Route path="/:identifier" element={<MyAccount />} />
+
                         <Route path="/" element={<Navigate to="/chatOrLogin" />} />
                         <Route path="/contacts" element={<ContactsPage />} />
                         <Route path="/chat" element={<PrivateRoute element={<MyMessages />} />} />

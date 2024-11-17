@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CssVarsProvider } from '@mui/joy/styles';
 import GlobalStyles from '@mui/joy/GlobalStyles';
@@ -59,12 +59,15 @@ const RegisterPage: React.FC = () => {
     const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
     const [signedMessage, setSignedMessage] = useState<{ message: string; signature: string } | null>(null);
 
-    const handleSubmit = async (event: React.FormEvent<SignUpFormElement>) => {
-        event.preventDefault();
-        const formElements = event.currentTarget.elements;
 
+    useEffect(() => {
+        if (walletAddress && signedMessage) {
+            handleSubmit();
+        }
+    }, [walletAddress, signedMessage]);
+
+    const handleSubmit = async () => {
         const userData = {
-            username: formElements.username.value,
             lastlogin: new Date().toISOString(),
             message: signedMessage?.message,
             signature: signedMessage?.signature,
@@ -74,10 +77,9 @@ const RegisterPage: React.FC = () => {
         try {
             const response = await axios.post(`${API_URL}/api/users/register`, userData);
             const token = response.data.token;
-            localStorage.setItem('token', token);
-            if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
-                navigate('/account?username=' + encodeURIComponent(response.data.user.username));
+            if (token) {
+                localStorage.setItem('token', token);
+                navigate(`/${encodeURIComponent(walletAddress || '')}`);
             }
         } catch (error) {
             console.error('Registration failed', error);
@@ -104,7 +106,6 @@ const RegisterPage: React.FC = () => {
                 const encodedMessage = new TextEncoder().encode(message);
 
                 const { signature } = await window.solana.signMessage(encodedMessage, 'utf8');
-
                 const signatureBase64 = btoa(String.fromCharCode(...Array.from(signature)));
 
                 setWalletAddress(walletAddress);
@@ -224,44 +225,6 @@ const RegisterPage: React.FC = () => {
                                 {errorMessage}
                             </Alert>
                         )}
-                        <form onSubmit={handleSubmit}>
-                            <FormControl required>
-                                <FormLabel>{t('username')}</FormLabel>
-                                <Input
-                                    type="text"
-                                    name="username"
-                                    startDecorator={<Person />}
-                                    sx={{
-                                        '& .MuiInputBase-input': {
-                                            pl: '32px',
-                                        },
-                                    }}
-                                />
-                            </FormControl>
-                            <Stack>
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                    }}
-                                >
-
-                                </Box>
-                                <Button type="submit" fullWidth>
-                                    {t('signUp')}
-                                </Button>
-                            </Stack>
-                        </form>
-                        <Divider
-                            sx={(theme) => ({
-                                [theme.getColorSchemeSelector('light')]: {
-                                    color: { xs: '#FFF', md: 'text.tertiary' },
-                                },
-                            })}
-                        >
-                            {t('or')}
-                        </Divider>
                         <PhantomConnectButton onConnect={handlePhantomConnect} />
                         <MetamaskConnectButton onConnect={handleMetaMaskConnect} />
                     </Box>

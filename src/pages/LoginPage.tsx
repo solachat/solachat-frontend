@@ -53,7 +53,7 @@ const Login = () => {
     const [totpCode, setTotpCode] = useState<string>('');
     const [signedMessage, setSignedMessage] = useState<{ message: string; signature: string } | null>(null);
 
-    const handleLogin = async (walletAddress: string, message: string, signature: number[]) => {
+    const handleLogin = async (walletAddress: string, message: string, signature: string) => {
         try {
             const response = await axios.post(`${API_URL}/api/users/login`, {
                 walletAddress,
@@ -63,22 +63,23 @@ const Login = () => {
 
             if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
-                navigate('/account?username=' + encodeURIComponent(response.data.user.username));
+                navigate('/' + encodeURIComponent(response.data.user.publicKey));
             } else {
                 setErrorMessage('Ошибка аутентификации');
             }
         } catch (err) {
             console.error('Login failed', err);
-            setErrorMessage('Ошибка при входе с помощью Phantom Wallet');
+            setErrorMessage('Ошибка при входе');
         }
     };
+
 
     const handleLoginWithTotp = async () => {
         try {
             const response = await axios.post(`${API_URL}/api/users/login`, { totpCode });
             if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
-                navigate('/account?username=' + encodeURIComponent(response.data.user.username));
+                navigate('/' + encodeURIComponent(response.data.user.public_key));
             } else {
                 setErrorMessage('Ошибка аутентификации');
             }
@@ -109,7 +110,9 @@ const Login = () => {
 
             const { signature } = await window.solana.signMessage(encodedMessage, 'utf8');
 
-            await handleLogin(walletAddress, message, Array.from(signature));
+            const signatureBase64 = btoa(String.fromCharCode(...Array.from(signature)));
+
+            await handleLogin(walletAddress, message, signatureBase64);
         } catch (error) {
             console.error(t("error.connectingPhantom"), error);
             setErrorMessage(t("error.connectingWallet"));
@@ -121,26 +124,25 @@ const Login = () => {
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 const walletAddress = accounts[0];
-                const message = t("message.confirmRegistration", { nonce: Math.random() });
+                const message = "Sign this message to confirm login. Nonce: " + Math.random();
 
+                // Получаем подпись как hex-строку
                 const signature = await window.ethereum.request({
                     method: 'personal_sign',
                     params: [message, walletAddress],
                 });
 
-                setWalletAddress(walletAddress);
-                setSignedMessage({ message, signature });
-                setErrorMessage(null);
-
+                // Передаем hex-подпись напрямую без конвертации
                 await handleLogin(walletAddress, message, signature);
             } catch (error) {
-                console.error(t("error.connectingMetaMask"), error);
-                setErrorMessage(t("error.connectMetaMaskFailed"));
+                console.error("Error connecting to MetaMask", error);
+                setErrorMessage("Ошибка при подключении MetaMask");
             }
         } else {
-            setErrorMessage(t("error.metaMaskNotFound"));
+            setErrorMessage("MetaMask не найден");
         }
     };
+
 
     return (
         <CssVarsProvider defaultMode="dark" disableTransitionOnChange>

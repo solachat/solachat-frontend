@@ -50,7 +50,7 @@ export default function MyProfile() {
             const decodedToken = jwtDecode<JwtPayload>(token);
             return {
                 id: decodedToken.id as number,
-                username: decodedToken.username as string,
+                public_key: decodedToken.publicKey as string,
                 avatar: decodedToken.avatar as string,
                 online: true,
                 verified: false,
@@ -220,7 +220,7 @@ export default function MyProfile() {
                 title={selectedChat
                     ? (selectedChat.isGroup
                             ? selectedChat.name ?? 'Unnamed Group'
-                            : selectedChat.users.find(user => user.id !== currentUser?.id)?.username ?? 'Unnamed User'
+                            : selectedChat.users.find(user => user.id !== currentUser?.id)?.public_key ?? 'Unnamed User'
                     )
                     : 'Messenger'}
             />

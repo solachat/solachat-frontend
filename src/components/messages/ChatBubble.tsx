@@ -25,7 +25,7 @@ type ChatBubbleProps = MessageProps & {
     messageCreatorId: number;
     user: {
         avatar: string;
-        username: string;
+        public_key: string;
     };
     isGroupChat: boolean;
     isRead: boolean;
@@ -301,7 +301,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     }}
                 >
                     {isGroupChat && !isSent && (
-                        <Typography>{user.username}</Typography>
+                        <Typography>{user.public_key}</Typography>
                     )}
 
                     {isVideo && (

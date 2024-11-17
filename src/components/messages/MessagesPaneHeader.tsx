@@ -51,8 +51,8 @@ export default function MessagesPaneHeader({
     const handleAvatarClick = () => {
         if (isGroup) {
             setIsGroupModalOpen(true);
-        } else if (sender?.username) {
-            window.location.href = `/account?username=${sender.username}`;
+        } else if (sender?.public_key) {
+            window.location.href = `/${sender.public_key}`;
         }
     };
 
@@ -106,7 +106,7 @@ export default function MessagesPaneHeader({
                     <Avatar
                         size="lg"
                         src={isGroup ? groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
-                        alt={isGroup ? chatName : sender?.username}
+                        alt={isGroup ? chatName : sender?.public_key}
                         onClick={handleAvatarClick}
                         sx={{ cursor: 'pointer' }}
                     />
@@ -129,7 +129,7 @@ export default function MessagesPaneHeader({
                             }}
                             onClick={handleAvatarClick}
                         >
-                            {isGroup ? chatName : sender?.username}
+                            {isGroup ? chatName : sender?.public_key}
                             {sender?.verified && <Verified sx={{ ml: 1 }} />}
                         </Typography>
 
@@ -173,7 +173,10 @@ export default function MessagesPaneHeader({
                 <CallModal
                     open={isCallModalOpen}
                     onClose={() => setIsCallModalOpen(false)}
-                    sender={sender}
+                    sender={{
+                        ...sender,
+                        username: sender.username || 'User',
+                    }}
                     receiver={{
                         id: receiverId,
                         username: sender.username || 'User',
@@ -182,9 +185,10 @@ export default function MessagesPaneHeader({
                     ws={null}
                     currentUserId={currentUserId}
                     callId={null}
-                    status={"incoming" || "outgoing" || "accepted" || "rejected"}
+                    status={"incoming"}
                 />
             )}
+
         </>
     ) : null;
 }

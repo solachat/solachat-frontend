@@ -16,6 +16,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import {useTranslation} from "react-i18next";
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import Verified from "../core/Verified";
+import Divider from "@mui/joy/Divider";
 
 type NewMessageEvent =
     | {
@@ -182,15 +183,15 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 <AvatarWithStatus
                                     online={sender?.online}
                                     src={sender?.avatar}
-                                    alt={sender?.username}
+                                    alt={sender?.public_key}
                                     sx={{
                                         width: { xs: 48, sm: 48 },
                                         height: { xs: 48, sm: 48 },
                                         fontSize: { xs: 16, sm: 24 },
                                     }}
                                 >
-                                    {(!sender?.avatar && sender?.username)
-                                        ? sender.username[0].toUpperCase()
+                                    {(!sender?.avatar && sender?.public_key)
+                                        ? sender.public_key[0].toUpperCase()
                                         : null}
                                 </AvatarWithStatus>
                                 {isFavorite && (
@@ -215,13 +216,26 @@ export default function ChatListItem(props: ChatListItemProps) {
                         )}
 
                         <Box sx={{ flex: 1 }}>
-                            <Typography level="body-md" fontSize={{ xs: 'sm', sm: 'md' }}>
+                            <Typography
+                                level="body-md"
+                                fontSize={{ xs: 'xs', sm: 'sm' }}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    flexWrap: 'wrap',
+                                    gap: 0.3,
+                                    lineHeight: 1.2,
+                                    wordBreak: 'break-word',
+                                }}
+                            >
                                 {isGroup ? (
                                     existingChat?.name || 'Group Chat'
                                 ) : (
                                     <>
-                                        {sender?.username || 'No Name'}
-                                        {sender?.verified && <Verified sx={{ fontSize: 16, verticalAlign: 'middle', ml: 0.5 }} />}
+                                        {sender?.public_key || 'No Name'}
+                                        {sender?.verified && (
+                                            <Verified sx={{ fontSize: 14, verticalAlign: 'middle', ml: 0.5 }} />
+                                        )}
                                     </>
                                 )}
                             </Typography>
@@ -236,7 +250,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
                                         color: 'text.secondary',
-                                        marginTop: '3px',
+                                        marginTop: '7px',
                                         maxWidth: { xs: '290px', sm: '350px' },
                                         width: '100%',
                                     }}

@@ -18,9 +18,10 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { DarkModeSwitch } from './ColorSchemeToggle';
 import { LanguageSwitcherWithText } from "./LanguageSwitcher";
 import { createFavoriteChat } from '../../api/api';
+import {useState} from "react";
 
 interface DecodedToken {
-    username: string;
+    publicKey: string;
     avatar: string;
     exp: number;
 }
@@ -62,10 +63,15 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-    const [userData, setUserData] = React.useState<{ username: string; avatar: string } | null>(null);
+    const [userData, setUserData] = React.useState<{ publicKey: string; avatar: string; } | null>(null);
     const { t } = useTranslation();
     const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
     const navigate = useNavigate();
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const handleToggle = () => {
+        setIsExpanded(!isExpanded);
+    };
 
     React.useEffect(() => {
         const token = localStorage.getItem('token');
@@ -74,7 +80,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 const decoded: DecodedToken = jwtDecode(token);
                 if (!userData) {
                     setUserData({
-                        username: decoded.username,
+                        publicKey: decoded.publicKey,
                         avatar: decoded.avatar,
                     });
                 }
@@ -132,17 +138,36 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     width: { xs: '240px', md: '180px' },
                 }}
             >
-                <Box sx={{ display: 'flex', flexDirection: 'column', mb: 0, padding: 0 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', mb: 0, padding: 0, alignItems: 'flex-start' }}>
                     <Avatar
                         variant="outlined"
                         size="lg"
                         sx={{ width: 50, height: 50 }}
                         src={userData.avatar || 'https://via.placeholder.com/80'}
                     />
-                    <Typography level="title-sm" sx={{ mt: 1, mb: 0 }}>
-                        {userData.username}
-                    </Typography>
+                    <Box
+                        onClick={handleToggle}
+                        sx={{
+                            mb: 0,
+                            maxHeight: isExpanded ? '500px' : '20px',
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'max-height 0.3s ease',
+                            width: '100%',
+                        }}
+                    >
+                        <Typography
+                            level="title-sm"
+                            sx={{
+                                wordBreak: 'break-all',
+                            }}
+                        >
+                            {userData.publicKey}
+                        </Typography>
+                    </Box>
                 </Box>
+
 
                 <Divider />
 
@@ -236,7 +261,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                     <ListItem sx={{ mt: 0.5 }}>
                                         <ListItemButton
                                             component="a"
-                                            href={`/account?username=${userData.username}`}
+                                            href={`/${userData.publicKey}`}
                                         >
                                             {t('myProfile')}
                                         </ListItemButton>
