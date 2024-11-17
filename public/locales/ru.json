@@ -135,7 +135,7 @@
   "Chat": "Сообщения",
   "Connect Telegram": "Подключить Telegram",
   "Connect Google": "Подключить Google",
-  "accountNotFound": "Аккаунт не найден!",
+  "accountNotFound": "Аккаунт {{identifier}} не найден",
   "your-account-was-updated": "Ваш аккаунт был обновлен",
   "tokens": "TOK",
   "notFound": {

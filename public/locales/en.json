@@ -108,7 +108,7 @@
   "Bullet list": "Bullet list",
   "Online": "Online",
   "Username": "Username",
-  "accountNotFound": "Account not found!",
+  "accountNotFound": "Account {{identifier}} not found",
   "your-account-was-updated": "Your account was updated",
   "tokens": "TOK",
   "notFound": {

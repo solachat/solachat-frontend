@@ -37,6 +37,7 @@ import AvatarUploadModal from '../components/profile/AvatarUploadModal';
 import ReportModal from "../components/profile/ReportModal";
 import WalletIcon from '@mui/icons-material/Wallet';
 import SecurityModal from "../components/profile/SecurityModal";
+import ConnectButtons from "../components/profile/ConnectButtons";
 
 export default function AccountPage() {
     const { t } = useTranslation();
@@ -201,7 +202,7 @@ export default function AccountPage() {
         setUsernameError(null);
         setProfileData((prevData) => ({
             ...prevData,
-            username: username ?? '-',
+            username: username ?? '',
             aboutMe: ''
         }));
     };
@@ -233,14 +234,53 @@ export default function AccountPage() {
         return (
             <CssVarsProvider defaultMode="dark">
                 <CssBaseline />
-                <Box sx={{ flex: 1, width: '100%', textAlign: 'center', py: 5 }}>
-                    <Typography level="h4" color="danger">
-                        {t('accountNotFound')}
+                <Box sx={{ flex: 1, width: '100%' }}>
+                    <Box sx={{ px: { xs: 2, md: 6 }, textAlign: 'center' }}>
+                        <Breadcrumbs
+                            size="sm"
+                            aria-label="breadcrumbs"
+                            separator={<ChevronRightRoundedIcon />}
+                            sx={{ pl: 0, justifyContent: 'center' }}
+                        >
+                            <Link underline="none" color="neutral" href="/" aria-label="Home">
+                                <HomeRoundedIcon />
+                            </Link>
+                            <Typography
+                            >
+                                {t('myProfile')} {identifier}
+                            </Typography>
+                        </Breadcrumbs>
+                    </Box>
+                    <Typography
+                        level="h4"
+                        color="danger"
+                        sx={{
+                            mt: 2,
+                            fontWeight: 'bold',
+                            textAlign: 'center',
+                        }}
+                    >
+                        {t('accountNotFound', { identifier })}
                     </Typography>
                 </Box>
+                <style>
+                    {`
+                    @keyframes typing {
+                        from { width: 0; }
+                        to { width: 11ch; }
+                    }
+
+                    @keyframes blink-caret {
+                        from, to { border-color: transparent; }
+                        50% { border-color: orange; }
+                    }
+                `}
+                </style>
             </CssVarsProvider>
         );
     }
+
+
 
     if (loading) {
         return (
@@ -259,7 +299,6 @@ export default function AccountPage() {
                             </Link>
                             <Typography
                                 sx={{
-                                    fontWeight: 'bold',
                                     animation: 'typing 3.5s steps(11, end), blink-caret 0.75s step-end infinite',
                                     borderRight: '.15em solid transparent',
                                     display: 'inline-block',
@@ -304,9 +343,9 @@ export default function AccountPage() {
             <Box
                 sx={{
                     cursor: 'pointer',
-                    maxWidth: isExpanded ? '100%' : '250px', // Ограничение ширины
+                    maxWidth: isExpanded ? '100%' : '250px',
                     overflow: 'hidden',
-                    whiteSpace: isExpanded ? 'normal' : 'nowrap', // Раскрытие текста
+                    whiteSpace: isExpanded ? 'normal' : 'nowrap',
                     textOverflow: isExpanded ? 'clip' : 'ellipsis',
                     transition: 'max-width 0.3s ease',
                     display: 'inline',
@@ -317,40 +356,6 @@ export default function AccountPage() {
             </Box>
         );
     };
-
-    const ProfileHeader = ({
-                               publicKey,
-                               verified,
-                           }: {
-        publicKey: string;
-        verified?: boolean;
-    }) => {
-        return (
-            <Typography
-                level="h2"
-                component="h1"
-                sx={{
-                    mt: 1,
-                    mb: 2,
-                    fontSize: { xs: '20px', sm: '24px' },
-                    fontWeight: 'bold',
-                    lineHeight: 1.2,
-                    textAlign: 'center',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem', // Расстояние между элементами
-                    flexWrap: 'wrap', // Чтобы текст переносился
-                }}
-            >
-                Profile
-                <ExpandablePublicKey publicKey={publicKey} />
-                {verified && (
-                    <Verified sx={{ fontSize: 20, verticalAlign: 'middle' }} />
-                )}
-            </Typography>
-        );
-    };
-
 
     return (
         <CssVarsProvider defaultMode="dark">
@@ -385,16 +390,8 @@ export default function AccountPage() {
                                 <HomeRoundedIcon />
                             </Link>
                             <Typography
-                                sx={{
-                                    maxWidth: '100%',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                    fontSize: { xs: '14px', md: '16px' },
-                                    color: 'text.secondary',
-                                }}
                             >
-                                {t('myProfile')}
+                                {t('myProfile')} {profileData.public_key}
                             </Typography>
                         </Breadcrumbs>
                         <Typography
@@ -437,8 +434,6 @@ export default function AccountPage() {
                         <LanguageSwitcher />
                     </Box>
                 </Box>
-
-
                 <Stack spacing={4} sx={{ maxWidth: '800px', mx: 'auto', px: { xs: 2, md: 6 }, py: { xs: 2, md: 3 } }}>
                     <Card>
                         <Box sx={{ mb: 1 }}>
@@ -545,7 +540,6 @@ export default function AccountPage() {
                                         sx={{ pointerEvents: 'auto' }}
                                     />
                                 </FormControl>
-
                             </Stack>
                         </Stack>
                         <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
