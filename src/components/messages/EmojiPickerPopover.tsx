@@ -31,7 +31,7 @@ export default function EmojiPickerPopover({ onEmojiSelect, anchorEl, onClose }:
             }}
         >
             <Box sx={{
-                width: 200, // увеличенная ширина
+                width: 200,
                 padding: '10px',
                 borderRadius: '8px',
                 backgroundColor: theme.palette.background.paper,
@@ -46,8 +46,8 @@ export default function EmojiPickerPopover({ onEmojiSelect, anchorEl, onClose }:
                     sx={{
                         display: 'flex',
                         flexWrap: 'wrap',
-                        gap: '4px', // уменьшенный gap для более плотного размещения
-                        maxHeight: '180px', // увеличенная высота для большего количества эмодзи
+                        gap: '4px',
+                        maxHeight: '180px',
                         overflowY: 'auto',
                         paddingRight: '6px',
                         '&::-webkit-scrollbar': {
@@ -71,8 +71,8 @@ export default function EmojiPickerPopover({ onEmojiSelect, anchorEl, onClose }:
                             onClick={() => onEmojiSelect(emoji)}
                             sx={{
                                 cursor: 'pointer',
-                                fontSize: '20px', // увеличенный шрифт для удобства
-                                padding: '4px', // уменьшенный padding для плотного размещения
+                                fontSize: '20px',
+                                padding: '4px',
                                 borderRadius: '4px',
                                 '&:hover': { backgroundColor: theme.palette.action.hover }
                             }}

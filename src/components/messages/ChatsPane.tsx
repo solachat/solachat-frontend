@@ -281,7 +281,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                     ) : (
                         <>
                             {loadingChats ? (
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 4 }}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 4 }}>
                                 </Box>
                             ) : chats.length > 0 ? (
                                 <List>

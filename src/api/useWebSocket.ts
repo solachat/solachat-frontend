@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import { updateUserStatus } from './api';
 import { jwtDecode } from 'jwt-decode';
 
-const WS_URL = process.env.WS_URL || 'ws://localhost:4005';
+const WS_URL = process.env.WS_URL || 'wss://api.solacoin.org';
 const RECONNECT_INTERVAL = 3000;
 const HEARTBEAT_INTERVAL = 120000;
 
@@ -34,7 +34,6 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
         },
         [currentUserId]
     );
-
 
     const connectWebSocket = useCallback(() => {
         if (isConnected || wsRef.current) return;

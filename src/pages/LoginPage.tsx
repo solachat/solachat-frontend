@@ -51,7 +51,6 @@ const Login = () => {
     const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
     const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
     const [totpCode, setTotpCode] = useState<string>('');
-    const [signedMessage, setSignedMessage] = useState<{ message: string; signature: string } | null>(null);
 
     const handleLogin = async (walletAddress: string, message: string, signature: string) => {
         try {
@@ -126,13 +125,11 @@ const Login = () => {
                 const walletAddress = accounts[0];
                 const message = "Sign this message to confirm login. Nonce: " + Math.random();
 
-                // Получаем подпись как hex-строку
                 const signature = await window.ethereum.request({
                     method: 'personal_sign',
                     params: [message, walletAddress],
                 });
 
-                // Передаем hex-подпись напрямую без конвертации
                 await handleLogin(walletAddress, message, signature);
             } catch (error) {
                 console.error("Error connecting to MetaMask", error);

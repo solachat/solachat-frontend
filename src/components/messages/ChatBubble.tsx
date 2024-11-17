@@ -90,8 +90,6 @@ const renderMessageContent = (text: string) => {
     });
 };
 
-
-
 export default function ChatBubble(props: ChatBubbleProps) {
     const { t } = useTranslation();
     const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat, isRead } = props;

@@ -11,10 +11,9 @@ export default function CustomAudioPlayer({ audioSrc, isSent }: { audioSrc: stri
     const [duration, setDuration] = useState(0);
     const [volume, setVolume] = useState(1);
 
-    const playerColor = isSent ? '#76baff' : '#34a853'; // Динамический цвет плеера
+    const playerColor = isSent ? '#76baff' : '#34a853';
 
     useEffect(() => {
-        // Устанавливаем продолжительность аудиофайла после загрузки метаданных
         const handleLoadedMetadata = () => {
             if (audioRef.current) {
                 setDuration(audioRef.current.duration);

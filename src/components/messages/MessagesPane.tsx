@@ -262,7 +262,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             >
 
                 {chatMessages.length > 0 ? (
-                    <Stack spacing={2} sx={{ width: { xs: '100%', sm: '80%', md: '95%' } }}>
+                    <Stack spacing={1} sx={{ width: { xs: '100%', sm: '80%', md: '95%' } }}>
                         {chatMessages.map((message: MessageProps, index: number) => {
                             const isCurrentUser = message.userId === currentUserId;
                             return (

@@ -123,7 +123,6 @@ export default function CallModal({
                     if (data.type === 'offer') {
                         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
 
-                        // Создаем answer и отправляем его звонящему
                         const answer = await peerConnection.createAnswer();
                         await peerConnection.setLocalDescription(answer);
 

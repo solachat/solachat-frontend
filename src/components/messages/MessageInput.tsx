@@ -79,7 +79,7 @@ export default function MessageInput(props: MessageInputProps) {
 
     const handleEmojiSelect = (emoji: string) => {
         setMessage((prev) => prev + emoji);
-        setAnchorEl(null); // Закрываем меню после выбора эмодзи
+        setAnchorEl(null);
     };
 
     const toggleEmojiMenu = (event: React.MouseEvent<HTMLElement>) => {

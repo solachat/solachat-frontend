@@ -59,7 +59,6 @@ const RegisterPage: React.FC = () => {
     const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
     const [signedMessage, setSignedMessage] = useState<{ message: string; signature: string } | null>(null);
 
-
     useEffect(() => {
         if (walletAddress && signedMessage) {
             handleSubmit();
