@@ -72,7 +72,6 @@ const Login = () => {
         }
     };
 
-
     const handleLoginWithTotp = async () => {
         try {
             const response = await axios.post(`${API_URL}/api/users/login`, { totpCode });
@@ -87,7 +86,6 @@ const Login = () => {
             setErrorMessage('Ошибка при входе с использованием TOTP кода');
         }
     };
-
 
     const handlePhantomConnect = async () => {
         try {

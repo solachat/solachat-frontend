@@ -39,6 +39,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 if (prevChats.some((chat) => chat.id === newChat.id)) return prevChats;
                 return [...prevChats, newChat].sort((a, b) => b.id - a.id);
             });
+            console.log('New chat created:', newChat);
         }
 
         if (data.type === 'chatDeleted') {
@@ -247,10 +248,10 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                             <Input
                                 size="sm"
                                 startDecorator={isConnecting ? <CircularProgress size="sm" /> : <SearchRoundedIcon />}
-                                placeholder={t('Search')}
+                                placeholder={isConnecting ? t('Connecting') : t('Search')}
                                 value={searchTerm}
                                 onChange={handleSearchChange}
-                                aria-label="Search"
+                                aria-label={isConnecting ? 'Connecting' : 'Search'}
                                 sx={{
                                     flex: 1,
                                     fontSize: '14px',

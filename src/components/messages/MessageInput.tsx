@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Box from '@mui/joy/Box';
 import FormControl from '@mui/joy/FormControl';
-import { IconButton, Stack, Typography, Avatar } from '@mui/joy';
+import {IconButton, Stack, Typography, Avatar, Modal, ModalDialog} from '@mui/joy';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -36,6 +36,23 @@ export default function MessageInput(props: MessageInputProps) {
     const [isFileUploadOpen, setFileUploadOpen] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [isImageOpen, setIsImageOpen] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
+    const [imageSrc, setImageSrc] = useState<string | null>(null);
+
+    const handleImageClick = (imageUrl: string) => {
+        setImageSrc(imageUrl);
+        setIsImageOpen(true);
+    };
+
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            setIsImageOpen(false);
+            setIsClosing(false);
+        }, 100);
+    };
 
     useEffect(() => {
         if (editingMessage?.content) {
@@ -267,34 +284,87 @@ export default function MessageInput(props: MessageInputProps) {
             {uploadedFiles.length > 0 && (
                 <Box sx={{ mt: 2 }}>
                     <Stack direction="row" flexWrap="wrap" spacing={2} sx={{ mt: 1 }}>
-                        {uploadedFiles.map((file, index) => (
-                            <Box
-                                key={index}
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    padding: '8px 16px',
-                                    border: '1px solid',
-                                    borderColor: 'divider',
-                                    borderRadius: '8px',
-                                    backgroundColor: 'background.level2',
-                                    minWidth: '200px',
-                                }}
-                            >
-                                <Stack direction="row" spacing={1} alignItems="center">
-                                    <Avatar sx={{ backgroundColor: 'primary.main' }}>
-                                        <InsertDriveFileIcon />
-                                    </Avatar>
-                                    <Typography noWrap sx={{ maxWidth: '120px' }}>
-                                        {file.file.name}
-                                    </Typography>
-                                </Stack>
-                                <IconButton onClick={() => removeUploadedFile(index)} size="sm">
-                                    <DeleteIcon />
-                                </IconButton>
-                            </Box>
-                        ))}
+                        {uploadedFiles.map((file, index) => {
+                            const isImage = file.file.type.startsWith('image/');
+                            const fileUrl = URL.createObjectURL(file.file);
+
+                            return (
+                                <Box
+                                    key={index}
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '8px 16px',
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        borderRadius: '8px',
+                                        backgroundColor: 'background.level2',
+                                        minWidth: '200px',
+                                    }}
+                                >
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                        {isImage ? (
+                                            <Avatar
+                                                sx={{
+                                                    width: 40,
+                                                    height: 40,
+                                                    borderRadius: '4px',
+                                                    objectFit: 'cover',
+                                                    cursor: 'pointer',
+                                                }}
+                                                src={fileUrl}
+                                                alt="preview"
+                                                onClick={() => handleImageClick(fileUrl)}
+                                            />
+                                        ) : (
+                                            <Avatar sx={{ backgroundColor: 'primary.main' }}>
+                                                <InsertDriveFileIcon />
+                                            </Avatar>
+                                        )}
+                                        <Typography noWrap sx={{ maxWidth: '120px' }}>
+                                            {file.file.name}
+                                        </Typography>
+                                    </Stack>
+                                    <IconButton onClick={() => removeUploadedFile(index)} size="sm">
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </Box>
+                            );
+                        })}
                     </Stack>
+                </Box>
+            )}
+
+            {/* Модальное окно с анимацией */}
+            {isImageOpen && imageSrc && (
+                <Box
+                    sx={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 999,
+                        cursor: 'pointer',
+                        animation: `${isClosing ? 'fade-out' : 'fade-in'} 0.2s ease-in-out`,
+                    }}
+                    onClick={handleClose}
+                >
+                    <Box sx={{ position: 'relative', display: 'inline-flex', maxWidth: '90%', maxHeight: '90%' }}>
+                        <img
+                            src={imageSrc}
+                            alt="attachment-preview"
+                            style={{
+                                width: '100%',
+                                height: 'auto',
+                                objectFit: 'contain',
+                            }}
+                        />
+                    </Box>
                 </Box>
             )}
 

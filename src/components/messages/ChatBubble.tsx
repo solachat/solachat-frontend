@@ -119,12 +119,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
         if (!attachment) return '';
         const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
-        const cleanedPath = attachment.filePath
-            .replace(/\\/g, '/')
-            .replace(/\.enc|\.decrypted/g, '');
+        const cleanedPath = attachment.filePath.replace(/\\/g, '/');
 
-        return `${cleanedPath}`;
+        return `${baseUrl}/${cleanedPath}`;
     };
+
 
     const isImage = isImageFile(attachment?.fileName || '');
     const isVideo = isVideoFile(attachment?.fileName || '');

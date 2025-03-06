@@ -234,7 +234,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     <>
                                         {sender?.public_key || 'No Name'}
                                         {sender?.verified && (
-                                            <Verified sx={{ fontSize: 14, verticalAlign: 'middle', ml: 0.5 }} />
+                                            <Verified sx={{ fontSize: 15, verticalAlign: 'middle' }} />
                                         )}
                                     </>
                                 )}
@@ -258,7 +258,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     {lastMessage.attachment && isImage(lastMessage.attachment.fileName) ? (
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <img
-                                                src={`${fixFilePath(lastMessage.attachment.filePath)}`}
+                                                src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath.replace('.mp4', '-thumbnail.jpg'))}`}
                                                 alt="attachment preview"
                                                 style={{ width: '20px', height: '20px', marginRight: '8px' }}
                                             />

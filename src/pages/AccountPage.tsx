@@ -38,6 +38,7 @@ import ReportModal from "../components/profile/ReportModal";
 import WalletIcon from '@mui/icons-material/Wallet';
 import SecurityModal from "../components/profile/SecurityModal";
 import ConnectButtons from "../components/profile/ConnectButtons";
+import CircularProgress from '@mui/material/CircularProgress';
 
 export default function AccountPage() {
     const { t } = useTranslation();
@@ -46,7 +47,6 @@ export default function AccountPage() {
     const queryParams = new URLSearchParams(location.search);
     const username = queryParams.get('username') || null;
     const publicKey = queryParams.get('publicKey') || null;
-    console.log('PublicKey: ', publicKey);
 
     const [isOwner, setIsOwner] = React.useState(false);
     const [shareEmail, setShareEmail] = React.useState(false);
@@ -109,14 +109,12 @@ export default function AccountPage() {
                     ? `public_key=${identifier}`
                     : `username=${identifier}`;
 
-                console.log(`Fetching profile with query: ${queryParam}`);
 
                 const response = await axios.get(`${API_URL}/api/users/profile?${queryParam}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
                 const data = response.data;
-                console.log("Profile data:", data);
 
                 setProfileData(data);
                 setAccountExists(true);
@@ -286,47 +284,39 @@ export default function AccountPage() {
         return (
             <CssVarsProvider defaultMode="dark">
                 <CssBaseline />
-                <Box sx={{ flex: 1, width: '100%' }}>
-                    <Box sx={{ px: { xs: 2, md: 6 }, textAlign: 'center' }}>
-                        <Breadcrumbs
-                            size="sm"
-                            aria-label="breadcrumbs"
-                            separator={<ChevronRightRoundedIcon />}
-                            sx={{ pl: 0, justifyContent: 'center' }}
-                        >
-                            <Link underline="none" color="neutral" href="/" aria-label="Home">
-                                <HomeRoundedIcon />
-                            </Link>
-                            <Typography
-                                sx={{
-                                    animation: 'typing 3.5s steps(11, end), blink-caret 0.75s step-end infinite',
-                                    borderRight: '.15em solid transparent',
-                                    display: 'inline-block',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                }}
-                            >
-                                {t('loading')}
-                            </Typography>
-                        </Breadcrumbs>
-                    </Box>
-                </Box>
-                <style>
-                    {`
-                    @keyframes typing {
-                        from { width: 0; }
-                        to { width: 11ch; }
-                    }
 
-                    @keyframes blink-caret {
-                        from, to { border-color: transparent; }
-                        50% { border-color: orange; }
-                    }
-                `}
-                </style>
+                <Box sx={{ px: { xs: 2, md: 6 }, textAlign: 'center' }}>
+                    <Breadcrumbs
+                        size="sm"
+                        aria-label="breadcrumbs"
+                        separator={<ChevronRightRoundedIcon />}
+                        sx={{ justifyContent: 'center' }}
+                    >
+                        <Link underline="none" color="neutral" href="/" aria-label="Home">
+                            <HomeRoundedIcon />
+                        </Link>
+                        <Typography
+                        >
+                            {t('myProfile')} {profileData?.public_key || '...'}
+                        </Typography>
+                    </Breadcrumbs>
+                </Box>
+
+                {/* Центр экрана с анимацией загрузки */}
+                <Box sx={{
+                    flex: 1,
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '50vh',
+                }}>
+                    <CircularProgress color="primary" size={60} />
+                </Box>
             </CssVarsProvider>
         );
     }
+
 
     const ExpandablePublicKey = ({
                                      publicKey,
