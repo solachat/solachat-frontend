@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useLocation, useNavigate, useParams} from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import AspectRatio from '@mui/joy/AspectRatio';
@@ -39,6 +39,7 @@ import WalletIcon from '@mui/icons-material/Wallet';
 import SecurityModal from "../components/profile/SecurityModal";
 import ConnectButtons from "../components/profile/ConnectButtons";
 import CircularProgress from '@mui/material/CircularProgress';
+import { useWebSocket } from '../api/useWebSocket';
 
 export default function AccountPage() {
     const { t } = useTranslation();
@@ -136,6 +137,38 @@ export default function AccountPage() {
         fetchProfile();
     }, [identifier, API_URL]);
 
+
+    const { connectWebSocket } = useWebSocket((message) => {
+        if (message.type === 'USER_CONNECTED' && message.publicKey === profileData.public_key) {
+            setProfileData(prevData => ({
+                ...prevData,
+                online: true
+            }));
+        } else if (message.type === 'USER_DISCONNECTED' && message.publicKey === profileData.public_key) {
+            setProfileData(prevData => ({
+                ...prevData,
+                online: false
+            }));
+        }
+    }, [profileData.public_key]);
+
+    useEffect(() => {
+    }, [profileData]);
+
+    useEffect(() => {
+
+        if (profileData.online && !wsConnection.current) {
+            connectWebSocket();
+            wsConnection.current = true;
+        } else if (!profileData.online && wsConnection.current) {
+            wsConnection.current = false;
+        } else {
+            console.log("WebSocket already connected or user is offline.");
+        }
+    }, [profileData.online, connectWebSocket]);
+
+    const wsConnection = useRef(false);
+
     const handleSave = async () => {
         const token = localStorage.getItem('token');
 
@@ -152,7 +185,6 @@ export default function AccountPage() {
                 return;
             }
 
-            console.log(token)
             const response = await axios.put(
                 `${API_URL}/api/users/profile/${publicKey}`,
                 {
@@ -227,6 +259,7 @@ export default function AccountPage() {
     };
 
     const defaultAvatarUrl = `https://via.placeholder.com/150?text=${username}`;
+    console.log(profileData)
 
     if (!accountExists) {
         return (
@@ -441,6 +474,7 @@ export default function AccountPage() {
                                         overflow: 'hidden',
                                         cursor: isOwner ? 'pointer' : 'default',
                                         transition: '0.3s ease',
+                                        border: profileData.online ? '3px solid green' : '3px solid transparent',
                                         '&:hover img': {
                                             filter: isOwner ? 'brightness(0.7)' : 'none',
                                         },
@@ -449,6 +483,7 @@ export default function AccountPage() {
                                 >
                                     <img src={profileData.avatar || defaultAvatarUrl} loading="lazy" alt="Avatar" />
                                 </AspectRatio>
+
                                 <Box sx={{ textAlign: 'center', mt: 2 }}>
                                     <Typography sx={{ fontSize: '1.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         {profileData.rating}
@@ -462,6 +497,9 @@ export default function AccountPage() {
                                     </Typography>
                                 </Box>
                             </Stack>
+
+
+
                             <Stack spacing={2} sx={{ flexGrow: 1, width: '100%' }}>
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: '100%' }}>
                                     <FormControl sx={{ flexGrow: 1 }}>
@@ -492,21 +530,21 @@ export default function AccountPage() {
                                     <FormLabel>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             {t('wallet')}
-                                            {isOwner || sharePublicKey ? (
-                                                <> ({balance} SOL, {tokenBalance} {t('tokens')})</>
-                                            ) : null}
-                                            {isOwner && (
-                                                <>
-                                                    <Checkbox
-                                                        size="sm"
-                                                        checked={sharePublicKey}
-                                                        onChange={() => setPublicKey(!sharePublicKey)}
-                                                        disabled={!isEditable}
-                                                        sx={{ ml: 1 }}
-                                                    />
-                                                    {t('Share public key')}
-                                                </>
-                                            )}
+                                            {/*{isOwner || sharePublicKey ? (*/}
+                                            {/*    <> ({balance} SOL, {tokenBalance} {t('tokens')})</>*/}
+                                            {/*) : null}*/}
+                                            {/*{isOwner && (*/}
+                                            {/*    <>*/}
+                                            {/*        <Checkbox*/}
+                                            {/*            size="sm"*/}
+                                            {/*            checked={sharePublicKey}*/}
+                                            {/*            onChange={() => setPublicKey(!sharePublicKey)}*/}
+                                            {/*            disabled={!isEditable}*/}
+                                            {/*            sx={{ ml: 1 }}*/}
+                                            {/*        />*/}
+                                            {/*        {t('Share public key')}*/}
+                                            {/*    </>*/}
+                                            {/*)}*/}
                                         </Box>
                                     </FormLabel>
                                     <Input

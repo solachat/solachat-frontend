@@ -18,7 +18,7 @@ const UnderConstruction: React.FC = () => {
     };
 
     return (
-        <CssVarsProvider defaultMode="dark">
+        <CssVarsProvider>
             <Helmet>
                 <title>{t('underConstruction.title')}</title>
             </Helmet>

@@ -14,7 +14,7 @@ const NotFoundPage: React.FC = () => {
     };
 
     return (
-        <CssVarsProvider defaultMode="dark">
+        <CssVarsProvider>
             <Helmet>
                 <title>404 {t('notFound.subtitle')}</title>
             </Helmet>

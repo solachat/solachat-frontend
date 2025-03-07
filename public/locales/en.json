@@ -234,5 +234,8 @@
     "preview": "preview",
     "selectFile": "Select File",
     "attachFile": "Attach File"
-  }
+  },
+  "uploadImage": "Upload Image",
+  "reset": "Reset",
+  "editImage": "Edit Image"
 }

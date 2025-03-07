@@ -77,16 +77,21 @@ const RegisterPage: React.FC = () => {
             const response = await axios.post(`${API_URL}/api/users/register`, userData);
             const token = response.data.token;
             if (token) {
-                localStorage.setItem('token', token);
-                navigate(`/${encodeURIComponent(walletAddress || '')}`);
+                localStorage.setItem("token", token);
+                navigate(`/${encodeURIComponent(walletAddress || "")}`);
             }
         } catch (error) {
-            console.error('Registration failed', error);
+            console.error("Registration failed", error);
+
             if (axios.isAxiosError(error)) {
-                const errorMessage = error.response?.data?.message || t('registrationFailed');
+                const errorMessage =
+                    error.response?.data && typeof error.response.data === "object" && "message" in error.response.data
+                        ? (error.response.data as { message: string }).message
+                        : t("registrationFailed");
+
                 setErrorMessage(errorMessage);
             } else {
-                setErrorMessage(t('registrationFailed'));
+                setErrorMessage(t("registrationFailed"));
             }
         }
     };
@@ -145,7 +150,7 @@ const RegisterPage: React.FC = () => {
     };
 
     return (
-        <CssVarsProvider defaultMode="dark" disableTransitionOnChange>
+        <CssVarsProvider disableTransitionOnChange>
             <Helmet>
                 <title>{t('title.register')}</title>
             </Helmet>

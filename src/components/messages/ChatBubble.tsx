@@ -56,6 +56,7 @@ const isLink = (text: string) => {
 };
 
 
+
 const renderMessageContent = (text: string) => {
     const parts = text.split(/((?:https?:\/\/[^\s]+|(?:[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:[\/\w.-]*)?)(?=\s|$))/g);
 
@@ -98,6 +99,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const handleImageLoad = () => {
         setImageLoading(false);
     };
+    const [pendingImage, setPendingImage] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
 
     const [isImageOpen, setIsImageOpen] = useState(false);
     const [isVideoOpen, setIsVideoOpen] = useState(false);
@@ -282,8 +285,12 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         borderRadius: '12px',
                         borderBottomLeftRadius: isSent ? '18px' : '0px',
                         borderBottomRightRadius: isSent ? '0px' : '18px',
-                        background: (isImage || isVideo || isAudio) && !content ? 'transparent' :
-                            (isSent ? '#4F6D7A' : 'var(--joy-palette-background-level2)'),
+                        backgroundColor:
+                            (isImage || isVideo || isAudio) && !content
+                                ? 'transparent'
+                                : isSent
+                                    ? 'var(--joy-palette-primary-solidBg)'
+                                    : 'background.body',
                         wordWrap: 'break-word',
                         overflowWrap: 'break-word',
                         whiteSpace: 'pre-wrap',
@@ -386,7 +393,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         </Box>
                     )}
 
-
                     {isAudio && !isVideo && (
                         <CustomAudioPlayer audioSrc={getAttachmentUrl()} isSent={isSent} />
                     )}
@@ -395,7 +401,13 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         <Typography
                             sx={{
                                 fontSize: { xs: '14px', sm: '14px' },
-                                color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-primary)',
+                                color: isSent
+                                    ? {
+                                        color: 'var(--joy-palette-common-white)',
+                                    }
+                                    : {
+                                        color: 'var(--joy-palette-text-primary)',
+                                    },
                                 marginLeft: isImage || isVideo || isAudio ? '12px' : '0px',
                                 marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',
                                 textAlign: 'left',

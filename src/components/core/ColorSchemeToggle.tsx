@@ -27,20 +27,23 @@ export function DarkModeSwitch() {
             sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1,
+                justifyContent: 'space-between',
+                width: '100%',
             }}
         >
-            <DarkModeOutlinedIcon />
-            <Typography
-                level="title-sm"
-                sx={{
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                }}
-            >
-                {t('Dark Mode')}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <DarkModeOutlinedIcon />
+                <Typography
+                    level="title-sm"
+                    sx={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    }}
+                >
+                    {t('Dark Mode')}
+                </Typography>
+            </Box>
             <Switch
                 checked={mode === 'dark'}
                 disabled={!mounted}
@@ -56,7 +59,6 @@ export function DarkModeSwitch() {
         </Box>
     );
 }
-
 
 export function ColorSchemeToggle(props: IconButtonProps) {
     const { onClick, ...other } = props;

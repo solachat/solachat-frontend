@@ -313,14 +313,14 @@ export default function ChatListItem(props: ChatListItemProps) {
                                             width: 20,
                                             height: 20,
                                             borderRadius: '50%',
-                                            backgroundColor: 'black',
+                                            backgroundColor: '#007bff',
                                             color: 'white',
                                             fontSize: 12,
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             mt: 1,
-                                            ml: 0.3,
+                                            marginLeft: '15px'
                                         }}
                                     >
                                         {unreadCount}

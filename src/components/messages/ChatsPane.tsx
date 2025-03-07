@@ -14,6 +14,9 @@ import { useWebSocket } from '../../api/useWebSocket';
 import IconButton from '@mui/joy/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
+import SettingsScreen from '../screen/SettingsScreen';
+import {useState} from "react";
+import { AnimatePresence, motion } from 'framer-motion';
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -23,16 +26,17 @@ type ChatsPaneProps = {
 };
 
 export default function ChatsPane({ chats: initialChats, setSelectedChat, selectedChatId, currentUser }: ChatsPaneProps) {
-    const { t } = useTranslation();
-    const [chats, setChats] = React.useState<ChatProps[]>(initialChats);
-    const [searchTerm, setSearchTerm] = React.useState('');
-    const [searchResults, setSearchResults] = React.useState<UserProps[]>([]);
-    const [loadingChats, setLoadingChats] = React.useState(true);
-    const [error, setError] = React.useState<string | null>(null);
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+    const {t} = useTranslation();
+    const [chats, setChats] = useState<ChatProps[]>(initialChats);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState<UserProps[]>([]);
+    const [loadingChats, setLoadingChats] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();
+    const [activeScreen, setActiveScreen] = useState<'chats' | 'settings'>('chats');
 
-    const { wsRef, isConnecting } = useWebSocket((data) => {
+    const {wsRef, isConnecting} = useWebSocket((data) => {
         if (data.type === 'chatCreated' || data.type === 'groupChatCreated') {
             const newChat = data.chat;
             setChats((prevChats) => {
@@ -105,11 +109,11 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                         ? {
                             ...chat,
                             messages: (chat.messages || []).map((msg) =>
-                                msg.id === editedMessage.id ? { ...msg, ...editedMessage } : msg
+                                msg.id === editedMessage.id ? {...msg, ...editedMessage} : msg
                             ),
                             lastMessage:
                                 chat.lastMessage && chat.lastMessage.id === editedMessage.id
-                                    ? { ...chat.lastMessage, ...editedMessage }
+                                    ? {...chat.lastMessage, ...editedMessage}
                                     : chat.lastMessage,
                         }
                         : chat
@@ -123,11 +127,11 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 prevChats.map((chat) => ({
                     ...chat,
                     messages: (chat.messages || []).map((msg) =>
-                        msg.id === messageId ? { ...msg, isRead: true } : msg
+                        msg.id === messageId ? {...msg, isRead: true} : msg
                     ),
                     lastMessage:
                         chat.lastMessage && chat.lastMessage.id === messageId
-                            ? { ...chat.lastMessage, isRead: true }
+                            ? {...chat.lastMessage, isRead: true}
                             : chat.lastMessage,
                 }))
             );
@@ -139,7 +143,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 prevChats.map((chat) => ({
                     ...chat,
                     users: (chat.users || []).map((user) =>
-                        user.id === userId ? { ...user, online: true } : user
+                        user.id === userId ? {...user, online: true} : user
                     ),
                 }))
             );
@@ -151,7 +155,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 prevChats.map((chat) => ({
                     ...chat,
                     users: (chat.users || []).map((user) =>
-                        user.id === userId ? { ...user, online: false } : user
+                        user.id === userId ? {...user, online: false} : user
                     ),
                 }))
             );
@@ -188,80 +192,108 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
         }
     };
 
+    const handleCloseSettings = () => {
+        setActiveScreen('chats');
+        setIsSidebarOpen(false);
+    };
+
     return (
         <CssVarsProvider>
-            <Box sx={{ display: 'flex', maxWidth: '100%' }}>
-                {!selectedChatId && (
+            <Box
+                sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    overflowY: "auto",
+                    maxWidth: "100%",
+
+                }}
+            >
+                {activeScreen === 'settings' ? (
+                    <SettingsScreen onBack={handleCloseSettings} />
+                ) : (
+                    <>
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        height: "56px",
+                        width: "100%",
+                        flexShrink: 0,
+                    }}
+                >
                     <IconButton
-                        sx={{ display: { xs: 'block', sm: 'none' }, position: 'absolute', zIndex: 10, left: '16px', top: '16px' }}
-                        onClick={() => setIsSidebarOpen(true)}
+                        sx={{
+                            borderRadius: "50%",
+                            mr: 2,
+                            ml: "16px",
+                            backgroundColor: isSidebarOpen ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                            },
+                        }}
+                        onClick={() => {
+                            setIsSidebarOpen(!isSidebarOpen);
+                            setActiveScreen('chats');
+                        }}
                     >
                         <MenuIcon />
                     </IconButton>
-                )}
 
-                {isSidebarOpen && (
-                    <Box
-                        onClick={() => setIsSidebarOpen(false)}
-                        sx={{
-                            position: 'fixed',
-                            top: 0,
-                            left: 0,
-                            width: '100vw',
-                            height: '100vh',
-                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                            zIndex: 9,
-                        }}
-                    />
-                )}
-                <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <Input
+                            size="sm"
+                            startDecorator={isConnecting ? <CircularProgress size="sm" /> : <SearchRoundedIcon />}
+                            onChange={handleSearchChange}
+                            value={searchTerm}
+                            aria-label={isConnecting ? "Connecting" : "Search"}
+                            placeholder={isConnecting ? t("Connecting") : t("Search")}
+                            sx={{
+                                flex: 1,
+                                maxWidth: "600px",
+                                minWidth: "350px",
+                                height: "44px",
+                                fontSize: "16px",
+                                borderRadius: "8px",
+                                textAlign: "center",
+                            }}
+                        />
+                    </Box>
+                </Box>
 
-                <Sheet
+                <Box
                     sx={{
-                        borderRight: '1px solid',
-                        borderColor: 'divider',
-                        height: '100vh',
-                        width: { xs: selectedChatId ? '0' : '100%', sm: 'calc(100% - 198px)' },
-                        overflowY: 'auto',
-                        display: { xs: selectedChatId ? 'none' : 'block', sm: 'block' },
+                        position: "absolute",
+                        top: "56px",
+                        left: 0,
+                        width: "auto",
+                        zIndex: 9,
+                        boxShadow: "2px 2px 10px rgba(0, 0, 0, 0.1)",
+                        maxHeight: isSidebarOpen ? "400px" : "0px",
+                        opacity: isSidebarOpen ? 1 : 0,
+                        overflow: "hidden",
+                        transition: "max-height 0.3s ease-in-out, opacity 0.3s ease-in-out",
+                        ml: 2,
                     }}
                 >
-                    <Stack
-                        direction="row"
-                        spacing={1}
-                        alignItems="center"
-                        justifyContent="space-between"
-                        p={2}
-                        sx={{
-                            flexDirection: { xs: 'column', sm: 'row' },
-                            ml: { xs: 5, sm: 0 },
-                        }}
-                    >
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                width: '100%',
-                                justifyContent: 'flex-start',
-                            }}
-                        >
-                            <Input
-                                size="sm"
-                                startDecorator={isConnecting ? <CircularProgress size="sm" /> : <SearchRoundedIcon />}
-                                placeholder={isConnecting ? t('Connecting') : t('Search')}
-                                value={searchTerm}
-                                onChange={handleSearchChange}
-                                aria-label={isConnecting ? 'Connecting' : 'Search'}
-                                sx={{
-                                    flex: 1,
-                                    fontSize: '14px',
-                                    maxWidth: { xs: '90%', sm: '100%' },
-                                    ml: 1,
-                                }}
-                            />
-                        </Box>
-                    </Stack>
+                    <Sidebar
+                        isOpen={isSidebarOpen}
+                        onClose={() => setIsSidebarOpen(false)}
+                        setActiveScreen={setActiveScreen}
+                    />
+                </Box>
 
+
+                <Box
+                    sx={{
+
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "flex-end",
+                        overflowY: "auto",
+                        maxWidth: "100%",
+                        pb: 2,
+                    }}
+                >
                     {searchResults.length > 0 ? (
                         <List>
                             {searchResults
@@ -279,40 +311,33 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                     />
                                 ))}
                         </List>
+                    ) : chats.length > 0 ? (
+                        <List>
+                            {chats.map((chat) => (
+                                <ChatListItem
+                                    key={chat.id}
+                                    id={chat.id.toString()}
+                                    sender={
+                                        chat.isGroup
+                                            ? undefined
+                                            : chat.users.find((user) => user.id !== currentUser.id)
+                                    }
+                                    messages={chat.messages || []}
+                                    setSelectedChat={setSelectedChat}
+                                    currentUserId={currentUser.id}
+                                    chats={chats}
+                                    setChats={setChats}
+                                    selectedChatId={selectedChatId}
+                                    isGroup={chat.isGroup}
+                                />
+                            ))}
+                        </List>
                     ) : (
-                        <>
-                            {loadingChats ? (
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 4 }}>
-                                </Box>
-                            ) : chats.length > 0 ? (
-                                <List>
-                                    {chats.map((chat) => (
-                                        <ChatListItem
-                                            key={chat.id}
-                                            id={chat.id.toString()}
-                                            sender={
-                                                chat.isGroup
-                                                    ? undefined
-                                                    : chat.users.find((user) => user.id !== currentUser.id)
-                                            }
-                                            messages={chat.messages || []}
-                                            setSelectedChat={setSelectedChat}
-                                            currentUserId={currentUser.id}
-                                            chats={chats}
-                                            setChats={setChats}
-                                            selectedChatId={selectedChatId}
-                                            isGroup={chat.isGroup}
-                                        />
-                                    ))}
-                                </List>
-                            ) : (
-                                <Typography sx={{ textAlign: 'center', mt: 3 }}>
-                                    {t('')}
-                                </Typography>
-                            )}
-                        </>
+                        <Typography sx={{ textAlign: "center", mt: 3 }}>{t("")}</Typography>
                     )}
-                </Sheet>
+                </Box>
+                    </>
+                    )}
             </Box>
         </CssVarsProvider>
     );
