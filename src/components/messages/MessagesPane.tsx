@@ -341,10 +341,10 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             {chat && (
                 <Box sx={{ width: { xs: '100%', sm: '80%', md: '94%' }, margin: '0 auto' }}>
                     <MessageInput
-                        chatId={chat?.id ?? null} // Чат может быть null, если он еще не создан
-                        selectedChat={chat} // Передаем текущий чат
-                        setSelectedChat={setSelectedChat} // Передаем функцию для обновления выбранного чата
-                        currentUserId={currentUserId!} // Убеждаемся, что передаем корректный ID пользователя
+                        chatId={chat?.id ?? null}
+                        selectedChat={chat}
+                        setSelectedChat={setSelectedChat}
+                        currentUserId={currentUserId!}
                         onSubmit={() => {
                             const newMessage: MessageProps = {
                                 id: chatMessages.length + 1,

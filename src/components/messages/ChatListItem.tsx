@@ -37,7 +37,7 @@ type NewMessageEvent =
 };
 
 type ChatListItemProps = {
-    id: string;
+    id: string | null;
     unread?: boolean;
     sender?: UserProps;
     messages: MessageProps[];
@@ -162,11 +162,9 @@ export default function ChatListItem(props: ChatListItemProps) {
 
     const handleClick = async () => {
         if (!sender) {
-            console.log("❌ Ошибка: sender не найден!");
+            console.error("❌ Ошибка: Отправитель не указан!");
             return;
         }
-
-        console.log("📌 handleClick вызван для sender.id =", sender.id);
 
         const token = localStorage.getItem("token");
         if (!token) {
@@ -174,41 +172,38 @@ export default function ChatListItem(props: ChatListItemProps) {
             return;
         }
 
-        let chat = existingChat;
+        console.log("📌 handleClick вызван для sender.id =", sender.id);
 
-        if (!chat) {
-            console.log("🔄 Чат не найден, пробуем загрузить...");
-            try {
-                const fetchedChat = await fetchChatsFromServer(sender.id, token);
-                if (fetchedChat && fetchedChat.id) {
-                    setExistingChat(fetchedChat);
-                    chat = fetchedChat;
-                } else {
-                    console.warn("❌ Чат не найден в базе.");
-                }
-            } catch (error) {
-                console.error("Ошибка загрузки чата:", error);
-            }
-        }
+        // Проверяем, есть ли чат с этим пользователем
+        const chatExists = chats.find(
+            (chat: ChatProps) =>
+                !chat.isGroup && chat.users.some((user: UserProps) => user.id === sender.id)
+        );
 
-        // ❗️ Добавляем проверку, чтобы не сбрасывать `selectedChat`
-        if (!chat || !chat.id) {
-            console.error("❌ Ошибка: Чат не существует!");
+        if (chatExists) {
+            console.log("✅ Чат найден:", chatExists);
+            setExistingChat(chatExists);
+            setSelectedChat(chatExists);
+            navigate(`/chat/#${chatExists.id}`);
             return;
         }
 
-        if (Number(selectedChatId) === chat.id) {
-            console.log("⚠️ Чат уже открыт, повторного вызова handleClick не требуется.");
-            return;
-        }
+        console.log("❌ Чат отсутствует, создаём временный (UI) чат.");
 
+        const tempChat: ChatProps = {
+            id: -1, // ✅ Указываем временный ID
+            users: [sender],
+            messages: [],
+            isGroup: false,
+            user: sender,
+        };
 
-        console.log("✅ Открываем чат:", chat);
-        setSelectedChat(chat);
-        navigate(`/chat/#${chat.id}`);
+        console.log(`🆕 Создан временный чат с ID: ${tempChat.id} (для UI)`);
+
+        setExistingChat(tempChat);
+        setSelectedChat(tempChat);
+        navigate(`/chat/#temp-${sender.id}`);
     };
-
-
 
 
     if (!sender && !isGroup) return null;

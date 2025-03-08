@@ -237,5 +237,13 @@
   },
   "uploadImage": "Upload Image",
   "reset": "Reset",
-  "editImage": "Edit Image"
+  "editImage": "Edit Image",
+  "online": "online",
+  "offline": "offline",
+  "just_now": "just now",
+  "last_seen": "last seen {{time}}",
+  "minutes_ago": "{{count}} minute ago",
+  "minutes_ago_plural": "{{count}} minutes ago",
+  "hours_ago": "{{count}} hour ago",
+  "hours_ago_plural": "{{count}} hours ago"
 }

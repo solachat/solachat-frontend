@@ -50,26 +50,61 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
 
         if (data.type === 'newMessage') {
             const newMessage = data.message;
+
             setChats((prevChats) => {
-                return [
-                    ...prevChats
-                        .map((chat) =>
-                            chat.id === newMessage.chatId
-                                ? {
-                                    ...chat,
-                                    messages: [...(chat.messages || []), newMessage],
-                                    lastMessage: newMessage,
-                                }
-                                : chat
-                        )
-                        .sort((a, b) => {
-                            if (a.id === newMessage.chatId) return -1;
-                            if (b.id === newMessage.chatId) return 1;
-                            return 0;
-                        })
-                ];
+                let chatExists = false;
+
+                console.log("📩 Получено новое сообщение в чат:", newMessage.chatId);
+                console.log("📝 Чаты до обновления:", prevChats.map(chat => chat.id));
+
+                let updatedChats = prevChats.map((chat) => {
+                    if (chat.id === newMessage.chatId) {
+                        chatExists = true;
+                        return {
+                            ...chat,
+                            messages: [...(chat.messages || []), newMessage],
+                            lastMessage: newMessage,
+                        };
+                    }
+                    return chat;
+                });
+
+                if (!chatExists) {
+                    console.log(`🆕 Чат ${newMessage.chatId} не найден, создаем временный`);
+                    updatedChats.push({
+                        id: newMessage.chatId,
+                        messages: [newMessage],
+                        lastMessage: newMessage,
+                        users: [newMessage.user],
+                        user: newMessage.user,
+                        isGroup: false,
+                    });
+                }
+
+                console.log(`🎯 Текущий активный чат: ${selectedChatId}`);
+
+                const selectedChatIdNum = Number(selectedChatId);
+                console.log(`🔍 Приведенный selectedChatIdNum: ${selectedChatIdNum}`);
+
+                updatedChats = updatedChats.sort((a, b) => {
+                    if (a.id === selectedChatIdNum) return -1;
+                    if (b.id === selectedChatIdNum) return 1;
+
+                    const aUpdated = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
+                    const bUpdated = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;
+                    return bUpdated - aUpdated;
+                });
+
+                console.log("✅ Чаты после сортировки:", updatedChats.map(chat => chat.id));
+
+                return updatedChats;
             });
+
+
         }
+
+
+
 
         if (data.type === 'deleteMessage') {
             const messageIdToDelete = data.messageId;
@@ -179,6 +214,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
         loadChats();
     }, [currentUser.id]);
 
+
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const term = e.target.value;
         setSearchTerm(term);
@@ -189,16 +225,30 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
 
                 const chatResults = chats
                     .map(chat => {
+                        console.log(`Chat ${chat.id} messages:`, chat.messages); // отладка: что приходит в messages
+
                         const user = chat.users.find(user => user.id !== currentUser.id);
                         if (!user) return null;
 
+                        // Если chat.lastMessage не установлен, вычисляем последнее сообщение по максимальной дате
+                        const lastMessage =
+                            chat.lastMessage ||
+                            (chat.messages && chat.messages.length > 0
+                                ? chat.messages.reduce((prev: MessageProps, curr: MessageProps) =>
+                                    new Date(curr.createdAt).getTime() > new Date(prev.createdAt).getTime() ? curr : prev
+                                )
+                                : null);
+
+                        console.log(`Chat ${chat.id} lastMessage:`, lastMessage); // отладка: что получилось
+
                         return {
                             ...user,
-                            lastMessage: chat.lastMessage || null,
+                            lastMessage,
                             chatId: chat.id,
                         };
                     })
                     .filter(Boolean) as (UserProps & { lastMessage?: MessageProps; chatId?: number })[];
+
 
                 const mergedResults = Array.from(
                     new Map([...chatResults, ...userResults].map(user => [user.id, user])).values()
@@ -213,6 +263,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
             setSearchResults([]);
         }
     };
+
 
 
     const handleCloseSettings = () => {
@@ -325,7 +376,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                         key={user.id}
                                         id={user.id.toString()}
                                         sender={user}
-                                        messages={[]}
+                                        messages={user.lastMessage ? [user.lastMessage] : []}
                                         setSelectedChat={setSelectedChat}
                                         currentUserId={currentUser.id}
                                         chats={chats}

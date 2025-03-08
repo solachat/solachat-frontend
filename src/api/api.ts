@@ -81,7 +81,6 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
     }
 };
 
-
 export const sendMessage = async (chatId: number, formData: FormData, token: string) => {
     try {
         const response = await axios.post(

@@ -212,7 +212,6 @@
   "participant": "участник",
   "participants_two": "участника",
   "participants_many": "участников",
-  "online": "в сети",
   "addParticipant": "Добавить участника",
   "enterUsername": "Введите имя пользователя",
   "add": "Добавить",
@@ -302,5 +301,15 @@
   "Connecting": "Подключение",
   "uploadImage": "Загрузить изображение",
   "reset": "Сбросить",
-  "editImage": "Редактировать изображение"
+  "editImage": "Редактировать изображение",
+  "online": "в сети",
+  "offline": "оффлайн",
+  "just_now": "только что",
+  "last_seen": "был(а) {{time}}",
+  "minutes_ago_one": "{{count}} минуту назад",
+  "minutes_ago_few": "{{count}} минуты назад",
+  "minutes_ago_many": "{{count}} минут назад",
+  "hours_ago_one": "{{count}} час назад",
+  "hours_ago_few": "{{count}} часа назад",
+  "hours_ago_many": "{{count}} часов назад"
 }

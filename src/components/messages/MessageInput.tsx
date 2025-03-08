@@ -71,49 +71,58 @@ export default function MessageInput(props: MessageInputProps) {
         setUploadedFiles([]);
     }, [editingMessage, chatId]);
 
+
     const handleClick = async () => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         if (!token) {
-            console.error('Authorization token is missing');
+            console.error('❌ Ошибка: Authorization token is missing');
             return;
         }
 
         const content = message.trim();
         if (content === '' && uploadedFiles.length === 0) {
-            console.warn('Cannot send an empty message');
+            console.warn('⚠️ Нельзя отправить пустое сообщение');
             return;
         }
 
         try {
-            let finalChatId = chatId;
+            let finalChatId = selectedChat?.id;
 
-            // Если чата нет, создаем новый
-            if (!chatId && selectedChat && selectedChat.users.length > 0) {
-                const recipientId = selectedChat.users[0].id;
-                const newChat = await createPrivateChat(currentUserId, recipientId, token);
-                if (!newChat) {
-                    toast.error('Failed to create chat.');
+            console.log(`📌 Отправка сообщения. Текущий chatId: ${finalChatId}`);
+
+            if (!finalChatId || finalChatId === -1) {
+                const recipient = selectedChat?.users.find(user => user.id !== currentUserId);
+                if (!recipient) {
+                    console.error("❌ Ошибка: Получатель не найден.");
                     return;
                 }
-                setSelectedChat({ ...newChat, users: selectedChat.users });
+
+                console.log("🔄 Создаём новый чат перед отправкой...");
+                const newChat = await createPrivateChat(currentUserId, recipient.id, token);
                 finalChatId = newChat.id;
+                setSelectedChat(newChat);
+                console.log("✅ Новый чат создан:", newChat);
             }
 
-            // Отправляем сообщение в чат
-            const formData = new FormData();
-            formData.append('content', content);
-            uploadedFiles.forEach((fileData) => formData.append('file', fileData.file));
-            if (finalChatId === null) {
-                console.error("Chat ID is missing. Cannot send message.");
+
+            if (!finalChatId) {
+                console.error("❌ Ошибка: Chat ID отсутствует. Сообщение не отправлено.");
                 return;
             }
 
+            console.log("📤 Отправляем сообщение в чат ID:", finalChatId);
+
+            const formData = new FormData();
+            formData.append('content', content);
+            uploadedFiles.forEach(fileData => formData.append("file", fileData.file));
+
             await sendMessage(finalChatId, formData, token);
 
-            setMessage("");
+            setMessage('');
             setUploadedFiles([]);
+            console.log(`✅ Сообщение успешно отправлено в чат ID: ${finalChatId}`);
         } catch (error) {
-            console.error('Error sending or editing message:', error);
+            console.error('❌ Ошибка при отправке сообщения:', error);
         }
     };
 

@@ -241,13 +241,15 @@ export default function MyProfile() {
     return (
         <>
             <PageTitle
-                title={selectedChat
-                    ? (selectedChat.isGroup
+                title={
+                    selectedChat
+                        ? selectedChat.isGroup
                             ? selectedChat.name ?? 'Unnamed Group'
-                            : selectedChat.users.find(user => user.id !== currentUser?.id)?.public_key ?? 'Unnamed User'
-                    )
-                    : 'Messenger'}
+                            : selectedChat.users?.find(user => user.id !== currentUser?.id)?.public_key ?? 'Unnamed User'
+                        : 'Messenger'
+                }
             />
+
 
             <Sheet
                 sx={{
