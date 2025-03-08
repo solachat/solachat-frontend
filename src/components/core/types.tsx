@@ -6,6 +6,7 @@ export type UserProps = {
     online: boolean;
     role: string;
     verified: boolean;
+    lastOnline?: string;
 };
 
 

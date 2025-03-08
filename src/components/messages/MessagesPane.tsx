@@ -34,7 +34,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const chatIdRef = useRef<number | null>(null);
     const { chatId } = useParams<{ chatId: string }>();
-
+    const [userStatuses, setUserStatuses] = React.useState<Record<string, Pick<UserProps, 'online' | 'lastOnline'>>>({});
 
     const scrollToBottom = (smooth: boolean = true) => {
         const container = messagesContainerRef.current;
@@ -130,6 +130,8 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             if (chatFromUrl) {
                 setSelectedChat(chatFromUrl);
             }
+        } else {
+            setSelectedChat(null);
         }
     }, [chatIdFromUrl, chats, setSelectedChat]);
 
@@ -145,7 +147,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             chatIdRef.current = null;
         }
     }, [chat]);
-
 
     useEffect(() => {
         const container = messagesContainerRef.current;
@@ -174,7 +175,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
     };
 
     useWebSocket((data) => {
-
         if (data.type === 'newMessage' && data.message) {
             const newMessage = data.message;
             if (newMessage.chatId === chatIdRef.current) {
@@ -203,6 +203,17 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                 )
             );
         }
+        if (data.type === 'USER_CONNECTED' && data.publicKey) {
+            setUserStatuses((prevStatuses) => ({
+                ...prevStatuses,
+                [data.publicKey]: { online: true, lastOnline: null },
+            }));
+        } else if (data.type === 'USER_DISCONNECTED' && data.publicKey) {
+            setUserStatuses((prevStatuses) => ({
+                ...prevStatuses,
+                [data.publicKey]: { online: false, lastOnline: data.lastOnline },
+            }));
+        }
     }, [currentUserId, chatIdRef]);
 
     const handleEditMessage = (messageId: number, content: string) => {
@@ -210,9 +221,25 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         setTextAreaValue(content);
     };
 
-    const interlocutor = chat?.isGroup
-        ? undefined
-        : chat?.users?.find((user) => user.id !== currentUserId);
+    const interlocutor = React.useMemo(() => {
+        if (!chat?.isGroup) {
+            // Находим собеседника по БД
+            const userFromDb = chat?.users?.find((user) => user.id !== currentUserId);
+            if (userFromDb) {
+                // Если для пользователя есть статус из вебсокета, объединяем данные
+                return {
+                    ...userFromDb,
+                    online: userFromDb.public_key && userStatuses[userFromDb.public_key]
+                        ? userStatuses[userFromDb.public_key].online
+                        : userFromDb.online ?? false,
+                    lastOnline: userFromDb.public_key && userStatuses[userFromDb.public_key]
+                        ? userStatuses[userFromDb.public_key].lastOnline
+                        : userFromDb.lastOnline,
+                };
+            }
+        }
+        return undefined;
+    }, [chat, currentUserId, userStatuses]);
 
 
     return (
@@ -314,7 +341,10 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             {chat && (
                 <Box sx={{ width: { xs: '100%', sm: '80%', md: '94%' }, margin: '0 auto' }}>
                     <MessageInput
-                        chatId={Number(chat?.id ?? 0)}
+                        chatId={chat?.id ?? null} // Чат может быть null, если он еще не создан
+                        selectedChat={chat} // Передаем текущий чат
+                        setSelectedChat={setSelectedChat} // Передаем функцию для обновления выбранного чата
+                        currentUserId={currentUserId!} // Убеждаемся, что передаем корректный ID пользователя
                         onSubmit={() => {
                             const newMessage: MessageProps = {
                                 id: chatMessages.length + 1,
@@ -326,7 +356,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                             };
                             setChatMessages([...chatMessages, newMessage]);
                             setTextAreaValue('');
-                            setEditingMessageId(null);
                             setEditingMessageId(null);
                         }}
                         editingMessage={
@@ -353,6 +382,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                             }
                         }}
                     />
+
                 </Box>
             )}
         </Sheet>

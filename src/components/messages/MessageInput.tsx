@@ -7,7 +7,7 @@ import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import FileUploadModal from './FileUploadModal';
-import { sendMessage, editMessage } from '../../api/api';
+import {sendMessage, editMessage, createPrivateChat} from '../../api/api';
 import { useState, useCallback, useEffect } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -15,13 +15,18 @@ import { useTranslation } from 'react-i18next';
 import CustomTextarea from "./CustomTextarea";
 import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
 import EmojiPickerPopover from "./EmojiPickerPopover";
+import {toast} from "react-toastify";
+import {ChatProps} from "../core/types";
 
 export type UploadedFileData = {
     file: File;
 };
 
 export type MessageInputProps = {
-    chatId: number;
+    chatId: number | null;
+    selectedChat: ChatProps | null;
+    setSelectedChat: (chat: ChatProps) => void;
+    currentUserId: number;
     onSubmit: (newMessage: any) => void;
     editingMessage?: { id: number | null; content: string | null } | null;
     setEditingMessage: (message: { id: number | null; content: string | null } | null) => void;
@@ -29,7 +34,10 @@ export type MessageInputProps = {
 
 export default function MessageInput(props: MessageInputProps) {
     const { t } = useTranslation();
-    const { chatId, editingMessage, setEditingMessage, onSubmit } = props;
+    const {
+        chatId, selectedChat, setSelectedChat, currentUserId,
+        editingMessage, setEditingMessage, onSubmit
+    } = props;
 
     const [message, setMessage] = useState("");
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
@@ -77,15 +85,30 @@ export default function MessageInput(props: MessageInputProps) {
         }
 
         try {
-            if (editingMessage && editingMessage.id) {
-                await editMessage(editingMessage.id, content, token);
-                setEditingMessage(null);
-            } else {
-                const formData = new FormData();
-                formData.append('content', content);
-                uploadedFiles.forEach((fileData) => formData.append('file', fileData.file));
-                await sendMessage(chatId, formData, token);
+            let finalChatId = chatId;
+
+            // Если чата нет, создаем новый
+            if (!chatId && selectedChat && selectedChat.users.length > 0) {
+                const recipientId = selectedChat.users[0].id;
+                const newChat = await createPrivateChat(currentUserId, recipientId, token);
+                if (!newChat) {
+                    toast.error('Failed to create chat.');
+                    return;
+                }
+                setSelectedChat({ ...newChat, users: selectedChat.users });
+                finalChatId = newChat.id;
             }
+
+            // Отправляем сообщение в чат
+            const formData = new FormData();
+            formData.append('content', content);
+            uploadedFiles.forEach((fileData) => formData.append('file', fileData.file));
+            if (finalChatId === null) {
+                console.error("Chat ID is missing. Cannot send message.");
+                return;
+            }
+
+            await sendMessage(finalChatId, formData, token);
 
             setMessage("");
             setUploadedFiles([]);
@@ -93,6 +116,7 @@ export default function MessageInput(props: MessageInputProps) {
             console.error('Error sending or editing message:', error);
         }
     };
+
 
     const handleEmojiSelect = (emoji: string) => {
         setMessage((prev) => prev + emoji);

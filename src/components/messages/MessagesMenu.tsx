@@ -1,33 +1,48 @@
 import * as React from 'react';
-import IconButton from '@mui/joy/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
-import { useTheme } from '@mui/system';
+import Box from '@mui/joy/Box';
+import Divider from '@mui/joy/Divider';
+import ListItem from '@mui/joy/ListItem';
+import ListItemButton from '@mui/joy/ListItemButton';
+import ListItemContent from '@mui/joy/ListItemContent';
+import Typography from '@mui/joy/Typography';
+import Sheet from '@mui/joy/Sheet';
+import { useTranslation } from 'react-i18next';
+import BlockIcon from '@mui/icons-material/Block';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { deleteChat } from '../../api/api';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 
-type MessagesMenuProps = {
+interface MessagesMenuProps {
+    isOpen: boolean;
+    onClose: () => void;
     chatId: number;
     token: string;
     onDeleteChat: () => void;
-};
+}
 
-export default function MessagesMenu({ chatId, token, onDeleteChat }: MessagesMenuProps) {
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const open = Boolean(anchorEl);
-    const navigate = useNavigate();
+export default function MessagesMenu({
+                                         isOpen,
+                                         onClose,
+                                         chatId,
+                                         token,
+                                         onDeleteChat,
+                                     }: MessagesMenuProps) {
+    const { t } = useTranslation();
+    const [selectedNav, setSelectedNav] = React.useState<string>();
 
-    const theme = useTheme();
-
-    const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
+    const handleSelect = (nav: string, callback?: () => void) => {
+        setSelectedNav(nav);
+        if (callback) callback();
     };
 
-    const handleMenuClose = () => {
-        setAnchorEl(null);
+    const hoverSx = {
+        height: '32px',
+        borderRadius: '8px',
+        transition: 'background-color 0.1s ease',
+        '&:hover': {
+            backgroundColor: 'rgba(76, 175, 80, 0.2)',
+        },
     };
 
     const handleDeleteChat = async () => {
@@ -38,50 +53,71 @@ export default function MessagesMenu({ chatId, token, onDeleteChat }: MessagesMe
             console.error('Failed to delete chat:', error);
             toast.error('Failed to delete chat');
         } finally {
-            handleMenuClose();
+            onClose();
         }
     };
 
+    const handleBlockUser = () => {
+        // Реализуйте логику блокировки пользователя
+        onClose();
+    };
+
+    const handleAddContact = () => {
+        // Реализуйте логику добавления контакта
+        onClose();
+    };
+
     return (
-        <>
-            <IconButton size="sm" variant="plain" color="neutral" onClick={handleMenuClick}>
-                <MoreVertRoundedIcon />
-            </IconButton>
-            <Menu
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleMenuClose}
-                PaperProps={{
-                    elevation: 0,
-                    sx: {
-                        mt: 1.5,
-                        overflow: 'visible',
-                        boxShadow: 'var(--joy-shadow-sm)',
-                        bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : '#fff',
-                        color: theme.palette.mode === 'dark' ? '#fff' : '#000',
-                        '&:before': {
-                            content: '""',
-                            display: 'block',
-                            position: 'absolute',
-                            top: 0,
-                            right: 14,
-                            width: 10,
-                            height: 10,
-                            bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : '#fff',
-                            transform: 'translateY(-50%) rotate(45deg)',
-                            zIndex: 0,
-                        },
-                    },
-                }}
-                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-            >
-                {[
-                    <MenuItem key="delete-chat" onClick={handleDeleteChat}>
-                        Delete Chat
-                    </MenuItem>
-                ]}
-            </Menu>
-        </>
+        <Sheet
+            className="MessageMenu"
+            sx={{
+                position: { xs: 'fixed', md: 'sticky' },
+                transform: isOpen ? 'translateX(0)' : { xs: 'translateX(-100%)', md: 'none' },
+                transition: 'transform 0.4s, width 0.4s',
+                zIndex: 10,
+                height: { xs: '80vh', md: '100%' },
+                p: 2,
+                flexShrink: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                borderRight: '1px solid',
+                borderColor: 'divider',
+                width: { xs: '240px', md: '120px' },
+                outline: 'none',
+                border: 'none',
+                borderRadius: '12px',
+            }}
+        >
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <ListItem>
+                    <ListItemButton onClick={handleBlockUser} sx={hoverSx}>
+                        <BlockIcon sx={{  marginRight: 1 }} />
+                        <ListItemContent>
+                            <Typography level="title-sm">{t("Block User")}</Typography>
+                        </ListItemContent>
+                    </ListItemButton>
+                </ListItem>
+                <ListItem>
+                    <ListItemButton onClick={handleAddContact} sx={hoverSx}>
+                        <PersonAddIcon sx={{ marginRight: 1 }} />
+                        <ListItemContent>
+                            <Typography level="title-sm">{t("Add Contact")}</Typography>
+                        </ListItemContent>
+                    </ListItemButton>
+                </ListItem>
+                <Divider sx={{ maxWidth: '100%' }} />
+                <ListItem>
+                    <ListItemButton onClick={handleDeleteChat} sx={hoverSx}>
+                        <DeleteIcon sx={{ marginRight: 1 }} />
+                        <ListItemContent>
+                            <Typography sx={{ color: 'red' }}>
+                                {t("Delete Chat")}
+                            </Typography>
+                        </ListItemContent>
+                    </ListItemButton>
+                </ListItem>
+            </Box>
+        </Sheet>
     );
 }

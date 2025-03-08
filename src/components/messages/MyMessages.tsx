@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import {useLocation, useSearchParams} from 'react-router-dom';
 import Sheet from '@mui/joy/Sheet';
 import MessagesPane from './MessagesPane';
 import ChatsPane from './ChatsPane';
@@ -13,7 +13,7 @@ import { useWebSocket } from '../../api/useWebSocket';
 import PageTitle from './PageTitle';
 import Box from "@mui/joy/Box";
 import { useNavigate } from 'react-router-dom';
-import { useState } from "react";
+import {useEffect, useRef, useState} from "react";
 import CallModal from './CallModal';
 
 
@@ -54,6 +54,7 @@ export default function MyProfile() {
                 avatar: decodedToken.avatar as string,
                 online: true,
                 verified: false,
+                lastOnline: new Date().toISOString(),
                 role: 'member',
             };
         } catch (error) {
@@ -107,8 +108,28 @@ export default function MyProfile() {
     };
 
     const removeChatFromList = (chatId: number) => {
+        chatDeletedRef.current = true;
+
         setChats((prevChats) => prevChats.filter(chat => chat.id !== chatId));
+
+        if (selectedChat?.id === chatId) {
+            setSelectedChat(null);
+            navigate('/chat');
+        }
     };
+
+
+    const chatDeletedRef = useRef(false);
+
+    useEffect(() => {
+        if (selectedChat && !chats.some(chat => chat.id === selectedChat.id)) {
+            if (chatDeletedRef.current) {
+                setSelectedChat(null);
+                navigate('/chat');
+            }
+        }
+    }, [chats, selectedChat, navigate]);
+
 
     const handleWebSocketMessage = (message: any) => {
 
@@ -172,6 +193,7 @@ export default function MyProfile() {
             setError('Failed to decode user from token');
         }
     }, []);
+    const location = useLocation();
 
     React.useEffect(() => {
         if (!currentUser) return;
@@ -188,6 +210,7 @@ export default function MyProfile() {
                 if (Array.isArray(fetchedChats) && fetchedChats.length > 0) {
                     setChats(fetchedChats);
 
+                    const searchParams = new URLSearchParams(location.search);
                     const chatIdFromUrl = searchParams.get('id');
                     if (chatIdFromUrl) {
                         const chatFromUrl = fetchedChats.find(chat => chat.id === Number(chatIdFromUrl));
@@ -198,7 +221,8 @@ export default function MyProfile() {
                             setError('Chat not found by URL');
                         }
                     } else {
-                        console.log('No chat selected by default, and no changes to URL.');
+                        console.log('No chat selected by default, clearing selection.');
+                        setSelectedChat(null); // сбрасываем выбранный чат, если параметр id отсутствует
                     }
                 } else {
                     setChats([]);
@@ -212,7 +236,7 @@ export default function MyProfile() {
         };
 
         loadChats();
-    }, [currentUser, searchParams, navigate]);
+    }, [currentUser, location.search]);
 
     return (
         <>
@@ -234,7 +258,8 @@ export default function MyProfile() {
                     display: 'grid',
                     gridTemplateColumns: {
                         xs: '1fr',
-                        sm: 'minmax(min-content, min(70%, 700px)) 1fr',
+                        sm: 'minmax(min-content, 250px) 1fr',
+                        md: 'minmax(min-content, 550px) 1fr',
                     },
                 }}
             >

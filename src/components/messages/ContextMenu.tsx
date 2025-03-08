@@ -6,24 +6,25 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ForwardIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { styled } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
     '&:hover': {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: theme.palette.primary.light,
         transition: 'background-color 0.3s ease',
     },
     display: 'flex',
     alignItems: 'center',
     fontSize: '0.875rem',
-    color: '#fff',
+    color: theme.palette.primary.contrastText,
 }));
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
     '& .MuiPaper-root': {
-        background: '#4F6D7A',
+        background: theme.palette.primary.main,
         minWidth: '160px',
-        borderRadius: '3px',
+        borderRadius: '12px',
     },
 }));
 
@@ -51,6 +52,7 @@ export default function ContextMenu({
                                         messageCreatorId,
                                     }: ContextMenuProps) {
     const { t } = useTranslation();
+    const theme = useTheme();
 
     return (
         <StyledMenu

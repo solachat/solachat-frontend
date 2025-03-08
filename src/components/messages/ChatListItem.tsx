@@ -11,12 +11,11 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/joy/Avatar';
 import { t } from 'i18next';
-import DoneAllIcon from "@mui/icons-material/DoneAll";
-import CheckIcon from "@mui/icons-material/Check";
 import {useTranslation} from "react-i18next";
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import Verified from "../core/Verified";
-import Divider from "@mui/joy/Divider";
+import {useEffect, useState} from "react";
+import {fetchChatsFromServer} from "../../api/api";
 
 type NewMessageEvent =
     | {
@@ -49,6 +48,7 @@ type ChatListItemProps = {
     isGroup?: boolean;
     newMessage?: NewMessageEvent;
     setChats: React.Dispatch<React.SetStateAction<ChatProps[]>>;
+    lastMessage?: MessageProps;
 };
 
 const isImage = (fileName: string) => {
@@ -74,11 +74,16 @@ export default function ChatListItem(props: ChatListItemProps) {
     const selected = selectedChatId === id;
     const navigate = useNavigate();
 
-    const existingChat = chats.find((chat: ChatProps) => chat.id === Number(id));
+    const [existingChat, setExistingChat] = useState<ChatProps | null>(null);
     const isFavorite = existingChat?.isFavorite || false;
+    const { i18n } = useTranslation();
+    const locale = i18n.language || 'en-GB';
 
-    const lastMessage = messages[messages.length - 1] || null;
-
+    const lastMessage = messages.length > 0
+        ? messages[messages.length - 1]
+        : existingChat && Array.isArray(existingChat.messages) && existingChat.messages.length > 0
+            ? existingChat.messages[existingChat.messages.length - 1]
+            : props.lastMessage || null;
 
     const unreadMessages = messages.filter(
         (msg) => msg.userId !== currentUserId && !msg.isRead
@@ -136,24 +141,75 @@ export default function ChatListItem(props: ChatListItemProps) {
     };
 
 
-    const { i18n } = useTranslation();
-    const locale = i18n.language || 'en-GB';
+    useEffect(() => {
+        if (sender && !existingChat) {
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                console.error("❌ Ошибка: JWT-токен отсутствует!");
+                return;
+            }
+
+            fetchChatsFromServer(sender.id, token)
+                .then((fetchedChat) => {
+                    if (fetchedChat) {
+                        setExistingChat(fetchedChat);
+                    }
+                })
+                .catch((error) => console.error("Ошибка при загрузке чата:", error));
+        }
+    }, [sender, existingChat]);
 
     const handleClick = async () => {
-        if (existingChat) {
-            setSelectedChat(existingChat);
-            navigate(isGroup ? `/chat/#-${existingChat.id}` : `/chat/#${existingChat.id}`);
-        } else if (sender) {
-            const token = localStorage.getItem('token');
-            const newChat = await createPrivateChat(currentUserId, sender.id, token || '');
-            if (newChat) {
-                setSelectedChat({ ...newChat, users: [sender, { id: currentUserId }] });
-                navigate(`/chat/#${newChat.id}`);
-            } else {
-                toast.error('Failed to create chat.');
+        if (!sender) {
+            console.log("❌ Ошибка: sender не найден!");
+            return;
+        }
+
+        console.log("📌 handleClick вызван для sender.id =", sender.id);
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("❌ Ошибка: JWT-токен отсутствует!");
+            return;
+        }
+
+        let chat = existingChat;
+
+        if (!chat) {
+            console.log("🔄 Чат не найден, пробуем загрузить...");
+            try {
+                const fetchedChat = await fetchChatsFromServer(sender.id, token);
+                if (fetchedChat && fetchedChat.id) {
+                    setExistingChat(fetchedChat);
+                    chat = fetchedChat;
+                } else {
+                    console.warn("❌ Чат не найден в базе.");
+                }
+            } catch (error) {
+                console.error("Ошибка загрузки чата:", error);
             }
         }
+
+        // ❗️ Добавляем проверку, чтобы не сбрасывать `selectedChat`
+        if (!chat || !chat.id) {
+            console.error("❌ Ошибка: Чат не существует!");
+            return;
+        }
+
+        if (Number(selectedChatId) === chat.id) {
+            console.log("⚠️ Чат уже открыт, повторного вызова handleClick не требуется.");
+            return;
+        }
+
+
+        console.log("✅ Открываем чат:", chat);
+        setSelectedChat(chat);
+        navigate(`/chat/#${chat.id}`);
     };
+
+
+
 
     if (!sender && !isGroup) return null;
 
@@ -163,31 +219,37 @@ export default function ChatListItem(props: ChatListItemProps) {
                 <ListItemButton
                     onClick={handleClick}
                     selected={selected}
-                    color="neutral"
                     sx={{
                         flexDirection: 'column',
                         alignItems: 'initial',
                         gap: 1,
-                        padding: { xs: '8px' },
+                        padding: { xs: '10px' },
+                        borderRadius: '12px',
+                        mx: '1px',
+                        '&.Mui-selected': {
+                            backgroundColor: 'var(--joy-palette-primary-solidBg)',
+                            color: 'white',
+                            borderRadius: '12px'
+                        },
                     }}
                 >
-                    <Stack direction="row" spacing={1.5}>
+                    <Stack direction="row" spacing={1}>
                         {isGroup ? (
                             <Avatar
                                 src={existingChat?.avatar || 'path/to/default-group-avatar.jpg'}
                                 alt={existingChat?.name || 'Group Chat'}
-                                sx={{ width: { xs: 48, sm: 48 }, height: { xs: 48, sm: 48 } }}
+                                sx={{ width: 56, height: 56 }}
                             />
                         ) : (
-                            <Box sx={{ position: 'relative', width: 48, height: 48 }}>
+                            <Box sx={{ position: 'relative', width: 56, height: 56 }}>
                                 <AvatarWithStatus
                                     online={sender?.online}
                                     src={sender?.avatar}
                                     alt={sender?.public_key}
                                     sx={{
-                                        width: { xs: 48, sm: 48 },
-                                        height: { xs: 48, sm: 48 },
-                                        fontSize: { xs: 16, sm: 24 },
+                                        width: 56,
+                                        height: 56,
+                                        fontSize: 15,
                                     }}
                                 >
                                     {(!sender?.avatar && sender?.public_key)
@@ -209,7 +271,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                             justifyContent: 'center',
                                         }}
                                     >
-                                        <BookmarkBorderIcon sx={{ color: 'white', fontSize: 16 }} />
+                                        <BookmarkBorderIcon sx={{ color: 'white', fontSize: 18 }} />
                                     </Box>
                                 )}
                             </Box>
@@ -218,14 +280,18 @@ export default function ChatListItem(props: ChatListItemProps) {
                         <Box sx={{ flex: 1 }}>
                             <Typography
                                 level="body-md"
-                                fontSize={{ xs: 'xs', sm: 'sm' }}
+                                fontSize={{ xs: 'sm', sm: 'md' }}
                                 sx={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     flexWrap: 'wrap',
-                                    gap: 0.3,
-                                    lineHeight: 1.2,
+
+                                    lineHeight: 1.3,
                                     wordBreak: 'break-word',
+                                    color: selected
+                                        ? 'var(--joy-palette-common-white)'
+                                        : 'var(--joy-palette-text-primary)',
+                                    fontWeight: 'bold'
                                 }}
                             >
                                 {isGroup ? (
@@ -234,7 +300,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     <>
                                         {sender?.public_key || 'No Name'}
                                         {sender?.verified && (
-                                            <Verified sx={{ fontSize: 15, verticalAlign: 'middle' }} />
+                                            <Verified sx={{ fontSize: 18, verticalAlign: 'middle' }} />
                                         )}
                                     </>
                                 )}
@@ -242,16 +308,18 @@ export default function ChatListItem(props: ChatListItemProps) {
                             {lastMessage ? (
                                 <Typography
                                     level="body-sm"
+                                    fontSize={{ xs: 'sm', sm: 'md' }}
                                     sx={{
                                         display: '-webkit-box',
                                         WebkitLineClamp: '2',
                                         WebkitBoxOrient: 'vertical',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                        color: 'text.secondary',
-                                        marginTop: '7px',
-                                        maxWidth: { xs: '290px', sm: '350px' },
+                                        color: selected
+                                            ? 'var(--joy-palette-common-white)'
+                                            : 'var(--joy-palette-text-primary)',
+
+                                        maxWidth: { xs: '320px', sm: '380px' },
                                         width: '100%',
                                     }}
                                 >
@@ -260,7 +328,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                             <img
                                                 src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath.replace('.mp4', '-thumbnail.jpg'))}`}
                                                 alt="attachment preview"
-                                                style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                                style={{ width: '24px', height: '24px', marginRight: '8px' }}
                                             />
                                             <span>{t('image')}</span>
                                         </Box>
@@ -291,31 +359,32 @@ export default function ChatListItem(props: ChatListItemProps) {
                             >
                                 <Typography
                                     level="body-xs"
+                                    fontSize="sm"
                                     noWrap
                                     sx={{
                                         display: 'flex',
                                         alignItems: 'center',
                                     }}
                                 >
-                                    {lastMessage.userId === currentUserId ? (
-                                        lastMessage.isRead ? (
-                                            <DoneAllIcon sx={{ fontSize: 15, mr: 0.5 }} />
-                                        ) : (
-                                            <CheckIcon sx={{ fontSize: 15, mr: 0.5 }} />
-                                        )
-                                    ) : null}
+                                    {/*{lastMessage.userId === currentUserId ? (*/}
+                                    {/*    lastMessage.isRead ? (*/}
+                                    {/*        <DoneAllIcon sx={{ fontSize: 16, mr: 0.5 }} />*/}
+                                    {/*    ) : (*/}
+                                    {/*        <CheckIcon sx={{ fontSize: 16, mr: 0.5 }} />*/}
+                                    {/*    )*/}
+                                    {/*) : null}*/}
                                     {getFormattedDate(new Date(lastMessage.createdAt), locale)}
                                 </Typography>
 
                                 {unreadCount > 0 && lastMessage.userId !== currentUserId && (
                                     <Box
                                         sx={{
-                                            width: 20,
-                                            height: 20,
+                                            width: 22,
+                                            height: 22,
                                             borderRadius: '50%',
                                             backgroundColor: '#007bff',
                                             color: 'white',
-                                            fontSize: 12,
+                                            fontSize: 14,
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',

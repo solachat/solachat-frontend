@@ -73,12 +73,14 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
                 },
             }
         );
+        console.log('Полученные чаты:', response.data);
         return response.data;
     } catch (error: any) {
         console.error('Error fetching chats:', error.response?.data || error.message);
         return [];
     }
 };
+
 
 export const sendMessage = async (chatId: number, formData: FormData, token: string) => {
     try {

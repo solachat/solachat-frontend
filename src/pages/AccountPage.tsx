@@ -119,9 +119,6 @@ export default function AccountPage() {
 
                 setProfileData(data);
                 setAccountExists(true);
-                setBalance(data.balance);
-                setTokenBalance(data.tokenBalance);
-                setPublicKey(data.sharePublicKey);
 
                 const decodedToken = token ? jwtDecode<{ publicKey: string }>(token) : null;
                 const currentPublicKey = decodedToken?.publicKey || null;
@@ -190,8 +187,6 @@ export default function AccountPage() {
                 {
                     newUsername: profileData.username,
                     aboutMe: profileData.aboutMe,
-                    shareEmail: shareEmail,
-                    sharePublicKey: Boolean(sharePublicKey),
                     verified: profileData.verified,
                 },
                 {
@@ -549,10 +544,10 @@ export default function AccountPage() {
                                     </FormLabel>
                                     <Input
                                         size="sm"
-                                        value={isOwner || sharePublicKey ? profileData.public_key : '******'}
+                                        value={profileData.public_key}
                                         startDecorator={<WalletIcon />}
                                         endDecorator={
-                                            (isOwner || sharePublicKey) && profileData.public_key ? (
+                                            profileData.public_key ? (
                                                 <IconButton
                                                     variant="plain"
                                                     size="sm"

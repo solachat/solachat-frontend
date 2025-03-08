@@ -11,6 +11,11 @@ import GroupInfoModal from '../group/GroupInfoModal';
 import CallModal from './CallModal';
 import { jwtDecode } from 'jwt-decode';
 import Verified from '../core/Verified';
+import {useEffect} from "react";
+import Box from "@mui/joy/Box";
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+
+type UserStatus = Pick<UserProps, 'online' | 'lastOnline'>;
 
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
@@ -20,6 +25,7 @@ type MessagesPaneHeaderProps = {
     groupAvatar?: string;
     members?: UserProps[];
     onBack?: () => void;
+    userStatus?: UserStatus;
 };
 
 export default function MessagesPaneHeader({
@@ -29,12 +35,14 @@ export default function MessagesPaneHeader({
                                                chatName,
                                                groupAvatar,
                                                members = [],
-                                               onBack
+                                               onBack,
+                                               userStatus,
                                            }: MessagesPaneHeaderProps) {
     const { t, i18n } = useTranslation();
     const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
     const [isCallModalOpen, setIsCallModalOpen] = React.useState(false);
     const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
+    const [currentTime, setCurrentTime] = React.useState(Date.now());
 
     React.useEffect(() => {
         const token = localStorage.getItem('token');
@@ -70,14 +78,40 @@ export default function MessagesPaneHeader({
         }
     };
 
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentTime(Date.now());
+        }, 60000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    const formatTimeAgo = (timestamp: number) => {
+        const diff = currentTime - timestamp;
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+
+        if (diff < 60000) return t("just_now");
+        if (minutes < 60) return t("minutes_ago", { count: minutes });
+        if (hours < 24) return t("hours_ago", { count: hours });
+
+        return new Date(timestamp).toLocaleDateString(i18n.language, {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        });
+    };
+
+
     return isGroup || sender ? (
         <>
             <Stack
                 direction="row"
                 sx={{
                     justifyContent: 'space-between',
-                    py: { xs: 2, md: 2 },
-                    px: { xs: 2, md: 2 },
+                    py: { xs: 2, md: 1 },
+                    px: { xs: 2, md: 1 },
                     borderBottom: '1px solid',
                     borderColor: 'divider',
                     backgroundColor: 'background.body',
@@ -85,7 +119,7 @@ export default function MessagesPaneHeader({
             >
                 <Stack
                     direction="row"
-                    spacing={{ xs: 1, md: 2 }}
+                    spacing={{ xs: 1, md: 1 }}
                     sx={{
                         alignItems: 'center',
                         width: { xs: '100%', sm: 'auto' },
@@ -133,6 +167,14 @@ export default function MessagesPaneHeader({
                             {sender?.verified && <Verified sx={{ ml: 1 }} />}
                         </Typography>
 
+                        <Typography level="body-sm" color={sender?.online ? "primary" : "neutral"}>
+                            {sender?.online
+                                ? t("online")
+                                : sender?.lastOnline
+                                    ? t("last_seen", { time: formatTimeAgo(new Date(sender.lastOnline).getTime()) })
+                                    : t("offline")}
+                        </Typography>
+
                         {isGroup && (
                             <Typography level="body-sm">
                                 {members.length} {getMemberLabel(members.length, i18n.language)}
@@ -141,18 +183,47 @@ export default function MessagesPaneHeader({
                     </div>
                 </Stack>
 
-                <Stack direction="row" spacing={1} alignItems="center">
-                    {/*{receiverId && (*/}
-                    {/*    <IconButton size="sm" sx={{ opacity: 0.5, cursor: 'not-allowed' }} onClick={() => setIsCallModalOpen(true)}>*/}
-                    {/*        <PhoneInTalkRoundedIcon />*/}
-                    {/*    </IconButton>*/}
-                    {/*)}*/}
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ position: 'relative' }}>
+                    {/* Кнопка с иконкой троеточия */}
+                    <IconButton
+                        onClick={() => setIsOpen(prev => !prev)}
+                        aria-label="Toggle menu"
+                        sx={{
+                            borderRadius: "50%",
+                            backgroundColor: isOpen ? "rgba(255, 255, 255, 0.2)" : "transparent",
+                            "&:hover": {
+                                backgroundColor: "rgba(255, 255, 255, 0.2)",
+                            },
+                        }}
+                    >
+                        <MoreVertRoundedIcon />
+                    </IconButton>
 
-                    <MessagesMenu
-                        chatId={chatId}
-                        token={localStorage.getItem('token') || ''}
-                        onDeleteChat={() => console.log('Chat deleted')}
-                    />
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            top: "60px",
+                            right: 0,
+                            mt: 0,
+                            width: "auto",
+                            zIndex: 9,
+                            borderRadius: "12px",
+                            boxShadow: "4px 4px 20px rgba(0, 0, 0, 0.5)",
+                            maxHeight: isOpen ? "400px" : "0px",
+                            opacity: isOpen ? 1 : 0,
+                            overflow: "hidden",
+                            transition: "max-height 0.3s ease-in-out, opacity 0.3s ease-in-out",
+                            ml: 2,
+                        }}
+                    >
+                        <MessagesMenu
+                            isOpen={isOpen}
+                            onClose={() => setIsOpen(false)}
+                            chatId={chatId}
+                            token={localStorage.getItem('token') || ''}
+                            onDeleteChat={() => console.log('Chat deleted')}
+                        />
+                    </Box>
                 </Stack>
             </Stack>
 

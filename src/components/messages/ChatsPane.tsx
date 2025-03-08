@@ -1,12 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import Stack from '@mui/joy/Stack';
-import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
 import {Box, CircularProgress, Input, List} from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChatListItem from './ChatListItem';
-import { ChatProps, UserProps } from '../core/types';
+import {ChatProps, MessageProps, UserProps} from '../core/types';
 import { searchUsers, fetchChatsFromServer } from '../../api/api';
 import { CssVarsProvider } from '@mui/joy/styles';
 import Sidebar from '../core/Sidebar';
@@ -16,7 +14,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
 import SettingsScreen from '../screen/SettingsScreen';
 import {useState} from "react";
-import { AnimatePresence, motion } from 'framer-motion';
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -29,7 +26,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     const {t} = useTranslation();
     const [chats, setChats] = useState<ChatProps[]>(initialChats);
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchResults, setSearchResults] = useState<UserProps[]>([]);
+    const [searchResults, setSearchResults] = useState<(UserProps & { lastMessage?: MessageProps; chatId?: number })[]>([]);
     const [loadingChats, setLoadingChats] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -37,13 +34,13 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     const [activeScreen, setActiveScreen] = useState<'chats' | 'settings'>('chats');
 
     const {wsRef, isConnecting} = useWebSocket((data) => {
+        console.log("Received WebSocket message:", data);
         if (data.type === 'chatCreated' || data.type === 'groupChatCreated') {
             const newChat = data.chat;
             setChats((prevChats) => {
                 if (prevChats.some((chat) => chat.id === newChat.id)) return prevChats;
                 return [...prevChats, newChat].sort((a, b) => b.id - a.id);
             });
-            console.log('New chat created:', newChat);
         }
 
         if (data.type === 'chatDeleted') {
@@ -137,25 +134,26 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
             );
         }
 
-        if (data.type === 'USER_CONNECTED' && 'userId' in data) {
-            const userId = data.userId;
-            setChats((prevChats) =>
-                prevChats.map((chat) => ({
+        if (data.type === 'USER_CONNECTED' && 'publicKey' in data) {
+            setChats((prevChats) => {
+                const updatedChats = prevChats.map((chat) => ({
                     ...chat,
                     users: (chat.users || []).map((user) =>
-                        user.id === userId ? {...user, online: true} : user
+                        user.public_key === data.publicKey ? { ...user, online: true } : user
                     ),
-                }))
-            );
+                }));
+                console.log("Updated chats:", updatedChats);
+                return updatedChats;
+            });
         }
 
-        if (data.type === 'USER_DISCONNECTED' && 'userId' in data) {
-            const userId = data.userId;
+        if (data.type === 'USER_DISCONNECTED' && 'publicKey' in data) {
+            const publicKey = data.publicKey;
             setChats((prevChats) =>
                 prevChats.map((chat) => ({
                     ...chat,
                     users: (chat.users || []).map((user) =>
-                        user.id === userId ? {...user, online: false} : user
+                        user.public_key === publicKey ? {...user, online: false} : user
                     ),
                 }))
             );
@@ -184,13 +182,38 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const term = e.target.value;
         setSearchTerm(term);
+
         if (term.trim()) {
-            const results = await searchUsers(term);
-            setSearchResults(results || []);
+            try {
+                const userResults = await searchUsers(term);
+
+                const chatResults = chats
+                    .map(chat => {
+                        const user = chat.users.find(user => user.id !== currentUser.id);
+                        if (!user) return null;
+
+                        return {
+                            ...user,
+                            lastMessage: chat.lastMessage || null,
+                            chatId: chat.id,
+                        };
+                    })
+                    .filter(Boolean) as (UserProps & { lastMessage?: MessageProps; chatId?: number })[];
+
+                const mergedResults = Array.from(
+                    new Map([...chatResults, ...userResults].map(user => [user.id, user])).values()
+                );
+
+                setSearchResults(mergedResults);
+            } catch (error) {
+                console.error("Ошибка поиска пользователей:", error);
+                setSearchResults([]);
+            }
         } else {
             setSearchResults([]);
         }
     };
+
 
     const handleCloseSettings = () => {
         setActiveScreen('chats');
@@ -223,7 +246,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 >
                     <IconButton
                         sx={{
-                            borderRadius: "50%",
+                            borderRadius: '50%',
                             mr: 2,
                             ml: "16px",
                             backgroundColor: isSidebarOpen ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
@@ -250,10 +273,10 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                             sx={{
                                 flex: 1,
                                 maxWidth: "600px",
-                                minWidth: "350px",
-                                height: "44px",
+                                minWidth: "420px",
+                                height: "40px",
                                 fontSize: "16px",
-                                borderRadius: "8px",
+                                borderRadius: "12px",
                                 textAlign: "center",
                             }}
                         />
@@ -267,7 +290,8 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                         left: 0,
                         width: "auto",
                         zIndex: 9,
-                        boxShadow: "2px 2px 10px rgba(0, 0, 0, 0.1)",
+                        borderRadius: "12px",
+                        boxShadow: "4px 4px 20px rgba(0, 0, 0, 0.5)",
                         maxHeight: isSidebarOpen ? "400px" : "0px",
                         opacity: isSidebarOpen ? 1 : 0,
                         overflow: "hidden",
@@ -282,10 +306,8 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                     />
                 </Box>
 
-
                 <Box
                     sx={{
-
                         display: "flex",
                         flexDirection: "column",
                         justifyContent: "flex-end",
