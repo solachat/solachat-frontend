@@ -30,6 +30,7 @@ type ChatBubbleProps = MessageProps & {
     isGroupChat: boolean;
     isRead: boolean;
     isDelivered: boolean;
+    pending?: boolean;
 };
 
 const isImageFile = (fileName: string) => {
@@ -54,7 +55,6 @@ const isLink = (text: string) => {
     const urlRegex = /(?:^|\s)(https?:\/\/[^\s]+|(?:[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:[\/\w.-]*)?)(?=\s|$)/g;
     return urlRegex.test(text.trim());
 };
-
 
 
 const renderMessageContent = (text: string) => {
@@ -93,7 +93,7 @@ const renderMessageContent = (text: string) => {
 
 export default function ChatBubble(props: ChatBubbleProps) {
     const { t } = useTranslation();
-    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat, isRead } = props;
+    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat, isRead, pending } = props;
     const isSent = variant === 'sent';
     const formattedTime = new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const handleImageLoad = () => {
@@ -119,18 +119,15 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const [isClosing, setIsClosing] = useState(false);
 
     const getAttachmentUrl = () => {
-        if (!attachment) return '';
-        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
-
-        const cleanedPath = attachment.filePath.replace(/\\/g, '/');
-
-        return `${baseUrl}/${cleanedPath}`;
+        return attachment?.filePath || '';
     };
 
 
-    const isImage = isImageFile(attachment?.fileName || '');
-    const isVideo = isVideoFile(attachment?.fileName || '');
-    const isAudio = isAudioFile(attachment?.fileName || '');
+    const isImage = isImageFile(attachment?.filePath || '');
+    const isVideo = isVideoFile(attachment?.filePath || '');
+    const isAudio = isAudioFile(attachment?.filePath || '');
+
+
 
     const handleImageClick = () => {
         setImageSrc(getAttachmentUrl());
@@ -281,10 +278,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     sx={{
                         maxWidth: isEdited ? '75%' : '70%',
                         minWidth: 'fit-content',
-                        padding: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 10px' } : 0,
+                        padding: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 8px' } : 0,
                         borderRadius: '12px',
-                        borderBottomLeftRadius: isSent ? '18px' : '0px',
-                        borderBottomRightRadius: isSent ? '0px' : '18px',
                         backgroundColor:
                             (isImage || isVideo || isAudio) && !content
                                 ? 'transparent'
@@ -302,6 +297,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             maxWidth: '85%',
                             width: 'auto',
                         },
+
                     }}
                 >
                     {isGroupChat && !isSent && (
@@ -435,7 +431,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             alignItems: 'center',
                             backgroundColor: (isImage && !content) || (isVideo && !content) ? 'rgba(0, 0, 0, 0.4)' : 'transparent',
                             padding: (isImage && !content) || (isVideo && !content) ? '2px 6px' : '0px',
-                            borderRadius: (isImage && !content) || (isVideo && !content) ? '10px' : '0px',
+                            borderRadius: (isImage && !content) || (isVideo && !content) ? '12px' : '0px',
                         }}
                     >
                         {isEdited && (
@@ -456,24 +452,45 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
                             }}
                         >
-                            <Typography component="span" sx={{ fontSize: '12px', color: isSent ? 'var(--joy-palette-common-white)' : 'inherit' }}>
-                                {formattedTime}
-                            </Typography>
+                            {!pending && createdAt && (
+                                <Typography
+                                    component="span"
+                                    sx={{
+                                        fontSize: '12px',
+                                        color: isSent ? 'var(--joy-palette-common-white)' : 'inherit',
+                                    }}
+                                >
+                                    {new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </Typography>
+                            )}
+
                             {isSent && (
-                                isRead ? (
-                                    <DoneAllIcon
+                                pending ? (
+                                    <CircularProgress
+                                        size="sm"
                                         sx={{
-                                            fontSize: '18px',
-                                            marginLeft: { xs: '1px', sm: '4px' },
+                                            fontSize: "12px",
+                                            marginLeft: { xs: '1px', sm: '2px' },
                                         }}
                                     />
+
+
                                 ) : (
-                                    <CheckIcon
-                                        sx={{
-                                            fontSize: '18px',
-                                            marginLeft: { xs: '1px', sm: '4px' },
-                                        }}
-                                    />
+                                    isRead ? (
+                                        <DoneAllIcon
+                                            sx={{
+                                                fontSize: '18px',
+                                                marginLeft: { xs: '1px', sm: '4px' },
+                                            }}
+                                        />
+                                    ) : (
+                                        <CheckIcon
+                                            sx={{
+                                                fontSize: '18px',
+                                                marginLeft: { xs: '1px', sm: '4px' },
+                                            }}
+                                        />
+                                    )
                                 )
                             )}
                         </Box>
@@ -541,7 +558,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                     padding: '6px',
                                     wordWrap: 'break-word',
                                     display: 'inline-block',
-                                    borderRadius: '10px',
+                                    borderRadius: '12px',
                                 }}
                             >
                                 {content}

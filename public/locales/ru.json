@@ -311,5 +311,6 @@
   "minutes_ago_many": "{{count}} минут назад",
   "hours_ago_one": "{{count}} час назад",
   "hours_ago_few": "{{count}} часа назад",
-  "hours_ago_many": "{{count}} часов назад"
+  "hours_ago_many": "{{count}} часов назад",
+  "logout": "Выйти"
 }

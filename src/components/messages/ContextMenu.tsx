@@ -13,6 +13,7 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
     '&:hover': {
         backgroundColor: theme.palette.primary.light,
         transition: 'background-color 0.3s ease',
+        borderRadius: '8px',
     },
     display: 'flex',
     alignItems: 'center',
@@ -52,7 +53,7 @@ export default function ContextMenu({
                                         messageCreatorId,
                                     }: ContextMenuProps) {
     const { t } = useTranslation();
-    const theme = useTheme();
+
 
     return (
         <StyledMenu

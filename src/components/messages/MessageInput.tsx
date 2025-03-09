@@ -16,7 +16,7 @@ import CustomTextarea from "./CustomTextarea";
 import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
 import EmojiPickerPopover from "./EmojiPickerPopover";
 import {toast} from "react-toastify";
-import {ChatProps} from "../core/types";
+import {ChatProps, MessageProps} from "../core/types";
 
 export type UploadedFileData = {
     file: File;
@@ -71,61 +71,89 @@ export default function MessageInput(props: MessageInputProps) {
         setUploadedFiles([]);
     }, [editingMessage, chatId]);
 
+    const [isSending, setIsSending] = useState(false);
 
     const handleClick = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.error('❌ Ошибка: Authorization token is missing');
-            return;
-        }
-
-        const content = message.trim();
-        if (content === '' && uploadedFiles.length === 0) {
-            console.warn('⚠️ Нельзя отправить пустое сообщение');
-            return;
-        }
+        if (isSending) return; // Если уже отправляется - выходим
+        setIsSending(true);
 
         try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("❌ Ошибка: Authorization token is missing");
+                return;
+            }
+
+            const content = message.trim();
+            if (content === "" && uploadedFiles.length === 0) {
+                console.warn("⚠️ Нельзя отправить пустое сообщение");
+                return;
+            }
+
             let finalChatId = selectedChat?.id;
 
-            console.log(`📌 Отправка сообщения. Текущий chatId: ${finalChatId}`);
-
             if (!finalChatId || finalChatId === -1) {
-                const recipient = selectedChat?.users.find(user => user.id !== currentUserId);
+                const recipient = selectedChat?.users.find(
+                    (user: any) => user.id !== currentUserId
+                );
                 if (!recipient) {
                     console.error("❌ Ошибка: Получатель не найден.");
                     return;
                 }
 
-                console.log("🔄 Создаём новый чат перед отправкой...");
+                console.log("🔄 Создаем новый чат перед отправкой...");
                 const newChat = await createPrivateChat(currentUserId, recipient.id, token);
                 finalChatId = newChat.id;
                 setSelectedChat(newChat);
-                console.log("✅ Новый чат создан:", newChat);
             }
-
 
             if (!finalChatId) {
                 console.error("❌ Ошибка: Chat ID отсутствует. Сообщение не отправлено.");
                 return;
             }
 
-            console.log("📤 Отправляем сообщение в чат ID:", finalChatId);
+            const tempId = Date.now();
+            console.log(`📝 Создано временное сообщение с tempId: ${tempId}`);
+
+            const optimisticMessage = {
+                id: tempId,
+                chatId: finalChatId,
+                userId: currentUserId,
+                content,
+                createdAt: new Date().toISOString(),
+                pending: true,
+                isRead: false
+            };
+
+            console.log("📩 Добавляем оптимистичное сообщение в UI:", optimisticMessage);
+            onSubmit(optimisticMessage);
 
             const formData = new FormData();
-            formData.append('content', content);
-            uploadedFiles.forEach(fileData => formData.append("file", fileData.file));
+            formData.append("content", content);
+            formData.append("tempId", String(tempId));
+            uploadedFiles.forEach(fileData => {
+                formData.append("file", fileData.file);
+            });
 
-            await sendMessage(finalChatId, formData, token);
+            console.log("📤 Отправляем сообщение на сервер...");
+            const serverMessage = await sendMessage(finalChatId, formData, token);
+            console.log("✅ Сервер подтвердил отправку:", serverMessage);
 
-            setMessage('');
+            onSubmit((prevMessages: MessageProps[]) =>
+                prevMessages.map((msg: MessageProps) =>
+                    msg.id === optimisticMessage.id ? { ...serverMessage, pending: false } : msg
+                )
+            );
+
+            console.log("🧹 Очищаем поле ввода");
+            setMessage("");
             setUploadedFiles([]);
-            console.log(`✅ Сообщение успешно отправлено в чат ID: ${finalChatId}`);
         } catch (error) {
-            console.error('❌ Ошибка при отправке сообщения:', error);
+            console.error("❌ Ошибка при отправке сообщения:", error);
+        } finally {
+            setIsSending(false); // Разблокируем отправку
         }
     };
-
 
     const handleEmojiSelect = (emoji: string) => {
         setMessage((prev) => prev + emoji);
@@ -180,7 +208,7 @@ export default function MessageInput(props: MessageInputProps) {
 
     return (
         <Box
-            sx={{ position: 'relative', px: 3, pb: 1 }}
+            sx={{ position: 'relative', px: 2, pb: 1 }}
             onPaste={handlePaste}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -213,7 +241,7 @@ export default function MessageInput(props: MessageInputProps) {
                     sx={{
                         border: '1px solid',
                         borderColor: 'divider',
-                        borderRadius: '4px',
+                        borderRadius: '12px',
                         padding: '6px',
                         backgroundColor: 'background.level1',
                         maxWidth: '100%',

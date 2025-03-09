@@ -64,14 +64,23 @@ export default function MyProfile() {
     };
 
     const updateLastMessageInChatList = (chatId: number, newMessage: MessageProps) => {
-                setChats((prevChats) =>
-                    prevChats.map((chat) =>
-                        chat.id === chatId
-                            ? { ...chat, lastMessage: newMessage }
-                            : chat
-                    )
-                );
+        setChats((prevChats) => {
+            return prevChats.map((chat) =>
+                chat.id === chatId
+                    ? { ...chat, lastMessage: newMessage }
+                    : chat
+            );
+        });
+
+        // Проверяем, не поменялся ли текущий чат
+        if (selectedChat?.id === chatId) {
+            console.log(`✅ Обновляем последнее сообщение в активном чате (${chatId})`);
+            setSelectedChat((prev) =>
+                prev ? { ...prev, lastMessage: newMessage } : prev
+            );
+        }
     };
+
 
     const addNewChat = (chatId: number) => {
         fetchChatsFromServer(currentUser!.id, localStorage.getItem('token')!).then((fetchedChats: ChatProps[]) => {
@@ -122,13 +131,21 @@ export default function MyProfile() {
     const chatDeletedRef = useRef(false);
 
     useEffect(() => {
-        if (selectedChat && !chats.some(chat => chat.id === selectedChat.id)) {
+        if (!selectedChat) return;
+
+        const foundChat = chats.find(chat => chat.id === selectedChat.id);
+        if (!foundChat) {
             if (chatDeletedRef.current) {
+                console.log(`⚠️ Чат ${selectedChat.id} удален, сбрасываем выбор.`);
                 setSelectedChat(null);
                 navigate('/chat');
             }
+        } else {
+            console.log(`✅ Чат ${selectedChat.id} найден, обновляем данные.`);
+            setSelectedChat(foundChat);
         }
     }, [chats, selectedChat, navigate]);
+
 
 
     const handleWebSocketMessage = (message: any) => {

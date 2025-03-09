@@ -99,12 +99,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
 
                 return updatedChats;
             });
-
-
         }
-
-
-
 
         if (data.type === 'deleteMessage') {
             const messageIdToDelete = data.messageId;

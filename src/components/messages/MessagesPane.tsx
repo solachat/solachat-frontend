@@ -12,7 +12,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
-import { updateMessageStatus } from '../../api/api';
+import {sendMessage, updateMessageStatus} from '../../api/api';
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
@@ -37,11 +37,17 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
     const [userStatuses, setUserStatuses] = React.useState<Record<string, Pick<UserProps, 'online' | 'lastOnline'>>>({});
 
     const scrollToBottom = (smooth: boolean = true) => {
-        const container = messagesContainerRef.current;
-        if (container) {
-            container.scrollTop = container.scrollHeight;
-        }
+        requestAnimationFrame(() => {
+            const container = messagesContainerRef.current;
+            if (container) {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: smooth ? 'smooth' : 'auto',
+                });
+            }
+        });
     };
+
 
     const markMessagesAsRead = async () => {
         try {
@@ -52,22 +58,24 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             const currentUserId = decodedToken.id;
 
             const messageIds = chatMessages
-                .filter(msg => !msg.isRead && msg.userId !== currentUserId)
+                .filter(msg => !msg.isRead && msg.userId !== currentUserId && Number.isInteger(msg.id))
                 .map(msg => msg.id);
 
-            if (messageIds.length > 0) {
-                await Promise.all(messageIds.map(id =>
-                    updateMessageStatus(Number(id), { isRead: true }, token)
-                ));
+            if (messageIds.length === 0) return;
 
-                setChatMessages(prevMessages =>
-                    prevMessages.map(msg =>
-                        messageIds.includes(msg.id) ? { ...msg, isRead: true } : msg
-                    )
-                );
-            }
+            console.log("📤 Отправляем запрос на обновление прочитанности сообщений:", messageIds);
+
+            await Promise.all(messageIds.map(id =>
+                updateMessageStatus(Number(id), { isRead: true }, token)
+            ));
+
+            setChatMessages(prevMessages =>
+                prevMessages.map(msg =>
+                    messageIds.includes(msg.id) ? { ...msg, isRead: true } : msg
+                )
+            );
         } catch (error) {
-            console.error('Error marking messages as read:', error);
+            console.error('❌ Ошибка при отметке сообщений как прочитанных:', error);
         }
     };
 
@@ -125,21 +133,27 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
 
 
     useEffect(() => {
-        if (chatIdFromUrl) {
-            const chatFromUrl = findChatById(chatIdFromUrl);
-            if (chatFromUrl) {
-                setSelectedChat(chatFromUrl);
-            }
-        } else {
-            setSelectedChat(null);
+        if (!chatIdFromUrl || chatIdRef.current === Number(chatIdFromUrl)) {
+            return; // Не меняем чат, если он уже активный
+        }
+
+        const chatFromUrl = findChatById(chatIdFromUrl);
+        if (chatFromUrl) {
+            setSelectedChat(chatFromUrl);
         }
     }, [chatIdFromUrl, chats, setSelectedChat]);
+
 
     useEffect(() => {
         if (chat && chat.id !== chatIdRef.current) {
             chatIdRef.current = chat.id;
-            chatMessagesRef.current = chat.messages || [];
-            setChatMessages(chatMessagesRef.current);
+            const newMessages = chat.messages || [];
+
+            if (JSON.stringify(newMessages) !== JSON.stringify(chatMessagesRef.current)) {
+                chatMessagesRef.current = newMessages;
+                setChatMessages([...newMessages]);
+            }
+
             scrollToBottom(false);
         } else if (!chat) {
             chatMessagesRef.current = [];
@@ -147,6 +161,38 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             chatIdRef.current = null;
         }
     }, [chat]);
+
+
+
+    const [messages, setMessages] = useState<MessageProps[]>(chat?.messages || []);
+
+    useEffect(() => {
+        const resendPendingMessages = async () => {
+            console.log("Соединение восстановлено. Проверяем pending сообщения...");
+            const token = localStorage.getItem("token");
+            if (!token) return;
+            const pendingMessages = messages.filter(msg => msg.pending);
+            for (const msg of pendingMessages) {
+                try {
+                    const formData = new FormData();
+                    formData.append("content", msg.content);
+                    await sendMessage(msg.chatId, formData, token);
+                    console.log(`Сообщение ${msg.id} успешно повторно отправлено.`);
+                    setMessages(prev =>
+                        prev.map(m => (m.id === msg.id ? { ...m, pending: false } : m))
+                    );
+                } catch (err) {
+                    console.error(`Ошибка повторной отправки сообщения ${msg.id}:`, err);
+                }
+            }
+        };
+
+        window.addEventListener("online", resendPendingMessages);
+        return () => {
+            window.removeEventListener("online", resendPendingMessages);
+        };
+    }, [messages]);
+
 
     useEffect(() => {
         const container = messagesContainerRef.current;
@@ -174,17 +220,34 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         setChatMessages((prevMessages) => prevMessages.filter((msg) => Number(msg.id) !== messageId));
     };
 
+
     useWebSocket((data) => {
         if (data.type === 'newMessage' && data.message) {
-            const newMessage = data.message;
-            if (newMessage.chatId === chatIdRef.current) {
-                setChatMessages((prevMessages) => {
-                    if (!prevMessages.some((msg) => msg.id === newMessage.id)) {
-                        return [...prevMessages, newMessage];
-                    }
-                    return prevMessages;
-                });
+            const serverMessage = data.message;
+
+            // Проверяем, что сообщение пришло в текущий чат
+            if (chatIdRef.current !== serverMessage.chatId) {
+                console.log(`📩 Сообщение ID ${serverMessage.id} пришло в другой чат (ID: ${serverMessage.chatId}), игнорируем.`);
+                return;
             }
+
+            console.log("📥 Получено новое сообщение:", serverMessage);
+
+            setChatMessages((prevMessages) => {
+                const index = prevMessages.findIndex(msg => msg.id === Number(serverMessage.tempId));
+
+                if (index !== -1) {
+                    return prevMessages.map(msg =>
+                        msg.id === Number(serverMessage.tempId)
+                            ? { ...msg, id: serverMessage.id, pending: false, createdAt: serverMessage.createdAt }
+                            : msg
+                    );
+                }
+
+                return [...prevMessages, serverMessage];
+            });
+
+
         } else if (data.type === 'editMessage' && data.message) {
             const updatedMessage = data.message;
             if (updatedMessage.chatId === chatIdRef.current) {
@@ -223,10 +286,8 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
 
     const interlocutor = React.useMemo(() => {
         if (!chat?.isGroup) {
-            // Находим собеседника по БД
             const userFromDb = chat?.users?.find((user) => user.id !== currentUserId);
             if (userFromDb) {
-                // Если для пользователя есть статус из вебсокета, объединяем данные
                 return {
                     ...userFromDb,
                     online: userFromDb.public_key && userStatuses[userFromDb.public_key]
@@ -270,8 +331,8 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column-reverse',
-                    px: 2,
-                    py: { xs: 2, sm: 3 },
+                    px: 1,
+                    py: { xs: 2, sm: 2 },
                     overflowY: 'auto',
                     alignItems: 'center',
                     '&::-webkit-scrollbar': {
@@ -289,36 +350,39 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             >
 
                 {chatMessages.length > 0 ? (
-                    <Stack spacing={1} sx={{ width: { xs: '100%', sm: '80%', md: '95%' } }}>
-                        {chatMessages.map((message: MessageProps, index: number) => {
-                            const isCurrentUser = message.userId === currentUserId;
-                            return (
-                                <Stack
-                                    key={index}
-                                    direction="row"
-                                    spacing={2}
-                                    flexDirection={isCurrentUser ? 'row-reverse' : 'row'}
-                                >
-                                    <ChatBubble
-                                        id={message.id}
-                                        chatId={message.chatId}
-                                        userId={message.userId}
-                                        variant={isCurrentUser ? 'sent' : 'received'}
-                                        user={message.user}
-                                        content={message.content}
-                                        createdAt={message.createdAt}
-                                        attachment={message.attachment}
-                                        isRead={message.isRead ?? false}
-                                        isDelivered={message.isDelivered ?? false}
-                                        unread={message.unread}
-                                        isEdited={message.isEdited}
-                                        onEditMessage={handleEditMessage}
-                                        messageCreatorId={message.userId}
-                                        isGroupChat={chat?.isGroup || false}
-                                    />
-                                </Stack>
-                            );
-                        })}
+                    <Stack spacing={1} sx={{ width: { xs: '100%', sm: '80%', md: '80%' } }}>
+                        {chatMessages
+                            .filter((message) => message.content || message.attachment)
+                            .map((message: MessageProps, index: number) => {
+                                const isCurrentUser = message.userId === currentUserId;
+                                return (
+                                    <Stack
+                                        key={index}
+                                        direction="row"
+                                        spacing={2}
+                                        flexDirection={isCurrentUser ? 'row-reverse' : 'row'}
+                                    >
+                                        <ChatBubble
+                                            id={message.id}
+                                            chatId={message.chatId}
+                                            userId={message.userId}
+                                            variant={isCurrentUser ? 'sent' : 'received'}
+                                            user={message.user}
+                                            content={message.content}
+                                            createdAt={message.createdAt}
+                                            attachment={message.attachment}
+                                            isRead={message.isRead ?? false}
+                                            isDelivered={message.isDelivered ?? false}
+                                            unread={message.unread}
+                                            isEdited={message.isEdited}
+                                            onEditMessage={handleEditMessage}
+                                            messageCreatorId={message.userId}
+                                            isGroupChat={chat?.isGroup || false}
+                                            pending={message.pending}
+                                        />
+                                    </Stack>
+                                );
+                            })}
                         <div ref={messagesEndRef} />
                     </Stack>
                 ) : (
@@ -339,23 +403,15 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             </Box>
 
             {chat && (
-                <Box sx={{ width: { xs: '100%', sm: '80%', md: '94%' }, margin: '0 auto' }}>
+                <Box sx={{ width: { xs: '100%', sm: '80%', md: '80%' }, margin: '0 auto' }}>
                     <MessageInput
                         chatId={chat?.id ?? null}
                         selectedChat={chat}
                         setSelectedChat={setSelectedChat}
                         currentUserId={currentUserId!}
-                        onSubmit={() => {
-                            const newMessage: MessageProps = {
-                                id: chatMessages.length + 1,
-                                user: chat?.users?.find((user) => user.id === currentUserId)!,
-                                userId: currentUserId!,
-                                chatId: chat?.id!,
-                                content: textAreaValue,
-                                createdAt: new Date().toISOString(),
-                            };
-                            setChatMessages([...chatMessages, newMessage]);
-                            setTextAreaValue('');
+                        onSubmit={(newMessage: MessageProps) => {
+                            setChatMessages((prevMessages) => [...prevMessages, newMessage]);
+                            setTextAreaValue("");
                             setEditingMessageId(null);
                         }}
                         editingMessage={
@@ -363,25 +419,24 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                                 ? {
                                     id: editingMessageId,
                                     content:
-                                        chatMessages.find(
-                                            (msg) => msg.id.toString() === editingMessageId.toString()
-                                        )?.content ?? null,
+                                        chatMessages.find((msg) => msg.id === editingMessageId)?.content || "",
                                 }
-                                : { id: null, content: null }
+                                : { id: null, content: "" }
                         }
                         setEditingMessage={(msg) => {
-                            if (msg === null) {
+                            if (!msg) {
                                 setEditingMessageId(null);
                             } else {
                                 const messageToEdit = chatMessages.find(
                                     (msgItem) => msgItem.content === msg.content
                                 );
                                 if (messageToEdit) {
-                                    setEditingMessageId(Number(messageToEdit.id));
+                                    setEditingMessageId(messageToEdit.id);
                                 }
                             }
                         }}
                     />
+
 
                 </Box>
             )}

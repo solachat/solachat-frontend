@@ -91,14 +91,21 @@ export const sendMessage = async (chatId: number, formData: FormData, token: str
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data',
                 },
+                validateStatus: (status) => status < 500, // ✅ Разрешаем 202
             }
         );
-        return response.data;
+        console.log("📥 typeof response.status:", typeof response.status, response.status);
+
+        console.log("📥 Ответ от сервера (sendMessage):", response); // ✅ Логируем ответ
+
+        return response;
+
     } catch (error) {
-        console.error('Error sending message:', error);
+        console.error('❌ Ошибка отправки сообщения:', error);
         throw new Error('Could not send message');
     }
 };
+
 
 export const updateUserStatus = async (userId: number, isOnline: boolean, token: string) => {
     if (!token) {

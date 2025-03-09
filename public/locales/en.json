@@ -245,5 +245,6 @@
   "minutes_ago": "{{count}} minute ago",
   "minutes_ago_plural": "{{count}} minutes ago",
   "hours_ago": "{{count}} hour ago",
-  "hours_ago_plural": "{{count}} hours ago"
+  "hours_ago_plural": "{{count}} hours ago",
+  "logout": "Log Out"
 }

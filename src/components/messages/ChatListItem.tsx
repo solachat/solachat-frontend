@@ -68,7 +68,7 @@ const fixFilePath = (filePath: string) => filePath.replace(/\\/g, '/').replace(/
 export default function ChatListItem(props: ChatListItemProps) {
     const {
         id, sender, messages, selectedChatId, setSelectedChat,
-        currentUserId, chats, isGroup, newMessage, setChats,
+        currentUserId, chats, isGroup
     } = props;
 
     const selected = selectedChatId === id;
@@ -321,7 +321,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     {lastMessage.attachment && isImage(lastMessage.attachment.fileName) ? (
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <img
-                                                src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath.replace('.mp4', '-thumbnail.jpg'))}`}
+                                                src={lastMessage.attachment.filePath}
                                                 alt="attachment preview"
                                                 style={{ width: '24px', height: '24px', marginRight: '8px' }}
                                             />

@@ -16,6 +16,8 @@ export type MessageProps = {
     createdAt: string;
     unread?: boolean;
     user: UserProps;
+    tempId?: number;
+    pending?: boolean;
     userId: number;
     chatId: number;
     attachment?: {
