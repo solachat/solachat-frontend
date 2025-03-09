@@ -81,6 +81,21 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
     }
 };
 
+export const saveSessionKey = async (chatId: number, sessionKey: string) => {
+    await fetch(`${API_URL}/api/session/session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId, sessionKey }),
+    });
+};
+
+// ✅ Запрос на получение ключа
+export const getSessionKey = async (chatId: number) => {
+    const response = await fetch(`${API_URL}/api/session/session/${chatId}`);
+    if (!response.ok) return null;
+    return await response.json();
+};
+
 export const sendMessage = async (chatId: number, formData: FormData, token: string) => {
     try {
         const response = await axios.post(

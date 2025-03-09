@@ -12,7 +12,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
-import {sendMessage, updateMessageStatus} from '../../api/api';
+import {getSessionKey, sendMessage, updateMessageStatus} from '../../api/api';
+import {decryptChatMessage} from "../../api/e2ee";
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
@@ -214,9 +215,46 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         );
     };
 
+    const decryptMessages = async (messages: MessageProps[], chatId: number) => {
+        let sessionKey = sessionStorage.getItem(`sessionKey-${chatId}`);
+
+        if (!sessionKey) {
+            console.warn(`⚠️ Ключ для чата ${chatId} не найден в sessionStorage. Запрашиваем у сервера...`);
+            try {
+                const response = await getSessionKey(chatId);
+                sessionKey = response?.sessionKey || null;
+
+                if (sessionKey) {
+                    sessionStorage.setItem(`sessionKey-${chatId}`, sessionKey);
+                } else {
+                    console.error(`❌ Ошибка: Не удалось получить ключ для чата ${chatId}`);
+                    return messages; // Возвращаем зашифрованные сообщения
+                }
+            } catch (error) {
+                console.error(`❌ Ошибка запроса сессионного ключа для чата ${chatId}:`, error);
+                return messages;
+            }
+        }
+
+        console.log(`🔓 Дешифруем ${messages.length} сообщений с ключом ${sessionKey}`);
+
+        return messages.map(msg => ({
+            ...msg,
+            content: decryptChatMessage(msg.content, sessionKey!, sessionKey!)
+        }));
+    };
+
     const handleDeleteMessageInList = (messageId: number) => {
         setChatMessages((prevMessages) => prevMessages.filter((msg) => Number(msg.id) !== messageId));
     };
+
+    useEffect(() => {
+        if (chat?.id && chat.messages.length > 0) {
+            decryptMessages(chat.messages, chat.id).then(decryptedMessages => {
+                setChatMessages(decryptedMessages);
+            });
+        }
+    }, [chat]);
 
 
     useWebSocket((data) => {
@@ -228,26 +266,11 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                 return;
             }
 
-            console.log("📥 Получено новое сообщение:", serverMessage);
+            console.log("📥 Получено новое сообщение (зашифрованное):", serverMessage);
 
-            setChatMessages((prevMessages) => {
-                const index = prevMessages.findIndex(msg => msg.id === Number(serverMessage.tempId));
-
-                if (index !== -1) {
-                    return prevMessages.map(msg =>
-                        msg.id === Number(serverMessage.tempId)
-                            ? {
-                                ...msg,
-                                id: serverMessage.id,
-                                pending: false,
-                                createdAt: serverMessage.createdAt,
-                                attachment: serverMessage.attachment || msg.attachment,
-                            }
-                            : msg
-                    );
-                }
-
-                return [...prevMessages, serverMessage];
+            // ✅ Расшифровываем и добавляем в UI
+            decryptMessages([serverMessage], serverMessage.chatId).then(decryptedMessages => {
+                setChatMessages(prevMessages => [...prevMessages, ...decryptedMessages]);
             });
 
 

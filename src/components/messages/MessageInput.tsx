@@ -16,7 +16,10 @@ import CustomTextarea from "./CustomTextarea";
 import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
 import EmojiPickerPopover from "./EmojiPickerPopover";
 import {toast} from "react-toastify";
-import {ChatProps, MessageProps} from "../core/types";
+import {ChatProps, MessageProps, UserProps} from "../core/types";
+import { encryptChatMessage } from "../../api/e2ee";
+import {generateSessionKey} from "../../encryption/e2ee";
+import { saveSessionKey, getSessionKey } from "../../api/api"; // 🔹 Запросы на сервер
 
 export type UploadedFileData = {
     file: File;
@@ -73,8 +76,9 @@ export default function MessageInput(props: MessageInputProps) {
 
     const [isSending, setIsSending] = useState(false);
 
+
     const handleClick = async () => {
-        if (isSending) return; // Если уже отправляется - выходим
+        if (isSending) return;
         setIsSending(true);
 
         try {
@@ -92,17 +96,19 @@ export default function MessageInput(props: MessageInputProps) {
 
             let finalChatId = selectedChat?.id;
 
+            // ✅ Проверяем, создан ли чат
             if (!finalChatId || finalChatId === -1) {
+                console.warn("⚠️ Чат ещё не создан, создаём новый...");
                 const recipient = selectedChat?.users.find((user: any) => user.id !== currentUserId);
                 if (!recipient) {
                     console.error("❌ Ошибка: Получатель не найден.");
                     return;
                 }
 
-                console.log("🔄 Создаем новый чат перед отправкой...");
                 const newChat = await createPrivateChat(currentUserId, recipient.id, token);
                 finalChatId = newChat.id;
                 setSelectedChat(newChat);
+                console.log(`✅ Чат создан с ID: ${finalChatId}`);
             }
 
             if (!finalChatId) {
@@ -113,36 +119,59 @@ export default function MessageInput(props: MessageInputProps) {
             const tempId = Date.now();
             console.log(`📝 Создано временное сообщение с tempId: ${tempId}`);
 
-            const optimisticFiles = uploadedFiles.map(fileData => ({
-                fileName: fileData.file.name,
-                filePath: URL.createObjectURL(fileData.file),
-                fileType: fileData.file.type,
-            }));
+// 🔑 Запрашиваем сессионный ключ с сервера
+            let sessionKey: string | null = sessionStorage.getItem(`sessionKey-${finalChatId}`);
+
+            if (!sessionKey) {
+                console.log("🔑 Запрашиваем ключ с сервера...");
+                try {
+                    const response = await getSessionKey(finalChatId);
+                    sessionKey = response?.sessionKey || null;
+                } catch (error) {
+                    console.warn("⚠️ Ошибка запроса ключа, ключа нет в БД, создаём новый...");
+                    sessionKey = null;
+                }
+
+                // ✅ Если ключ не найден, генерируем новый и отправляем на сервер
+                if (!sessionKey) {
+                    console.warn("⚠️ Ключ не найден, генерируем новый...");
+
+                    const userToken = localStorage.getItem("token") || "default_token";
+                    const recipientUser = selectedChat?.users.find((user: any) => user.id !== currentUserId);
+                    const recipientToken = recipientUser?.public_key || "default_recipient_token";
+
+                    sessionKey = generateSessionKey(userToken, recipientToken);
+
+                    if (sessionKey) {
+                        console.log(`🔑 Новый сессионный ключ: ${sessionKey}`);
+                        await saveSessionKey(finalChatId, sessionKey);
+                        sessionStorage.setItem(`sessionKey-${finalChatId}`, sessionKey);
+                    } else {
+                        console.error("❌ Ошибка генерации ключа!");
+                        return;
+                    }
+                }
+            }
+
+            const encryptedContent = encryptChatMessage(content, sessionKey, sessionKey);
 
             const optimisticMessage = {
                 id: tempId,
                 chatId: finalChatId,
                 userId: currentUserId,
-                content,
+                content: encryptedContent,
                 createdAt: new Date().toISOString(),
                 pending: true,
                 isRead: false,
-                attachment: optimisticFiles.length > 0 ? optimisticFiles[0] : null,
             };
 
             console.log("📩 Добавляем оптимистичное сообщение в UI:", optimisticMessage);
             onSubmit(optimisticMessage);
 
-            // ✅ Сохраняем в localStorage для восстановления после разрыва соединения
-            const pendingMessages = JSON.parse(localStorage.getItem("pendingMessages") || "[]");
-            localStorage.setItem("pendingMessages", JSON.stringify([...pendingMessages, optimisticMessage]));
-
+            // 📤 Отправляем на сервер
             const formData = new FormData();
-            formData.append("content", content);
+            formData.append("content", encryptedContent);
             formData.append("tempId", String(tempId));
-            uploadedFiles.forEach(fileData => {
-                formData.append("file", fileData.file);
-            });
 
             console.log("📤 Отправляем сообщение на сервер...");
             const serverMessage = await sendMessage(finalChatId, formData, token);
@@ -154,21 +183,14 @@ export default function MessageInput(props: MessageInputProps) {
                 )
             );
 
-            // ✅ Удаляем из localStorage после успешной отправки
-            const updatedPendingMessages = JSON.parse(localStorage.getItem("pendingMessages") || "[]")
-                .filter((msg: any) => msg.id !== tempId);
-            localStorage.setItem("pendingMessages", JSON.stringify(updatedPendingMessages));
-
             console.log("🧹 Очищаем поле ввода");
             setMessage("");
-            setUploadedFiles([]);
         } catch (error) {
             console.error("❌ Ошибка при отправке сообщения:", error);
         } finally {
             setIsSending(false);
         }
     };
-
 
     const handleEmojiSelect = (emoji: string) => {
         setMessage((prev) => prev + emoji);

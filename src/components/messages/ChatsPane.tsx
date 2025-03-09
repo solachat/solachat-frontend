@@ -199,6 +199,14 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
 
                 const chatsFromServer: ChatProps[] = await fetchChatsFromServer(currentUser.id, token);
                 setChats(chatsFromServer || []);
+
+                // Сохраняем сессионный ключ для каждого чата, если он есть
+                chatsFromServer.forEach(chat => {
+                    if (chat.session && chat.session.sessionKey) {
+                        localStorage.setItem(`sessionKey-${chat.id}`, chat.session.sessionKey);
+                        console.log(`🔑 Ключ для чата ${chat.id} сохранён в localStorage.`);
+                    }
+                });
             } catch (error) {
                 console.error(error);
                 setError('Failed to fetch chats');
@@ -208,6 +216,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
         };
         loadChats();
     }, [currentUser.id]);
+
 
 
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
