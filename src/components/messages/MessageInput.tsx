@@ -93,9 +93,7 @@ export default function MessageInput(props: MessageInputProps) {
             let finalChatId = selectedChat?.id;
 
             if (!finalChatId || finalChatId === -1) {
-                const recipient = selectedChat?.users.find(
-                    (user: any) => user.id !== currentUserId
-                );
+                const recipient = selectedChat?.users.find((user: any) => user.id !== currentUserId);
                 if (!recipient) {
                     console.error("❌ Ошибка: Получатель не найден.");
                     return;
@@ -115,6 +113,12 @@ export default function MessageInput(props: MessageInputProps) {
             const tempId = Date.now();
             console.log(`📝 Создано временное сообщение с tempId: ${tempId}`);
 
+            const optimisticFiles = uploadedFiles.map(fileData => ({
+                fileName: fileData.file.name,
+                filePath: URL.createObjectURL(fileData.file),
+                fileType: fileData.file.type,
+            }));
+
             const optimisticMessage = {
                 id: tempId,
                 chatId: finalChatId,
@@ -122,11 +126,16 @@ export default function MessageInput(props: MessageInputProps) {
                 content,
                 createdAt: new Date().toISOString(),
                 pending: true,
-                isRead: false
+                isRead: false,
+                attachment: optimisticFiles.length > 0 ? optimisticFiles[0] : null,
             };
 
             console.log("📩 Добавляем оптимистичное сообщение в UI:", optimisticMessage);
             onSubmit(optimisticMessage);
+
+            // ✅ Сохраняем в localStorage для восстановления после разрыва соединения
+            const pendingMessages = JSON.parse(localStorage.getItem("pendingMessages") || "[]");
+            localStorage.setItem("pendingMessages", JSON.stringify([...pendingMessages, optimisticMessage]));
 
             const formData = new FormData();
             formData.append("content", content);
@@ -145,15 +154,21 @@ export default function MessageInput(props: MessageInputProps) {
                 )
             );
 
+            // ✅ Удаляем из localStorage после успешной отправки
+            const updatedPendingMessages = JSON.parse(localStorage.getItem("pendingMessages") || "[]")
+                .filter((msg: any) => msg.id !== tempId);
+            localStorage.setItem("pendingMessages", JSON.stringify(updatedPendingMessages));
+
             console.log("🧹 Очищаем поле ввода");
             setMessage("");
             setUploadedFiles([]);
         } catch (error) {
             console.error("❌ Ошибка при отправке сообщения:", error);
         } finally {
-            setIsSending(false); // Разблокируем отправку
+            setIsSending(false);
         }
     };
+
 
     const handleEmojiSelect = (emoji: string) => {
         setMessage((prev) => prev + emoji);

@@ -34,6 +34,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const chatIdRef = useRef<number | null>(null);
     const { chatId } = useParams<{ chatId: string }>();
+    const [messages, setMessages] = useState<MessageProps[]>(chat?.messages || []);
     const [userStatuses, setUserStatuses] = React.useState<Record<string, Pick<UserProps, 'online' | 'lastOnline'>>>({});
 
     const scrollToBottom = (smooth: boolean = true) => {
@@ -134,7 +135,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
 
     useEffect(() => {
         if (!chatIdFromUrl || chatIdRef.current === Number(chatIdFromUrl)) {
-            return; // Не меняем чат, если он уже активный
+            return;
         }
 
         const chatFromUrl = findChatById(chatIdFromUrl);
@@ -162,9 +163,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         }
     }, [chat]);
 
-
-
-    const [messages, setMessages] = useState<MessageProps[]>(chat?.messages || []);
 
     useEffect(() => {
         const resendPendingMessages = async () => {
@@ -225,7 +223,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         if (data.type === 'newMessage' && data.message) {
             const serverMessage = data.message;
 
-            // Проверяем, что сообщение пришло в текущий чат
             if (chatIdRef.current !== serverMessage.chatId) {
                 console.log(`📩 Сообщение ID ${serverMessage.id} пришло в другой чат (ID: ${serverMessage.chatId}), игнорируем.`);
                 return;
@@ -239,7 +236,13 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                 if (index !== -1) {
                     return prevMessages.map(msg =>
                         msg.id === Number(serverMessage.tempId)
-                            ? { ...msg, id: serverMessage.id, pending: false, createdAt: serverMessage.createdAt }
+                            ? {
+                                ...msg,
+                                id: serverMessage.id,
+                                pending: false,
+                                createdAt: serverMessage.createdAt,
+                                attachment: serverMessage.attachment || msg.attachment,
+                            }
                             : msg
                     );
                 }
@@ -283,6 +286,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         setEditingMessageId(messageId);
         setTextAreaValue(content);
     };
+
 
     const interlocutor = React.useMemo(() => {
         if (!chat?.isGroup) {
@@ -352,7 +356,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                 {chatMessages.length > 0 ? (
                     <Stack spacing={1} sx={{ width: { xs: '100%', sm: '80%', md: '80%' } }}>
                         {chatMessages
-                            .filter((message) => message.content || message.attachment)
+                            .filter((message) => message.content || (message.attachment && message.attachment.filePath))
                             .map((message: MessageProps, index: number) => {
                                 const isCurrentUser = message.userId === currentUserId;
                                 return (

@@ -313,7 +313,6 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         color: selected
                                             ? 'var(--joy-palette-common-white)'
                                             : 'var(--joy-palette-text-primary)',
-
                                         maxWidth: { xs: '320px', sm: '380px' },
                                         width: '100%',
                                     }}
@@ -323,9 +322,9 @@ export default function ChatListItem(props: ChatListItemProps) {
                                             <img
                                                 src={lastMessage.attachment.filePath}
                                                 alt="attachment preview"
-                                                style={{ width: '24px', height: '24px', marginRight: '8px' }}
+                                                style={{ width: '24px', height: '24px', marginRight: '8px', borderRadius: '2px' }}
                                             />
-                                            <span>{t('image')}</span>
+                                            <span>{lastMessage.content ? lastMessage.content : t('image')}</span>
                                         </Box>
                                     ) : lastMessage.attachment && isVideo(lastMessage.attachment.fileName) ? (
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -340,6 +339,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                             ) : (
                                 <Typography level="body-sm">{t('No messages')}</Typography>
                             )}
+
                         </Box>
                         {lastMessage && (
                             <Box

@@ -23,7 +23,7 @@ export type MessageProps = {
     attachment?: {
         fileName: string;
         filePath: string;
-        type: string;
+        fileType: string;
     };
     isEdited?: boolean;
     isRead?: boolean;
