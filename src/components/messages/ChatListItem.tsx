@@ -219,12 +219,12 @@ export default function ChatListItem(props: ChatListItemProps) {
                         alignItems: 'initial',
                         gap: 1,
                         padding: { xs: '10px' },
-                        borderRadius: '12px',
+                        borderRadius: '2px',
                         mx: '1px',
                         '&.Mui-selected': {
                             backgroundColor: 'var(--joy-palette-primary-solidBg)',
                             color: 'white',
-                            borderRadius: '12px'
+                            borderRadius: '2px'
                         },
                     }}
                 >
@@ -294,16 +294,16 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 ) : (
                                     <>
                                         {sender?.public_key || 'No Name'}
-                                        {sender?.verified && (
-                                            <Verified sx={{ fontSize: 18, verticalAlign: 'middle' }} />
-                                        )}
+                                        {/*{sender?.verified && (*/}
+                                        {/*    <Verified sx={{ fontSize: 18, verticalAlign: 'middle' }} />*/}
+                                        {/*)}*/}
                                     </>
                                 )}
                             </Typography>
                             {lastMessage ? (
                                 <Typography
                                     level="body-sm"
-                                    fontSize={{ xs: 'sm', sm: 'md' }}
+                                    fontSize={{ xs: 'sm', sm: '15px' }}
                                     sx={{
                                         display: '-webkit-box',
                                         WebkitLineClamp: '2',

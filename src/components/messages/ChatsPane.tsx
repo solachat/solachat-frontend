@@ -292,7 +292,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 >
                     <IconButton
                         sx={{
-                            borderRadius: '50%',
                             mr: 2,
                             ml: "16px",
                             backgroundColor: isSidebarOpen ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
@@ -322,7 +321,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                 minWidth: "420px",
                                 height: "40px",
                                 fontSize: "16px",
-                                borderRadius: "12px",
                                 textAlign: "center",
                             }}
                         />
@@ -336,7 +334,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                         left: 0,
                         width: "auto",
                         zIndex: 9,
-                        borderRadius: "12px",
+
                         boxShadow: "4px 4px 20px rgba(0, 0, 0, 0.5)",
                         maxHeight: isSidebarOpen ? "400px" : "0px",
                         opacity: isSidebarOpen ? 1 : 0,

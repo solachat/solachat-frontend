@@ -336,7 +336,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                     display: 'flex',
                     flexDirection: 'column-reverse',
                     px: 1,
-                    py: { xs: 2, sm: 2 },
+                    py: { xs: 2, sm: 1 },
                     overflowY: 'auto',
                     alignItems: 'center',
                     '&::-webkit-scrollbar': {
@@ -354,7 +354,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             >
 
                 {chatMessages.length > 0 ? (
-                    <Stack spacing={1} sx={{ width: { xs: '100%', sm: '80%', md: '80%' } }}>
+                    <Stack spacing={1} sx={{ width: { xs: '100%', sm: '80%', md: '60%' } }}>
                         {chatMessages
                             .filter((message) => message.content || (message.attachment && message.attachment.filePath))
                             .map((message: MessageProps, index: number) => {
@@ -407,7 +407,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             </Box>
 
             {chat && (
-                <Box sx={{ width: { xs: '100%', sm: '80%', md: '80%' }, margin: '0 auto' }}>
+                <Box sx={{ width: { xs: '100%', sm: '80%', md: '60%' }, margin: '0px auto' }}>
                     <MessageInput
                         chatId={chat?.id ?? null}
                         selectedChat={chat}

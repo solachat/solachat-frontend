@@ -402,8 +402,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 onLoad={handleImageLoad}
                                 style={{
                                     width: '100%',
-                                    maxWidth: '700px',
-                                    maxHeight: '500px',
+                                    maxWidth: '600px',
+                                    maxHeight: '400px',
                                     objectFit: 'contain',
                                     borderTopLeftRadius: content ? '12px' : '0px',
                                     borderTopRightRadius: content ? '12px' : '0px',
@@ -568,39 +568,59 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             <CircularProgress size='md' sx={{ color: 'white' }} />
                         </Box>
                     )}
-                    <Box sx={{ position: 'relative', display: 'inline-flex', maxWidth: '90%', maxHeight: '90%' }}>
+                    <Box
+                        sx={{
+                            position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
                         <img
                             src={imageSrc}
                             alt="attachment-preview"
                             style={{
-                                width: '100%',
-                                height: 'auto',
                                 objectFit: 'contain',
-
+                                maxWidth: '70%',
+                                maxHeight: '70%',
                             }}
                         />
-                        {content && (
+                    </Box>
+
+                    {content && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                bottom: '20px',
+                                width: '100%',
+                                display: 'flex',
+                                justifyContent: 'center',
+                            }}
+                        >
                             <Typography
                                 sx={{
-                                    position: 'absolute',
-                                    bottom: '5px',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    color: 'white',
+                                    color: 'rgba(255, 255, 255, 0.7)',
                                     backgroundColor: 'rgba(0, 0, 0, 0.6)',
                                     textAlign: 'center',
-                                    padding: '6px',
+                                    padding: '6px 12px',
                                     wordWrap: 'break-word',
-                                    display: 'inline-block',
                                     borderRadius: '12px',
+                                    maxWidth: '90%',
+                                    transition: 'color 0.2s ease-in-out, background-color 0.2s ease-in-out',
+                                    '&:hover': {
+                                        color: 'white',
+                                    }
                                 }}
                             >
                                 {content}
                             </Typography>
-                        )}
-                    </Box>
+                        </Box>
+                    )}
                 </Box>
             )}
+
+
 
             {isVideoOpen && videoSrc && (
                 <Box

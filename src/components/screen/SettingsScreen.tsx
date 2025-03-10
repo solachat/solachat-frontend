@@ -125,7 +125,6 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
                             borderColor: 'divider',
                             outline: 'none',
                             border: 'none',
-                            borderRadius: '12px',
                             opacity: isOpen ? 1 : 0,
                             maxHeight: isOpen ? '300px' : '0',
                             overflow: 'hidden',

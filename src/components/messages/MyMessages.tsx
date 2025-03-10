@@ -239,7 +239,7 @@ export default function MyProfile() {
                         }
                     } else {
                         console.log('No chat selected by default, clearing selection.');
-                        setSelectedChat(null); // сбрасываем выбранный чат, если параметр id отсутствует
+                        setSelectedChat(null);
                     }
                 } else {
                     setChats([]);

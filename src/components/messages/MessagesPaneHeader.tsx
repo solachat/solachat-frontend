@@ -207,7 +207,7 @@ export default function MessagesPaneHeader({
                             mt: 0,
                             width: "auto",
                             zIndex: 9,
-                            borderRadius: "12px",
+
                             boxShadow: "4px 4px 20px rgba(0, 0, 0, 0.5)",
                             maxHeight: isOpen ? "400px" : "0px",
                             opacity: isOpen ? 1 : 0,

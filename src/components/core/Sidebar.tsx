@@ -126,7 +126,7 @@ export default function Sidebar({ isOpen, setActiveScreen }: SidebarProps) {
                 </ListItem>
             </Box>
 
-            <Box sx={{ marginLeft: 'auto', marginRight: 'auto', mb: 2, zIndex: 10001 }}>
+            <Box sx={{ marginLeft: 'auto', marginRight: 'auto', mb: 1, zIndex: 10001 }}>
                 <Typography sx={{ textAlign: 'center', fontSize: '12px', color: 'text.secondary' }}>
                     Dark Chat Web 0.1.0
                 </Typography>

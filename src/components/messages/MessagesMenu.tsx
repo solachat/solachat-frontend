@@ -86,7 +86,7 @@ export default function MessagesMenu({
                 width: { xs: '240px', md: '120px' },
                 outline: 'none',
                 border: 'none',
-                borderRadius: '12px',
+
             }}
         >
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
