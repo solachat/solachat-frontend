@@ -7,6 +7,7 @@ export type UserProps = {
     role: string;
     verified: boolean;
     lastOnline?: string;
+    sessionToken?: string;
 };
 
 
@@ -35,6 +36,9 @@ export type ChatProps = {
     user: UserProps;
     users: UserProps[];
     messages: MessageProps[];
+    session?: {
+        sessionKey: string;
+    };
     isGroup?: boolean;
     isFavorite?: boolean;
     groupAvatar?: string;

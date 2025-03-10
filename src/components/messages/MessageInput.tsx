@@ -82,7 +82,7 @@ export default function MessageInput(props: MessageInputProps) {
     const [isSending, setIsSending] = useState(false);
 
     const handleClick = async () => {
-        if (isSending) return; // Если уже отправляется - выходим
+        if (isSending) return;
         setIsSending(true);
 
         try {
@@ -100,8 +100,6 @@ export default function MessageInput(props: MessageInputProps) {
 
             let finalChatId = selectedChat?.id;
 
-<<<<<<< Updated upstream
-=======
             if (editingMessage && editingMessage.id !== null) {
                 console.log("✏️ Обновление сообщения:", editingMessage.id);
 
@@ -125,7 +123,6 @@ export default function MessageInput(props: MessageInputProps) {
                 return;
             }
 
->>>>>>> Stashed changes
             if (!finalChatId || finalChatId === -1) {
                 const recipient = selectedChat?.users.find((user: any) => user.id !== currentUserId);
                 if (!recipient) {
@@ -167,10 +164,6 @@ export default function MessageInput(props: MessageInputProps) {
             console.log("📩 Добавляем оптимистичное сообщение в UI:", optimisticMessage);
             onSubmit(optimisticMessage);
 
-<<<<<<< Updated upstream
-            // ✅ Сохраняем в localStorage для восстановления после разрыва соединения
-=======
->>>>>>> Stashed changes
             const pendingMessages = JSON.parse(localStorage.getItem("pendingMessages") || "[]");
             localStorage.setItem("pendingMessages", JSON.stringify([...pendingMessages, optimisticMessage]));
 
@@ -178,11 +171,7 @@ export default function MessageInput(props: MessageInputProps) {
             formData.append("content", content);
             formData.append("tempId", String(tempId));
             uploadedFiles.forEach(fileData => {
-<<<<<<< Updated upstream
-                formData.append("file", fileData.file);
-=======
                 formData.append("files", fileData.file);
->>>>>>> Stashed changes
             });
 
             console.log("📤 Отправляем сообщение на сервер...");
@@ -195,10 +184,6 @@ export default function MessageInput(props: MessageInputProps) {
                 )
             );
 
-<<<<<<< Updated upstream
-            // ✅ Удаляем из localStorage после успешной отправки
-=======
->>>>>>> Stashed changes
             const updatedPendingMessages = JSON.parse(localStorage.getItem("pendingMessages") || "[]")
                 .filter((msg: any) => msg.id !== tempId);
             localStorage.setItem("pendingMessages", JSON.stringify(updatedPendingMessages));
@@ -212,7 +197,6 @@ export default function MessageInput(props: MessageInputProps) {
             setIsSending(false);
         }
     };
-
 
     const handleEmojiSelect = (emoji: string) => {
         setMessage((prev) => prev + emoji);
