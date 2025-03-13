@@ -30,6 +30,7 @@ import axios from 'axios';
 import {Helmet} from "react-helmet-async";
 import {CardActions, CardOverflow, Checkbox} from "@mui/joy";
 import Verified from '../components/core/Verified';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
 import LanguageSwitcher from '../components/core/LanguageSwitcher';
@@ -40,6 +41,8 @@ import SecurityModal from "../components/profile/SecurityModal";
 import ConnectButtons from "../components/profile/ConnectButtons";
 import CircularProgress from '@mui/material/CircularProgress';
 import { useWebSocket } from '../api/useWebSocket';
+import {cacheAvatar, cacheProfile, getCachedAvatar, getCachedProfile} from "../utils/cacheStorage";
+import {cacheMedia, getCachedMedia} from "../utils/cacheMedia";
 
 export default function AccountPage() {
     const { t } = useTranslation();
@@ -55,6 +58,7 @@ export default function AccountPage() {
     const [accountExists, setAccountExists] = React.useState(true);
     const [loading, setLoading] = React.useState(true);
     const [balance, setBalance] = React.useState(0);
+    const [totpSecret, setTotpSecret] = React.useState<string | null>(null);
     const [tokenBalance, setTokenBalance] = React.useState(0);
     const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
     const [isEditable, setIsEditable] = React.useState(false);
@@ -68,6 +72,7 @@ export default function AccountPage() {
     const [usernameError, setUsernameError] = React.useState<string | null>(null);
     const [openSnackbar, setOpenSnackbar] = React.useState(false);
     const [showSecurityModal, setShowSecurityModal] = useState(false);
+    const [avatar, setAvatar] = useState<string | null>(null);
 
     const [profileData, setProfileData] = React.useState({
         username: '',
@@ -79,12 +84,15 @@ export default function AccountPage() {
         lastOnline: '',
         avatar: '',
         online: false,
-        verified: false
+        verified: false,
+        totpSecret: '',
     });
 
     const handleOpenSecurityModal = () => setShowSecurityModal(true);
     const handleCloseSecurityModal = () => setShowSecurityModal(false);
     const { identifier } = useParams<{ identifier: string }>();
+    const [error, setError] = useState<string | null>(null);
+    const [showTotpAlert, setShowTotpAlert] = useState<boolean>(totpSecret === null);
 
 
     const isPublicKey = (id: string) => {
@@ -95,47 +103,106 @@ export default function AccountPage() {
         return false;
     };
 
-    React.useEffect(() => {
-        if (!identifier) {
-            console.error("Identifier is undefined");
-            setAccountExists(false);
-            setLoading(false);
-            return;
+    useEffect(() => {
+        if (showTotpAlert) {
+            const timer = setTimeout(() => setShowTotpAlert(false), 10000);
+            return () => clearTimeout(timer);
         }
+    }, [showTotpAlert]);
+
+
+    const profileFetched = useRef(false);
+
+    useEffect(() => {
+        if (!identifier || profileFetched.current) return;
 
         const fetchProfile = async () => {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem("token");
+                if (!token) throw new Error("⚠️ Токен отсутствует!");
+
                 const queryParam = isPublicKey(identifier)
                     ? `public_key=${identifier}`
                     : `username=${identifier}`;
 
+                console.log(`🌍 Запрос профиля: ${API_URL}/api/users/profile?${queryParam}`);
 
+                // Загружаем профиль из кэша
+                const cachedProfile = await getCachedProfile(identifier);
+                if (cachedProfile) {
+                    console.log("✅ Профиль загружен из кэша:", cachedProfile);
+                    setProfileData(cachedProfile);
+                    setError(null);
+                    profileFetched.current = true; // Предотвращаем повторные запросы
+
+                    if (cachedProfile.avatar) {
+                        const cachedAvatarUrl = await getCachedMedia(cachedProfile.avatar);
+                        if (cachedAvatarUrl) {
+                            setAvatar(`${cachedAvatarUrl}?t=${Date.now()}`);
+                        }
+                    }
+                }
+
+                // Загружаем профиль с сервера
                 const response = await axios.get(`${API_URL}/api/users/profile?${queryParam}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
                 const data = response.data;
-
+                console.log("📌 Профиль загружен с сервера:", data);
                 setProfileData(data);
-                setAccountExists(true);
-                setBalance(data.balance);
-                setTokenBalance(data.tokenBalance);
-                setPublicKey(data.sharePublicKey);
+                profileFetched.current = true; // Фиксируем, что запрос уже был
 
+                // Загружаем аватарку и кэшируем
+                if (data.avatar) {
+                    const cachedAvatarUrl = await getCachedMedia(data.avatar);
+                    if (cachedAvatarUrl) {
+                        setAvatar(`${cachedAvatarUrl}?t=${Date.now()}`);
+                    } else {
+                        try {
+                            const response = await fetch(data.avatar);
+                            const avatarBlob = await response.blob();
+                            await cacheMedia(data.avatar, avatarBlob);
+                            const avatarUrl = URL.createObjectURL(avatarBlob);
+                            setAvatar(`${avatarUrl}?t=${Date.now()}`);
+                            return () => URL.revokeObjectURL(avatarUrl);
+                        } catch (error) {
+                            console.error("❌ Ошибка загрузки аватарки:", error);
+                        }
+                    }
+                }
+
+                await cacheProfile(identifier, data);
+
+                // Определяем владельца профиля
                 const decodedToken = token ? jwtDecode<{ publicKey: string }>(token) : null;
                 const currentPublicKey = decodedToken?.publicKey || null;
                 setIsOwner(currentPublicKey === data.public_key);
             } catch (error) {
-                console.error("Error fetching profile:", error);
-                setAccountExists(false);
+                console.error("❌ Ошибка загрузки профиля:", error);
+                const cachedProfile = await getCachedProfile(identifier);
+                if (cachedProfile) {
+                    setProfileData(cachedProfile);
+                    setError("Сервер недоступен, загружены данные из кэша.");
+                    if (cachedProfile.avatar) {
+                        const cachedAvatarUrl = await getCachedMedia(cachedProfile.avatar);
+                        if (cachedAvatarUrl) {
+                            setAvatar(`${cachedAvatarUrl}?t=${Date.now()}`);
+                        }
+                    }
+                } else {
+                    setError("Сервер недоступен, данных нет.");
+                }
             } finally {
                 setLoading(false);
             }
         };
 
         fetchProfile();
-    }, [identifier, API_URL]);
+    }, [identifier]); // ❌ Убрали
+
+
+
 
 
     const { connectWebSocket } = useWebSocket((message) => {
@@ -190,8 +257,6 @@ export default function AccountPage() {
                 {
                     newUsername: profileData.username,
                     aboutMe: profileData.aboutMe,
-                    shareEmail: shareEmail,
-                    sharePublicKey: Boolean(sharePublicKey),
                     verified: profileData.verified,
                 },
                 {
@@ -549,10 +614,10 @@ export default function AccountPage() {
                                     </FormLabel>
                                     <Input
                                         size="sm"
-                                        value={isOwner || sharePublicKey ? profileData.public_key : '******'}
+                                        value={profileData.public_key}
                                         startDecorator={<WalletIcon />}
                                         endDecorator={
-                                            (isOwner || sharePublicKey) && profileData.public_key ? (
+                                            profileData.public_key ? (
                                                 <IconButton
                                                     variant="plain"
                                                     size="sm"
@@ -648,6 +713,78 @@ export default function AccountPage() {
                             </Alert>
                         </Box>
                     )}
+
+                    {isOwner && showTotpAlert && (
+                        <Box
+                            sx={{
+                                position: 'fixed',
+                                bottom: 10,
+                                right: 10,
+                                zIndex: 9999,
+                                width: 320,
+                                minHeight: 140,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                p: 2,
+                                borderRadius: 3,
+                                boxShadow: 4,
+
+                            }}
+                        >
+                            <Alert
+                                variant="soft"
+                                color="warning"
+                                sx={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
+                                    p: 2,
+                                    pb: 3,
+                                    position: 'relative',
+
+                                }}
+                                startDecorator={<WarningRoundedIcon sx={{ fontSize: 30, color: 'warning.dark' }} />}
+                            >
+                                {/* Крестик сверху справа */}
+                                <IconButton
+                                    variant="plain"
+                                    size="sm"
+                                    color="neutral"
+                                    onClick={() => setShowTotpAlert(false)}
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 8,
+                                        right: 8,
+                                    }}
+                                >
+                                    <CloseRoundedIcon sx={{ fontSize: 20 }} />
+                                </IconButton>
+
+                                <Typography fontSize={15} fontWeight={600}>
+                                    {t('totp_alert_title')}
+                                </Typography>
+                                <Typography fontSize={13} fontWeight={400}>
+                                    {t('totp_alert_description')}
+                                </Typography>
+                                <Button
+                                    variant="solid"
+                                    size="sm"
+                                    color="primary"
+                                    onClick={handleOpenSecurityModal}
+                                    sx={{
+                                        alignSelf: 'stretch',
+                                        mt: 1,
+                                        fontSize: 13,
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    {t('totp_alert_button')}
+                                </Button>
+                            </Alert>
+                        </Box>
+                    )}
+
                 </Stack>
             </Box>
         </CssVarsProvider>

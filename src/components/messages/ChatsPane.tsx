@@ -1,12 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import Stack from '@mui/joy/Stack';
-import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
 import {Box, CircularProgress, Input, List} from '@mui/joy';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChatListItem from './ChatListItem';
-import { ChatProps, UserProps } from '../core/types';
+import {ChatProps, MessageProps, UserProps} from '../core/types';
 import { searchUsers, fetchChatsFromServer } from '../../api/api';
 import { CssVarsProvider } from '@mui/joy/styles';
 import Sidebar from '../core/Sidebar';
@@ -16,7 +14,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
 import SettingsScreen from '../screen/SettingsScreen';
 import {useState} from "react";
-import { AnimatePresence, motion } from 'framer-motion';
+import {cacheChats, getCachedChats} from "../../utils/cacheChats";
+import {cacheMedia, getCachedMedia} from "../../utils/cacheMedia";
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -29,7 +28,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     const {t} = useTranslation();
     const [chats, setChats] = useState<ChatProps[]>(initialChats);
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchResults, setSearchResults] = useState<UserProps[]>([]);
+    const [searchResults, setSearchResults] = useState<(UserProps & { lastMessage?: MessageProps; chatId?: number })[]>([]);
     const [loadingChats, setLoadingChats] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -37,13 +36,13 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     const [activeScreen, setActiveScreen] = useState<'chats' | 'settings'>('chats');
 
     const {wsRef, isConnecting} = useWebSocket((data) => {
+        console.log("Received WebSocket message:", data);
         if (data.type === 'chatCreated' || data.type === 'groupChatCreated') {
             const newChat = data.chat;
             setChats((prevChats) => {
                 if (prevChats.some((chat) => chat.id === newChat.id)) return prevChats;
                 return [...prevChats, newChat].sort((a, b) => b.id - a.id);
             });
-            console.log('New chat created:', newChat);
         }
 
         if (data.type === 'chatDeleted') {
@@ -53,24 +52,54 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
 
         if (data.type === 'newMessage') {
             const newMessage = data.message;
+
             setChats((prevChats) => {
-                return [
-                    ...prevChats
-                        .map((chat) =>
-                            chat.id === newMessage.chatId
-                                ? {
-                                    ...chat,
-                                    messages: [...(chat.messages || []), newMessage],
-                                    lastMessage: newMessage,
-                                }
-                                : chat
-                        )
-                        .sort((a, b) => {
-                            if (a.id === newMessage.chatId) return -1;
-                            if (b.id === newMessage.chatId) return 1;
-                            return 0;
-                        })
-                ];
+                let chatExists = false;
+
+                console.log("📩 Получено новое сообщение в чат:", newMessage.chatId);
+                console.log("📝 Чаты до обновления:", prevChats.map(chat => chat.id));
+
+                let updatedChats = prevChats.map((chat) => {
+                    if (chat.id === newMessage.chatId) {
+                        chatExists = true;
+                        return {
+                            ...chat,
+                            messages: [...(chat.messages || []), newMessage],
+                            lastMessage: newMessage,
+                        };
+                    }
+                    return chat;
+                });
+
+                if (!chatExists) {
+                    console.log(`🆕 Чат ${newMessage.chatId} не найден, создаем временный`);
+                    updatedChats.push({
+                        id: newMessage.chatId,
+                        messages: [newMessage],
+                        lastMessage: newMessage,
+                        users: [newMessage.user],
+                        user: newMessage.user,
+                        isGroup: false,
+                    });
+                }
+
+                console.log(`🎯 Текущий активный чат: ${selectedChatId}`);
+
+                const selectedChatIdNum = Number(selectedChatId);
+                console.log(`🔍 Приведенный selectedChatIdNum: ${selectedChatIdNum}`);
+
+                updatedChats = updatedChats.sort((a, b) => {
+                    if (a.id === selectedChatIdNum) return -1;
+                    if (b.id === selectedChatIdNum) return 1;
+
+                    const aUpdated = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
+                    const bUpdated = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;
+                    return bUpdated - aUpdated;
+                });
+
+                console.log("✅ Чаты после сортировки:", updatedChats.map(chat => chat.id));
+
+                return updatedChats;
             });
         }
 
@@ -137,25 +166,26 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
             );
         }
 
-        if (data.type === 'USER_CONNECTED' && 'userId' in data) {
-            const userId = data.userId;
-            setChats((prevChats) =>
-                prevChats.map((chat) => ({
+        if (data.type === 'USER_CONNECTED' && 'publicKey' in data) {
+            setChats((prevChats) => {
+                const updatedChats = prevChats.map((chat) => ({
                     ...chat,
                     users: (chat.users || []).map((user) =>
-                        user.id === userId ? {...user, online: true} : user
+                        user.public_key === data.publicKey ? { ...user, online: true } : user
                     ),
-                }))
-            );
+                }));
+                console.log("Updated chats:", updatedChats);
+                return updatedChats;
+            });
         }
 
-        if (data.type === 'USER_DISCONNECTED' && 'userId' in data) {
-            const userId = data.userId;
+        if (data.type === 'USER_DISCONNECTED' && 'publicKey' in data) {
+            const publicKey = data.publicKey;
             setChats((prevChats) =>
                 prevChats.map((chat) => ({
                     ...chat,
                     users: (chat.users || []).map((user) =>
-                        user.id === userId ? {...user, online: false} : user
+                        user.public_key === publicKey ? {...user, online: false} : user
                     ),
                 }))
             );
@@ -165,32 +195,118 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
 
     React.useEffect(() => {
         const loadChats = async () => {
+            setLoadingChats(true);
             try {
-                const token = localStorage.getItem('token');
-                if (!token) throw new Error('Authorization token is missing');
+                const token = localStorage.getItem("token");
+                if (!token) throw new Error("⛔ Authorization token is missing");
 
-                const chatsFromServer: ChatProps[] = await fetchChatsFromServer(currentUser.id, token);
-                setChats(chatsFromServer || []);
+                let cachedChats = await getCachedChats() || [];
+                let chats = cachedChats; // По умолчанию используем кэш
+
+                const chatsFromServer = await fetchChatsFromServer(currentUser.id, token);
+                if (chatsFromServer) {
+                    chats = chatsFromServer;
+                    await cacheChats(chatsFromServer);
+                }
+
+                // Обновляем аватары и вложения сообщений
+                const updatedChats = await Promise.all(
+                    chats.map(async (chat) => {
+                        if (!chat.messages) return chat;
+
+                        const updatedUsers = await Promise.all(
+                            chat.users.map(async (user: any) => {
+                                if (user.avatar) {
+                                    const cachedAvatar = await getCachedMedia(user.avatar);
+                                    return { ...user, avatar: cachedAvatar || user.avatar };
+                                }
+                                return user;
+                            })
+                        );
+
+                        const updatedMessages = await Promise.all(
+                            chat.messages.map(async (msg: any) => {
+                                if (msg.attachment?.filePath) {
+                                    const cachedFile = await getCachedMedia(msg.attachment.filePath);
+                                    return cachedFile
+                                        ? { ...msg, attachment: { ...msg.attachment, filePath: cachedFile } }
+                                        : msg;
+                                }
+                                return msg;
+                            })
+                        );
+
+                        return { ...chat, users: updatedUsers, messages: updatedMessages };
+                    })
+                );
+
+                console.log("📌 Обновлённые чаты:", updatedChats);
+                setChats([...updatedChats]);
+
             } catch (error) {
-                console.error(error);
-                setError('Failed to fetch chats');
+                console.error("❌ Ошибка загрузки чатов:", error);
+                setError("Failed to fetch chats");
             } finally {
                 setLoadingChats(false);
             }
         };
+
         loadChats();
     }, [currentUser.id]);
+
+
+
 
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const term = e.target.value;
         setSearchTerm(term);
+
         if (term.trim()) {
-            const results = await searchUsers(term);
-            setSearchResults(results || []);
+            try {
+                const userResults = await searchUsers(term);
+
+                const chatResults = chats
+                    .map(chat => {
+                        console.log(`Chat ${chat.id} messages:`, chat.messages); // отладка: что приходит в messages
+
+                        const user = chat.users.find(user => user.id !== currentUser.id);
+                        if (!user) return null;
+
+                        // Если chat.lastMessage не установлен, вычисляем последнее сообщение по максимальной дате
+                        const lastMessage =
+                            chat.lastMessage ||
+                            (chat.messages && chat.messages.length > 0
+                                ? chat.messages.reduce((prev: MessageProps, curr: MessageProps) =>
+                                    new Date(curr.createdAt).getTime() > new Date(prev.createdAt).getTime() ? curr : prev
+                                )
+                                : null);
+
+                        console.log(`Chat ${chat.id} lastMessage:`, lastMessage); // отладка: что получилось
+
+                        return {
+                            ...user,
+                            lastMessage,
+                            chatId: chat.id,
+                        };
+                    })
+                    .filter(Boolean) as (UserProps & { lastMessage?: MessageProps; chatId?: number })[];
+
+
+                const mergedResults = Array.from(
+                    new Map([...chatResults, ...userResults].map(user => [user.id, user])).values()
+                );
+
+                setSearchResults(mergedResults);
+            } catch (error) {
+                console.error("Ошибка поиска пользователей:", error);
+                setSearchResults([]);
+            }
         } else {
             setSearchResults([]);
         }
     };
+
+
 
     const handleCloseSettings = () => {
         setActiveScreen('chats');
@@ -223,7 +339,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 >
                     <IconButton
                         sx={{
-                            borderRadius: "50%",
                             mr: 2,
                             ml: "16px",
                             backgroundColor: isSidebarOpen ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
@@ -250,10 +365,9 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                             sx={{
                                 flex: 1,
                                 maxWidth: "600px",
-                                minWidth: "350px",
-                                height: "44px",
+                                minWidth: "420px",
+                                height: "40px",
                                 fontSize: "16px",
-                                borderRadius: "8px",
                                 textAlign: "center",
                             }}
                         />
@@ -267,7 +381,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                         left: 0,
                         width: "auto",
                         zIndex: 9,
-                        boxShadow: "2px 2px 10px rgba(0, 0, 0, 0.1)",
+                        boxShadow: "4px 4px 20px rgba(0, 0, 0, 0.5)",
                         maxHeight: isSidebarOpen ? "400px" : "0px",
                         opacity: isSidebarOpen ? 1 : 0,
                         overflow: "hidden",
@@ -282,10 +396,8 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                     />
                 </Box>
 
-
                 <Box
                     sx={{
-
                         display: "flex",
                         flexDirection: "column",
                         justifyContent: "flex-end",
@@ -303,7 +415,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                         key={user.id}
                                         id={user.id.toString()}
                                         sender={user}
-                                        messages={[]}
+                                        messages={user.lastMessage ? [user.lastMessage] : []}
                                         setSelectedChat={setSelectedChat}
                                         currentUserId={currentUser.id}
                                         chats={chats}

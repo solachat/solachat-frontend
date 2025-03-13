@@ -1,5 +1,5 @@
-import React from 'react';
-import { Box, IconButton, Typography, Avatar, Divider } from '@mui/joy';
+import React, { useState } from 'react';
+import { Box, IconButton, Typography, Avatar, Divider, Menu, MenuItem } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import KeyIcon from '@mui/icons-material/VpnKey';
@@ -8,6 +8,8 @@ import InfoIcon from '@mui/icons-material/Info';
 import SettingsIcon from '@mui/icons-material/Settings';
 import StorageIcon from '@mui/icons-material/Storage';
 import { jwtDecode } from 'jwt-decode';
+import { useTranslation } from "react-i18next";
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 interface DecodedToken {
     avatar: string;
@@ -18,7 +20,7 @@ interface DecodedToken {
 }
 
 export default function SettingsScreen({ onBack }: { onBack: () => void }) {
-    // Получаем данные из JWT
+    const { t } = useTranslation();
     const token = localStorage.getItem('token');
     let avatarUrl = '';
     let publicKey = '';
@@ -29,7 +31,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
     if (token) {
         try {
             const decoded: DecodedToken = jwtDecode(token);
-            avatarUrl = decoded.avatar || 'https://via.placeholder.com/300'; // Заглушка если нет аватарки
+            avatarUrl = decoded.avatar || 'https://via.placeholder.com/300';
             publicKey = decoded.publicKey || 'Unknown';
             username = decoded.username || '';
             bio = decoded.bio || '';
@@ -38,6 +40,35 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
             console.error('Invalid token', error);
         }
     }
+
+    // Состояние для управления открытием меню
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+        setIsOpen(!isOpen);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+        setIsOpen(false);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        handleMenuClose();
+        console.log('Logged out');
+    };
+
+    const hoverSx = {
+        height: '32px',
+        borderRadius: '8px',
+        transition: 'background-color 0.1s ease',
+        '&:hover': {
+            backgroundColor: 'rgba(76, 175, 80, 0.2)',
+        },
+    };
 
     return (
         <Box
@@ -52,7 +83,6 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
                 overflow: 'hidden',
             }}
         >
-            {/* Верхняя панель */}
             <Box
                 sx={{
                     position: 'absolute',
@@ -70,16 +100,47 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
                 <IconButton onClick={onBack} sx={{ padding: 0 }}>
                     <ArrowBackIcon />
                 </IconButton>
-                <Typography level="h4" sx={{ lineHeight: 'normal' }}>Settings</Typography>
+                <Typography level="h4" sx={{ lineHeight: 'normal' }}>{t('settings')}</Typography>
 
-                <Box sx={{ marginLeft: '73%', display: 'flex' }}>
-                    <IconButton>
-                        <MoreVertIcon />
+                <Box sx={{ marginLeft: '60%', display: 'flex' }}>
+                    <IconButton onClick={handleMenuClick}>
+                        <MoreVertIcon sx={{
+                            transition: 'transform 0.3s ease',
+                        }} />
                     </IconButton>
+                    <Menu
+                        anchorEl={anchorEl}
+                        open={isOpen}
+                        onClose={handleMenuClose}
+                        sx={{
+                            position: { xs: 'fixed', md: 'sticky' },
+                            maxWidth: '200px',
+                            width: '100%',
+                            zIndex: 10,
+                            flexShrink: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2,
+                            borderRight: '1px solid',
+                            borderColor: 'divider',
+                            outline: 'none',
+                            border: 'none',
+                            opacity: isOpen ? 1 : 0,
+                            maxHeight: isOpen ? '300px' : '0',
+                            overflow: 'hidden',
+                            transition: "max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, background-color 0.3s ease",
+
+                        }}
+                    >
+                        <MenuItem onClick={handleLogout} sx={{ display: 'flex', alignItems: 'center', gap: 1, hoverSx }}>
+                            <ExitToAppIcon sx={{ fontSize: 20 }} />
+                            <Typography sx={{ fontSize: '16px' }}>{t('logout')}</Typography>
+                        </MenuItem>
+                    </Menu>
                 </Box>
             </Box>
 
-            <Box sx={{ position: 'relative', width: '100%', height: '100%', maxHeight: '70vh', marginTop: '50px' }}>
+            <Box sx={{ position: 'relative', width: '100%', height: '100%', maxHeight: '60vh', marginTop: '65px' }}>
                 <Avatar
                     src={avatarUrl}
                     alt="Avatar"

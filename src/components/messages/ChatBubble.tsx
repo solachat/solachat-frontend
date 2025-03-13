@@ -30,31 +30,57 @@ type ChatBubbleProps = MessageProps & {
     isGroupChat: boolean;
     isRead: boolean;
     isDelivered: boolean;
+    pending?: boolean;
 };
 
-const isImageFile = (fileName: string) => {
-    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif'];
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    return imageExtensions.includes(fileExtension || '');
+const isImageFile = (file: File | string, fileType?: string) => {
+    if (fileType?.startsWith("image/")) return true;
+    if (typeof file === "string" && file.startsWith("blob:")) return true;
+
+    const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+
+    if (typeof file === "string") {
+        const fileExtension = file.split(".").pop()?.toLowerCase();
+        return fileExtension ? imageExtensions.includes(fileExtension) : false;
+    }
+
+    return false;
 };
 
-const isVideoFile = (fileName: string) => {
-    const videoExtensions = ['mp4', 'webm', 'ogg', "mov"];
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    return videoExtensions.includes(fileExtension || '');
+const isVideoFile = (file: File | string, fileType?: string) => {
+    if (fileType?.startsWith("video/")) return true;
+
+    if (typeof file === "string" && file.startsWith("blob:")) return fileType?.startsWith("video/") || false;
+
+    const videoExtensions = ["mp4", "webm", "ogg", "mov", "mkv"];
+    if (typeof file === "string") {
+        const fileExtension = file.split(".").pop()?.toLowerCase();
+        return fileExtension ? videoExtensions.includes(fileExtension) : false;
+    }
+
+    return false;
 };
 
-const isAudioFile = (fileName: string) => {
-    const audioExtensions = ['mp3'];
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    return audioExtensions.includes(fileExtension || '');
+const isAudioFile = (file: File | string, fileType?: string) => {
+    if (fileType?.startsWith("audio/")) return true;
+
+    if (typeof file === "string" && file.startsWith("blob:")) return fileType?.startsWith("audio/") || false;
+
+    const audioExtensions = ["mp3", "wav", "ogg", "aac", "flac"];
+    if (typeof file === "string") {
+        const fileExtension = file.split(".").pop()?.toLowerCase();
+        return fileExtension ? audioExtensions.includes(fileExtension) : false;
+    }
+
+    return false;
 };
+
+
 
 const isLink = (text: string) => {
     const urlRegex = /(?:^|\s)(https?:\/\/[^\s]+|(?:[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:[\/\w.-]*)?)(?=\s|$)/g;
     return urlRegex.test(text.trim());
 };
-
 
 
 const renderMessageContent = (text: string) => {
@@ -93,7 +119,7 @@ const renderMessageContent = (text: string) => {
 
 export default function ChatBubble(props: ChatBubbleProps) {
     const { t } = useTranslation();
-    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat, isRead } = props;
+    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat, isRead, pending } = props;
     const isSent = variant === 'sent';
     const formattedTime = new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const handleImageLoad = () => {
@@ -119,18 +145,14 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const [isClosing, setIsClosing] = useState(false);
 
     const getAttachmentUrl = () => {
-        if (!attachment) return '';
-        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
-
-        const cleanedPath = attachment.filePath.replace(/\\/g, '/');
-
-        return `${baseUrl}/${cleanedPath}`;
+        return attachment?.filePath || '';
     };
 
 
-    const isImage = isImageFile(attachment?.fileName || '');
-    const isVideo = isVideoFile(attachment?.fileName || '');
-    const isAudio = isAudioFile(attachment?.fileName || '');
+    const isImage = isImageFile(attachment?.filePath || '', attachment?.fileType);
+    const isVideo = isVideoFile(attachment?.filePath || '', attachment?.fileType);
+    const isAudio = isAudioFile(attachment?.filePath || '', attachment?.fileType);
+
 
     const handleImageClick = () => {
         setImageSrc(getAttachmentUrl());
@@ -281,10 +303,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     sx={{
                         maxWidth: isEdited ? '75%' : '70%',
                         minWidth: 'fit-content',
-                        padding: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 10px' } : 0,
+                        padding: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 8px' } : 0,
                         borderRadius: '12px',
-                        borderBottomLeftRadius: isSent ? '18px' : '0px',
-                        borderBottomRightRadius: isSent ? '0px' : '18px',
                         backgroundColor:
                             (isImage || isVideo || isAudio) && !content
                                 ? 'transparent'
@@ -302,6 +322,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             maxWidth: '85%',
                             width: 'auto',
                         },
+
                     }}
                 >
                     {isGroupChat && !isSent && (
@@ -361,38 +382,42 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 <Box
                                     sx={{
                                         position: 'absolute',
-                                        width: '100px',
-                                        height: '100px',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
                                         display: 'flex',
                                         justifyContent: 'center',
                                         alignItems: 'center',
-                                        backgroundColor: '#f0f0f0',
-                                        borderRadius: '4px',
-                                        zIndex: 1,
+                                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                                        borderRadius: '50%',
+                                        width: '50px',
+                                        height: '50px',
+                                        zIndex: 2,
                                     }}
                                 >
-                                    <CircularProgress />
+                                    <CircularProgress size='sm' sx={{ color: 'white' }} />
                                 </Box>
                             )}
+
                             <img
                                 src={getAttachmentUrl()}
                                 alt="attachment"
                                 onLoad={handleImageLoad}
                                 style={{
                                     width: '100%',
-                                    maxWidth: '700px',
-                                    maxHeight: '500px',
+                                    maxWidth: '600px',
+                                    maxHeight: '400px',
                                     objectFit: 'contain',
                                     borderTopLeftRadius: content ? '12px' : '0px',
                                     borderTopRightRadius: content ? '12px' : '0px',
                                     borderBottomLeftRadius: content ? '0px' : '12px',
                                     borderBottomRightRadius: content ? '0px' : '12px',
-                                    opacity: imageLoading ? 0 : 1,
+                                    opacity: imageLoading ? 0.5 : 1,
+                                    transition: 'opacity 0.3s ease',
                                 }}
                             />
                         </Box>
                     )}
-
                     {isAudio && !isVideo && (
                         <CustomAudioPlayer audioSrc={getAttachmentUrl()} isSent={isSent} />
                     )}
@@ -435,7 +460,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             alignItems: 'center',
                             backgroundColor: (isImage && !content) || (isVideo && !content) ? 'rgba(0, 0, 0, 0.4)' : 'transparent',
                             padding: (isImage && !content) || (isVideo && !content) ? '2px 6px' : '0px',
-                            borderRadius: (isImage && !content) || (isVideo && !content) ? '10px' : '0px',
+                            borderRadius: (isImage && !content) || (isVideo && !content) ? '12px' : '0px',
                         }}
                     >
                         {isEdited && (
@@ -456,24 +481,41 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
                             }}
                         >
-                            <Typography component="span" sx={{ fontSize: '12px', color: isSent ? 'var(--joy-palette-common-white)' : 'inherit' }}>
-                                {formattedTime}
+                            <Typography
+                                component="span"
+                                sx={{
+                                    fontSize: '12px',
+                                    color: isSent ? 'var(--joy-palette-common-white)' : 'inherit',
+                                }}
+                            >
+                                {new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </Typography>
+
                             {isSent && (
-                                isRead ? (
-                                    <DoneAllIcon
+                                pending ? (
+                                    <CircularProgress
+                                        size="sm"
                                         sx={{
-                                            fontSize: '18px',
+                                            fontSize: "12px",
                                             marginLeft: { xs: '1px', sm: '4px' },
                                         }}
                                     />
                                 ) : (
-                                    <CheckIcon
-                                        sx={{
-                                            fontSize: '18px',
-                                            marginLeft: { xs: '1px', sm: '4px' },
-                                        }}
-                                    />
+                                    isRead ? (
+                                        <DoneAllIcon
+                                            sx={{
+                                                fontSize: '18px',
+                                                marginLeft: { xs: '1px', sm: '4px' },
+                                            }}
+                                        />
+                                    ) : (
+                                        <CheckIcon
+                                            sx={{
+                                                fontSize: '18px',
+                                                marginLeft: { xs: '1px', sm: '4px' },
+                                            }}
+                                        />
+                                    )
                                 )
                             )}
                         </Box>
@@ -517,39 +559,71 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     }}
                     onClick={handleClose}
                 >
-                    <Box sx={{ position: 'relative', display: 'inline-flex', maxWidth: '90%', maxHeight: '90%' }}>
+                    {pending && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                            }}
+                        >
+                            <CircularProgress size='md' sx={{ color: 'white' }} />
+                        </Box>
+                    )}
+                    <Box
+                        sx={{
+                            position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
                         <img
                             src={imageSrc}
                             alt="attachment-preview"
                             style={{
-                                width: '100%',
-                                height: 'auto',
                                 objectFit: 'contain',
-
+                                maxWidth: '70%',
+                                maxHeight: '70%',
                             }}
                         />
-                        {content && (
+                    </Box>
+
+                    {content && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                bottom: '20px',
+                                width: '100%',
+                                display: 'flex',
+                                justifyContent: 'center',
+                            }}
+                        >
                             <Typography
                                 sx={{
-                                    position: 'absolute',
-                                    bottom: '5px',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    color: 'white',
+                                    color: 'rgba(255, 255, 255, 0.7)',
                                     backgroundColor: 'rgba(0, 0, 0, 0.6)',
                                     textAlign: 'center',
-                                    padding: '6px',
+                                    padding: '6px 12px',
                                     wordWrap: 'break-word',
-                                    display: 'inline-block',
-                                    borderRadius: '10px',
+                                    borderRadius: '12px',
+                                    maxWidth: '90%',
+                                    transition: 'color 0.2s ease-in-out, background-color 0.2s ease-in-out',
+                                    '&:hover': {
+                                        color: 'white',
+                                    }
                                 }}
                             >
                                 {content}
                             </Typography>
-                        )}
-                    </Box>
+                        </Box>
+                    )}
                 </Box>
             )}
+
+
 
             {isVideoOpen && videoSrc && (
                 <Box

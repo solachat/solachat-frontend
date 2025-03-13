@@ -6,6 +6,8 @@ export type UserProps = {
     online: boolean;
     role: string;
     verified: boolean;
+    lastOnline?: string;
+    sessionToken?: string;
 };
 
 
@@ -15,12 +17,14 @@ export type MessageProps = {
     createdAt: string;
     unread?: boolean;
     user: UserProps;
+    tempId?: number;
+    pending?: boolean;
     userId: number;
     chatId: number;
     attachment?: {
         fileName: string;
         filePath: string;
-        type: string;
+        fileType: string;
     };
     isEdited?: boolean;
     isRead?: boolean;
@@ -32,6 +36,9 @@ export type ChatProps = {
     user: UserProps;
     users: UserProps[];
     messages: MessageProps[];
+    session?: {
+        sessionKey: string;
+    };
     isGroup?: boolean;
     isFavorite?: boolean;
     groupAvatar?: string;

@@ -7,7 +7,7 @@ import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import FileUploadModal from './FileUploadModal';
-import { sendMessage, editMessage } from '../../api/api';
+import {sendMessage, editMessage, createPrivateChat} from '../../api/api';
 import { useState, useCallback, useEffect } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -15,13 +15,18 @@ import { useTranslation } from 'react-i18next';
 import CustomTextarea from "./CustomTextarea";
 import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
 import EmojiPickerPopover from "./EmojiPickerPopover";
+import {toast} from "react-toastify";
+import {ChatProps, MessageProps} from "../core/types";
 
 export type UploadedFileData = {
     file: File;
 };
 
 export type MessageInputProps = {
-    chatId: number;
+    chatId: number | null;
+    selectedChat: ChatProps | null;
+    setSelectedChat: (chat: ChatProps) => void;
+    currentUserId: number;
     onSubmit: (newMessage: any) => void;
     editingMessage?: { id: number | null; content: string | null } | null;
     setEditingMessage: (message: { id: number | null; content: string | null } | null) => void;
@@ -29,7 +34,10 @@ export type MessageInputProps = {
 
 export default function MessageInput(props: MessageInputProps) {
     const { t } = useTranslation();
-    const { chatId, editingMessage, setEditingMessage, onSubmit } = props;
+    const {
+        chatId, selectedChat, setSelectedChat, currentUserId,
+        editingMessage, setEditingMessage, onSubmit
+    } = props;
 
     const [message, setMessage] = useState("");
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
@@ -40,16 +48,24 @@ export default function MessageInput(props: MessageInputProps) {
     const [isImageOpen, setIsImageOpen] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
     const [imageSrc, setImageSrc] = useState<string | null>(null);
+    const [isVideoOpen, setIsVideoOpen] = useState(false);
+    const [videoSrc, setVideoSrc] = useState<string | null>(null);
 
     const handleImageClick = (imageUrl: string) => {
         setImageSrc(imageUrl);
         setIsImageOpen(true);
     };
 
+    const handleVideoClick = (src: string) => {
+        setVideoSrc(src);
+        setIsVideoOpen(true);
+    };
+
     const handleClose = () => {
         setIsClosing(true);
         setTimeout(() => {
             setIsImageOpen(false);
+            setIsVideoOpen(false);
             setIsClosing(false);
         }, 100);
     };
@@ -63,36 +79,125 @@ export default function MessageInput(props: MessageInputProps) {
         setUploadedFiles([]);
     }, [editingMessage, chatId]);
 
-    const handleClick = async () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.error('Authorization token is missing');
-            return;
-        }
+    const [isSending, setIsSending] = useState(false);
 
-        const content = message.trim();
-        if (content === '' && uploadedFiles.length === 0) {
-            console.warn('Cannot send an empty message');
-            return;
-        }
+    const handleClick = async () => {
+        if (isSending) return;
+        setIsSending(true);
 
         try {
-            if (editingMessage && editingMessage.id) {
-                await editMessage(editingMessage.id, content, token);
-                setEditingMessage(null);
-            } else {
-                const formData = new FormData();
-                formData.append('content', content);
-                uploadedFiles.forEach((fileData) => formData.append('file', fileData.file));
-                await sendMessage(chatId, formData, token);
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("❌ Ошибка: Authorization token is missing");
+                return;
             }
 
+            const content = message.trim();
+            if (content === "" && uploadedFiles.length === 0) {
+                console.warn("⚠️ Нельзя отправить пустое сообщение");
+                return;
+            }
+
+            let finalChatId = selectedChat?.id;
+
+            if (editingMessage && editingMessage.id !== null) {
+                console.log("✏️ Обновление сообщения:", editingMessage.id);
+
+                const updatedMessage = await editMessage(editingMessage.id as number, content, token);
+
+                if (updatedMessage) {
+                    console.log("✅ Сообщение обновлено:", updatedMessage);
+
+                    onSubmit((prevMessages: MessageProps[]) =>
+                        prevMessages.map((msg: MessageProps) =>
+                            msg.id === editingMessage.id ? { ...msg, content: updatedMessage.content } : msg
+                        )
+                    );
+                } else {
+                    console.error("❌ Ошибка при обновлении сообщения");
+                }
+
+                setEditingMessage(null);
+                setMessage("");
+                setIsSending(false);
+                return;
+            }
+
+            if (!finalChatId || finalChatId === -1) {
+                const recipient = selectedChat?.users.find((user: any) => user.id !== currentUserId);
+                if (!recipient) {
+                    console.error("❌ Ошибка: Получатель не найден.");
+                    return;
+                }
+
+                console.log("🔄 Создаем новый чат перед отправкой...");
+                const newChat = await createPrivateChat(currentUserId, recipient.id, token);
+                finalChatId = newChat.id;
+                setSelectedChat(newChat);
+            }
+
+            if (!finalChatId) {
+                console.error("❌ Ошибка: Chat ID отсутствует. Сообщение не отправлено.");
+                return;
+            }
+
+            const tempId = Date.now();
+            console.log(`📝 Создано временное сообщение с tempId: ${tempId}`);
+
+            const optimisticFiles = uploadedFiles.map(fileData => ({
+                fileName: fileData.file.name,
+                filePath: URL.createObjectURL(fileData.file),
+                fileType: fileData.file.type,
+            }));
+
+            const optimisticMessage = {
+                id: tempId,
+                chatId: finalChatId,
+                userId: currentUserId,
+                content,
+                createdAt: new Date().toISOString(),
+                pending: true,
+                isRead: false,
+                attachment: optimisticFiles.length > 0 ? optimisticFiles[0] : null,
+            };
+
+            console.log("📩 Добавляем оптимистичное сообщение в UI:", optimisticMessage);
+            onSubmit(optimisticMessage);
+
+            const pendingMessages = JSON.parse(localStorage.getItem("pendingMessages") || "[]");
+            localStorage.setItem("pendingMessages", JSON.stringify([...pendingMessages, optimisticMessage]));
+
+            const formData = new FormData();
+            formData.append("content", content);
+            formData.append("tempId", String(tempId));
+            uploadedFiles.forEach(fileData => {
+                formData.append("file", fileData.file);
+            });
+
+            console.log("📤 Отправляем сообщение на сервер...");
+            const serverMessage = await sendMessage(finalChatId, formData, token);
+            console.log("✅ Сервер подтвердил отправку:", serverMessage);
+
+            onSubmit((prevMessages: MessageProps[]) =>
+                prevMessages.map((msg: MessageProps) =>
+                    msg.id === optimisticMessage.id ? { ...serverMessage, pending: false } : msg
+                )
+            );
+
+            const updatedPendingMessages = JSON.parse(localStorage.getItem("pendingMessages") || "[]")
+                .filter((msg: any) => msg.id !== tempId);
+            localStorage.setItem("pendingMessages", JSON.stringify(updatedPendingMessages));
+
+            console.log("🧹 Очищаем поле ввода");
             setMessage("");
             setUploadedFiles([]);
         } catch (error) {
-            console.error('Error sending or editing message:', error);
+            console.error("❌ Ошибка при отправке сообщения:", error);
+        } finally {
+            setIsSending(false);
         }
     };
+
 
     const handleEmojiSelect = (emoji: string) => {
         setMessage((prev) => prev + emoji);
@@ -147,7 +252,7 @@ export default function MessageInput(props: MessageInputProps) {
 
     return (
         <Box
-            sx={{ position: 'relative', px: 3, pb: 1 }}
+            sx={{ position: 'relative', px: 2, pb: 1 }}
             onPaste={handlePaste}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -180,7 +285,7 @@ export default function MessageInput(props: MessageInputProps) {
                     sx={{
                         border: '1px solid',
                         borderColor: 'divider',
-                        borderRadius: '4px',
+
                         padding: '6px',
                         backgroundColor: 'background.level1',
                         maxWidth: '100%',
@@ -286,6 +391,7 @@ export default function MessageInput(props: MessageInputProps) {
                     <Stack direction="row" flexWrap="wrap" spacing={2} sx={{ mt: 1 }}>
                         {uploadedFiles.map((file, index) => {
                             const isImage = file.file.type.startsWith('image/');
+                            const isVideo = file.file.type.startsWith('video/');
                             const fileUrl = URL.createObjectURL(file.file);
 
                             return (
@@ -316,6 +422,21 @@ export default function MessageInput(props: MessageInputProps) {
                                                 alt="preview"
                                                 onClick={() => handleImageClick(fileUrl)}
                                             />
+                                        ) : isVideo ? (
+                                            <Box
+                                                sx={{
+                                                    width: 40,
+                                                    height: 40,
+                                                    borderRadius: '4px',
+                                                    overflow: 'hidden',
+                                                    cursor: 'pointer',
+                                                }}
+                                                onClick={() => handleVideoClick(fileUrl)}
+                                            >
+                                                <video width="40" height="40" style={{ objectFit: 'cover' }}>
+                                                    <source src={fileUrl} type={file.file.type} />
+                                                </video>
+                                            </Box>
                                         ) : (
                                             <Avatar sx={{ backgroundColor: 'primary.main' }}>
                                                 <InsertDriveFileIcon />
@@ -335,7 +456,6 @@ export default function MessageInput(props: MessageInputProps) {
                 </Box>
             )}
 
-            {/* Модальное окно с анимацией */}
             {isImageOpen && imageSrc && (
                 <Box
                     sx={{
@@ -354,16 +474,64 @@ export default function MessageInput(props: MessageInputProps) {
                     }}
                     onClick={handleClose}
                 >
-                    <Box sx={{ position: 'relative', display: 'inline-flex', maxWidth: '90%', maxHeight: '90%' }}>
+                    <Box sx={{                            position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center', }}>
                         <img
                             src={imageSrc}
                             alt="attachment-preview"
                             style={{
-                                width: '100%',
+                                maxWidth: '70%',
+                                maxHeight: '70%',
                                 height: 'auto',
                                 objectFit: 'contain',
                             }}
                         />
+                    </Box>
+                </Box>
+            )}
+
+            {isVideoOpen && videoSrc && (
+                <Box
+                    sx={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        fleft: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 999,
+                        cursor: 'pointer',
+                    }}
+                    onClick={handleClose}
+                >
+                    <Box
+                        sx={{
+                            position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <video
+                            controls
+                            autoPlay
+                            style={{
+                                maxWidth: '70%',
+                                maxHeight: '70%',
+                                height: 'auto',
+                                objectFit: 'contain',
+                            }}
+                        >
+                            <source src={videoSrc} type="video/mp4" />
+                        </video>
                     </Box>
                 </Box>
             )}

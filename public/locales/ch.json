@@ -185,5 +185,18 @@
   "delete": "删除",
   "copy": "复制",
   "forward": "转发",
-  "Connecting": "連接中"
+  "Connecting": "連接中",
+  "offline": "离线",
+  "just_now": "刚刚",
+  "last_seen": "最后出现于 {{time}}",
+  "minutes_ago_one": "{{count}} 分钟前",
+  "minutes_ago_few": "{{count}} 分钟前",
+  "minutes_ago_many": "{{count}} 分钟前",
+  "hours_ago_one": "{{count}} 小时前",
+  "hours_ago_few": "{{count}} 小时前",
+  "hours_ago_many": "{{count}} 小时前",
+  "last_seen_yesterday": "昨天 {{time}}",
+  "totp_alert_title": "使用 TOTP 保护您的帐户",
+  "totp_alert_description": "启用双因素身份验证 (TOTP) 以提高安全性并简化登录。",
+  "totp_alert_button": "设置 TOTP"
 }

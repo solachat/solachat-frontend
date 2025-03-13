@@ -10,6 +10,7 @@ import SolanaIcon from "./SolanaIcon";
 import {Switch} from "@mui/joy";
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import {useTranslation} from "react-i18next";
+import BitcoinIcon from "./BitcoinIcon";
 
 export function DarkModeSwitch() {
     const { mode, setMode } = useColorScheme();
@@ -105,9 +106,9 @@ export function Header({ sx, ...props }: HeaderProps) {
         >
             <Box sx={{ gap: 2, display: 'flex', alignItems: 'center' }}>
                 <IconButton variant="soft" size="sm">
-                    <SolanaIcon />
+                    <BitcoinIcon />
                 </IconButton>
-                <Typography component="h1">SolaChat</Typography>
+                <Typography component="h1">DarkChat</Typography>
             </Box>
             <Box sx={{ gap: 2, display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
                 <ColorSchemeToggle />
