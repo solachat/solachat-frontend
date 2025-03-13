@@ -56,8 +56,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
             setChats((prevChats) => {
                 let chatExists = false;
 
-                console.log("📩 Получено новое сообщение в чат:", newMessage.chatId);
-                console.log("📝 Чаты до обновления:", prevChats.map(chat => chat.id));
 
                 let updatedChats = prevChats.map((chat) => {
                     if (chat.id === newMessage.chatId) {
@@ -91,7 +89,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 updatedChats = updatedChats.sort((a, b) => {
                     if (a.id === selectedChatIdNum) return -1;
                     if (b.id === selectedChatIdNum) return 1;
-
                     const aUpdated = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
                     const bUpdated = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;
                     return bUpdated - aUpdated;
@@ -201,7 +198,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 if (!token) throw new Error("⛔ Authorization token is missing");
 
                 let cachedChats = await getCachedChats() || [];
-                let chats = cachedChats; // По умолчанию используем кэш
+                let chats = cachedChats;
 
                 const chatsFromServer = await fetchChatsFromServer(currentUser.id, token);
                 if (chatsFromServer) {
@@ -209,7 +206,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                     await cacheChats(chatsFromServer);
                 }
 
-                // Обновляем аватары и вложения сообщений
                 const updatedChats = await Promise.all(
                     chats.map(async (chat) => {
                         if (!chat.messages) return chat;
@@ -255,8 +251,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     }, [currentUser.id]);
 
 
-
-
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const term = e.target.value;
         setSearchTerm(term);
@@ -267,21 +261,18 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
 
                 const chatResults = chats
                     .map(chat => {
-                        console.log(`Chat ${chat.id} messages:`, chat.messages); // отладка: что приходит в messages
-
                         const user = chat.users.find(user => user.id !== currentUser.id);
                         if (!user) return null;
 
-                        // Если chat.lastMessage не установлен, вычисляем последнее сообщение по максимальной дате
                         const lastMessage =
-                            chat.lastMessage ||
-                            (chat.messages && chat.messages.length > 0
-                                ? chat.messages.reduce((prev: MessageProps, curr: MessageProps) =>
-                                    new Date(curr.createdAt).getTime() > new Date(prev.createdAt).getTime() ? curr : prev
+                            chat.lastMessage ??
+                            (Array.isArray(chat.messages) && chat.messages.length > 0
+                                ? chat.messages.reduce((prev, curr) =>
+                                    new Date(curr.timestamp || curr.createdAt).getTime() > new Date(prev.timestamp || prev.createdAt).getTime()
+                                        ? curr
+                                        : prev
                                 )
                                 : null);
-
-                        console.log(`Chat ${chat.id} lastMessage:`, lastMessage); // отладка: что получилось
 
                         return {
                             ...user,
@@ -291,10 +282,19 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                     })
                     .filter(Boolean) as (UserProps & { lastMessage?: MessageProps; chatId?: number })[];
 
-
                 const mergedResults = Array.from(
-                    new Map([...chatResults, ...userResults].map(user => [user.id, user])).values()
-                );
+                    new Map<string, UserProps & { lastMessage?: MessageProps; chatId?: number }>(
+                        [...userResults, ...chatResults].map(user => [user.id.toString(), user])
+                    ).values()
+                ).sort((a: UserProps & { lastMessage?: MessageProps }, b: UserProps & { lastMessage?: MessageProps }) => {
+                    const timeA: number = a.lastMessage?.timestamp
+                        ? new Date(a.lastMessage.timestamp).getTime()
+                        : 0;
+                    const timeB: number = b.lastMessage?.timestamp
+                        ? new Date(b.lastMessage.timestamp).getTime()
+                        : 0;
+                    return timeB - timeA;
+                });
 
                 setSearchResults(mergedResults);
             } catch (error) {
@@ -305,8 +305,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
             setSearchResults([]);
         }
     };
-
-
 
     const handleCloseSettings = () => {
         setActiveScreen('chats');
@@ -415,7 +413,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                         key={user.id}
                                         id={user.id.toString()}
                                         sender={user}
-                                        messages={user.lastMessage ? [user.lastMessage] : []}
+                                        messages={user.lastMessage ? [{ ...user.lastMessage }] : []}
                                         setSelectedChat={setSelectedChat}
                                         currentUserId={currentUser.id}
                                         chats={chats}

@@ -29,6 +29,7 @@ export type MessageProps = {
     isEdited?: boolean;
     isRead?: boolean;
     isDelivered?: boolean;
+    timestamp?: string;
 };
 
 export type ChatProps = {

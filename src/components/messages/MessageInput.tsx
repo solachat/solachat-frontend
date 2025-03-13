@@ -124,17 +124,20 @@ export default function MessageInput(props: MessageInputProps) {
             }
 
             if (!finalChatId || finalChatId === -1) {
-                const recipient = selectedChat?.users.find((user: any) => user.id !== currentUserId);
-                if (!recipient) {
+                const recipientId = Number(window.location.hash.replace("#", ""));
+
+                if (!recipientId || recipientId === currentUserId) {
                     console.error("❌ Ошибка: Получатель не найден.");
                     return;
                 }
 
-                console.log("🔄 Создаем новый чат перед отправкой...");
-                const newChat = await createPrivateChat(currentUserId, recipient.id, token);
-                finalChatId = newChat.id;
+                console.log(`🔄 Создаем новый чат с userId ${recipientId} перед отправкой...`);
+                const newChat = await createPrivateChat(currentUserId, recipientId, token);
+
+                finalChatId = recipientId;
                 setSelectedChat(newChat);
             }
+
 
             if (!finalChatId) {
                 console.error("❌ Ошибка: Chat ID отсутствует. Сообщение не отправлено.");

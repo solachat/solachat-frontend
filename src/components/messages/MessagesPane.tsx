@@ -14,6 +14,8 @@ import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
 import {sendMessage, updateMessageStatus} from '../../api/api';
 import dayjs from "dayjs";
+import {IconButton} from "@mui/joy";
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
@@ -30,23 +32,18 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
     const [textAreaValue, setTextAreaValue] = useState<string>('');
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
-    const [isFarFromBottom, setIsFarFromBottom] = useState<boolean>(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const chatIdRef = useRef<number | null>(null);
-    const { chatId } = useParams<{ chatId: string }>();
     const [messages, setMessages] = useState<MessageProps[]>(chat?.messages || []);
     const [userStatuses, setUserStatuses] = React.useState<Record<string, Pick<UserProps, 'online' | 'lastOnline'>>>({});
     const [visibleDate, setVisibleDate] = useState<string | null>(null);
     const chatMessagesRef = useRef<MessageProps[]>(chat?.messages || []);
-
-    const findChatById = (id: string | undefined) => {
-        return chats.find((chat) => chat.id === Number(id)) || null;
-    };
+    const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
     const groupMessagesByDate = (messages: MessageProps[]) => {
         return messages.reduce((acc, message) => {
-            const messageDate = dayjs(message.createdAt).format('DD MMMM YYYY'); // Форматируем дату
+            const messageDate = dayjs(message.createdAt).format('DD MMMM YYYY');
             if (!acc[messageDate]) {
                 acc[messageDate] = [];
             }
@@ -107,12 +104,18 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         const container = messagesContainerRef.current;
         if (!container) return;
 
-        console.log("📜 Скролл сработал!");
+        const isAtBottom = container.scrollTop === 0;
 
+        console.log("Scroll position:", container.scrollTop, "Container height:", container.clientHeight, "Content height:", container.scrollHeight);
+
+        if (isAtBottom) {
+            setShowScrollToBottom(false);
+        } else {
+            setShowScrollToBottom(true);
+        }
         const messages = Array.from(container.querySelectorAll('.message[data-date]'));
         for (let message of messages) {
             const rect = (message as HTMLElement).getBoundingClientRect();
-
             if (rect.top >= 50) {
                 const date = message.getAttribute('data-date');
                 if (date) {
@@ -123,6 +126,14 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         }
     };
 
+    useEffect(() => {
+        const container = messagesContainerRef.current;
+        if (!container) return;
+
+        const isAtBottom = container.scrollTop === 0;
+
+        setShowScrollToBottom(!isAtBottom);
+    }, [chatMessages])
 
     useEffect(() => {
         const container = messagesContainerRef.current;
@@ -131,7 +142,9 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             return () => container.removeEventListener('scroll', handleScroll);
         }
     }, []);
-
+    const handleScrollToBottom = () => {
+        scrollToBottom(true);
+    };
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -168,7 +181,15 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             return;
         }
 
-        const chatFromUrl = findChatById(chatIdFromUrl);
+        const recipientId = Number(chatIdFromUrl);
+        if (!recipientId || recipientId === currentUserId) {
+            console.warn("⚠️ Некорректный recipientId:", recipientId);
+            return;
+        }
+
+        const chatFromUrl = chats.find(chat =>
+            !chat.isGroup && chat.users.some(user => user.id === recipientId)
+        );
         if (chatFromUrl) {
             setSelectedChat(chatFromUrl);
         }
@@ -270,7 +291,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
 
             console.log("Используем дату:", parsedDate.toISOString());
 
-            // Обновляем состояние
             setChatMessages((prevMessages) => {
                 const index = prevMessages.findIndex(msg => msg.id === Number(serverMessage.tempId));
 
@@ -503,6 +523,28 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                             {t('')}
                         </Typography>
                     )}
+                    {showScrollToBottom && (
+                        <IconButton
+                            onClick={handleScrollToBottom}
+                            size="lg"
+                            sx={{
+                                position: 'absolute',
+                                right: 20,
+                                width: 40,
+                                height: 40,
+                                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                color: 'white',
+                                fontSize: 32,
+                                opacity: showScrollToBottom ? 1 : 0,
+                                transition: 'opacity 0.3s ease-in-out',
+                                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.8)' }
+                            }}
+                        >
+                            <KeyboardArrowDownIcon fontSize="inherit" />
+                        </IconButton>
+
+
+                    )}
                 </>
             </Box>
 
@@ -540,8 +582,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                             }
                         }}
                     />
-
-
                 </Box>
             )}
         </Sheet>

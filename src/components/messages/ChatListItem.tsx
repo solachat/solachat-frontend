@@ -155,24 +155,23 @@ export default function ChatListItem(props: ChatListItemProps) {
 
         console.log("📌 handleClick вызван для sender.id =", sender.id);
 
-        // Проверяем, есть ли чат с этим пользователем
+        const recipientId = sender.id;
+
         const chatExists = chats.find(
             (chat: ChatProps) =>
-                !chat.isGroup && chat.users.some((user: UserProps) => user.id === sender.id)
+                !chat.isGroup && chat.users.some((user: UserProps) => user.id === recipientId)
         );
 
         if (chatExists) {
             console.log("✅ Чат найден:", chatExists);
             setExistingChat(chatExists);
             setSelectedChat(chatExists);
-            navigate(`/chat/#${chatExists.id}`);
+            navigate(`/chat/#${recipientId}`);
             return;
         }
 
-        console.log("❌ Чат отсутствует, создаём временный (UI) чат.");
-
         const tempChat: ChatProps = {
-            id: -1, // ✅ Указываем временный ID
+            id: -1,
             users: [sender],
             messages: [],
             isGroup: false,
@@ -183,9 +182,8 @@ export default function ChatListItem(props: ChatListItemProps) {
 
         setExistingChat(tempChat);
         setSelectedChat(tempChat);
-        navigate(`/chat/#temp-${sender.id}`);
+        navigate(`/chat/#${recipientId}`);
     };
-
 
     if (!sender && !isGroup) return null;
 

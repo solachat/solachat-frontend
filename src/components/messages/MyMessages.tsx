@@ -75,7 +75,6 @@ export default function MyProfile() {
             );
         });
 
-        // Проверяем, не поменялся ли текущий чат
         if (selectedChat?.id === chatId) {
             console.log(`✅ Обновляем последнее сообщение в активном чате (${chatId})`);
             setSelectedChat((prev) =>
@@ -85,14 +84,6 @@ export default function MyProfile() {
     };
 
 
-    const addNewChat = (chatId: number) => {
-        fetchChatsFromServer(currentUser!.id, localStorage.getItem('token')!).then((fetchedChats: ChatProps[]) => {
-            const newChat = fetchedChats.find((chat: ChatProps) => chat.id === chatId);
-            if (newChat && !chats.some(chat => chat.id === chatId)) {
-                setChats((prevChats) => [...prevChats, newChat]);
-            }
-        });
-    };
 
     const removeUserFromChat = (chatId: number, userId: number) => {
         setChats((prevChats) =>
@@ -123,6 +114,7 @@ export default function MyProfile() {
         chatDeletedRef.current = true;
 
         setChats((prevChats) => prevChats.filter(chat => chat.id !== chatId));
+        setSelectedChat(null)
 
         if (selectedChat?.id === chatId) {
             setSelectedChat(null);
@@ -133,35 +125,10 @@ export default function MyProfile() {
 
     const chatDeletedRef = useRef(false);
 
-    useEffect(() => {
-        if (!selectedChat) return;
-
-        const foundChat = chats.find(chat => chat.id === selectedChat.id);
-        if (!foundChat) {
-            if (chatDeletedRef.current) {
-                console.log(`⚠️ Чат ${selectedChat.id} удален, сбрасываем выбор.`);
-                setSelectedChat(null);
-                navigate('/chat');
-            }
-        } else {
-            console.log(`✅ Чат ${selectedChat.id} найден, обновляем данные.`);
-            setSelectedChat(foundChat);
-        }
-    }, [chats, selectedChat, navigate]);
-
-
-
     const handleWebSocketMessage = (message: any) => {
-
         switch (message.type) {
             case 'newMessage':
                 updateLastMessageInChatList(message.message.chatId, message.message);
-                break;
-            case 'chatCreated':
-                addNewChat(message.chat);
-                break;
-            case 'userAdded':
-                addNewChat(message.chatId);
                 break;
             case 'userRemoved':
                 removeUserFromChat(message.chatId, message.userId);
@@ -226,12 +193,10 @@ export default function MyProfile() {
                     return;
                 }
 
-                // 🔹 1. Загружаем чаты из `Cache Storage`
                 let chatsToProcess = await getCachedChats() || [];
                 let fetchedChats = [];
 
                 try {
-                    // 🔹 2. Загружаем данные с сервера (если доступен)
                     fetchedChats = await fetchChatsFromServer(currentUser.id, token);
                     if (fetchedChats.length > 0) {
                         await cacheChats(fetchedChats);
@@ -241,7 +206,6 @@ export default function MyProfile() {
                     console.warn("⚠️ Сервер не отвечает, используем кэшированные данные.");
                 }
 
-                // 🔹 3. Обновляем вложения и аватарки (используем кэш, если есть)
                 const updatedChats = await Promise.all(
                     chatsToProcess.map(async (chat) => {
                         const updatedMessages = await Promise.all(
@@ -297,7 +261,7 @@ export default function MyProfile() {
                 );
 
                 console.log("📌 Обновлённые чаты:", updatedChats);
-                setChats(prevChats => [...prevChats, ...updatedChats]); // 🔥 Добавляем, а не заменяем
+                setChats(prevChats => [...prevChats, ...updatedChats]);
 
             } catch (error) {
                 console.error("❌ Ошибка загрузки чатов:", error);
@@ -309,10 +273,6 @@ export default function MyProfile() {
 
         loadChatsAndMessages();
     }, [currentUser]);
-
-
-
-
 
 
     return (
