@@ -106,7 +106,7 @@ export function Header({ sx, ...props }: HeaderProps) {
         >
             <Box sx={{ gap: 2, display: 'flex', alignItems: 'center' }}>
                 <IconButton variant="soft" size="sm">
-                    <BitcoinIcon />
+                    <SolanaIcon />
                 </IconButton>
                 <Typography component="h1">DarkChat</Typography>
             </Box>

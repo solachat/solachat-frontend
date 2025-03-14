@@ -165,12 +165,23 @@
   "add": "Add",
   "image": "Image",
   "footer": {
-    "companyName": "SolaChat",
-    "companySlogan": "The digital currency of the future",
-    "about": "About Us",
-    "terms": "Terms of Service",
-    "privacy": "Privacy Policy",
-    "support": "Support",
+    "about": "About",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "slogan": "Secure Crypto Messaging. End-to-End Encrypted. Built on Blockchain.",
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "community": "Join Community",
+    "features": "Features",
+    "security": "Security Audit",
+    "download": "Download Apps",
+    "blog": "Blog",
+    "careers": "Careers",
+    "compliance": "Compliance",
+    "learnMore": "Learn More",
+    "madeWith": "Made with",
+    "team": "by DarkChat Team",
     "rightsReserved": "All rights reserved"
   },
   "aboutSolacoinTitle": "About SolaCoin",
@@ -267,5 +278,58 @@
     "12": "december"
   },
   "date_format": "{{month}} {{day}}",
-  "date_format_with_year": "{{month}} {{day}}, {{year}}"
+  "date_format_with_year": "{{month}} {{day}}, {{year}}",
+  "cta": {
+    "title": "Welcome to SolanaChat",
+    "description": "More than 100,000 users are already enjoying secure and anonymous communication",
+    "download": "Download now"
+  },
+  "reasons": {
+    "title": "7 reasons to choose SolanaChat",
+    "security": {
+      "title": "Absolute Security",
+      "description": "Instant message encryption and military-grade data protection."
+    },
+    "anonymity": {
+      "title": "Network Anonymity",
+      "description": "Communicate without linking to a phone number or email. Full privacy."
+    },
+    "transactions": {
+      "title": "Lightning-fast Transactions",
+      "description": "Solana allows instant transfers and microtransactions."
+    },
+    "decentralization": {
+      "title": "Global Decentralization",
+      "description": "No centralized servers. No one can block access."
+    },
+    "web3": {
+      "title": "Web3 Integration",
+      "description": "Connect crypto wallets, manage NFTs and tokens directly in chat."
+    },
+    "wallets": {
+      "title": "Secure Wallets",
+      "description": "Built-in crypto wallet for easy asset storage."
+    },
+    "transparency": {
+      "title": "Transparent Ecosystem",
+      "description": "Open-source, no hidden fees, and maximum honesty."
+    }
+  },
+  "hero": {
+    "title": "SolaChat",
+    "subtitle": "The next-generation messenger for the Web3 era",
+    "features": {
+      "encryption": "End-to-end encryption",
+      "decentralization": "Decentralized architecture",
+      "walletSupport": "Crypto wallet support"
+    },
+    "button": "Start for free"
+  },
+  "navbar": {
+    "feedback": "Feedback",
+    "vacancies": "Careers",
+    "documents": "Documents",
+    "signIn": "Sign In",
+    "signUp": "Sign Up"
+  }
 }

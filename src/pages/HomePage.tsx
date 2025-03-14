@@ -11,6 +11,7 @@ import HeroLeft03 from '../components/home/HeroLeft03';
 import Navbar from "../components/home/Navbar";
 import {Header} from '../components/core/ColorSchemeToggle';
 import Footer from "../components/home/Footer";
+import TeamSection from "../components/home/TeamSeaction";
 
 
 export default function HomePage() {
@@ -22,10 +23,9 @@ export default function HomePage() {
             </Helmet>
             <CssBaseline />
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Header />
-                <Navbar />
+                <Navbar/>
             </Box>
-            <Box sx={{ pt: 8, overflow: 'hidden' }}>
+            <Box sx={{ overflow: 'hidden' }}>
                 <Box
                     sx={{
                         height: '100%',
@@ -39,6 +39,7 @@ export default function HomePage() {
                     <HeroLeft01 />
                     <HeroLeft02 />
                     <HeroLeft03 />
+                    <TeamSection/>
                 </Box>
             </Box>
             <Footer/>

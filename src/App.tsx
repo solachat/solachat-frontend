@@ -35,12 +35,12 @@ const App: React.FC = () => {
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/:identifier" element={<MyAccount />} />
 
-                        <Route path="/" element={<Navigate to="/chatOrLogin" />} />
+                        <Route path="/" element={<HomePage/>} />
                         <Route path="/contacts" element={<ContactsPage />} />
                         <Route path="/chat" element={<PrivateRoute element={<MyMessages />} />} />
-                        <Route path="/chatOrLogin" element={
-                            localStorage.getItem('token') ? <Navigate to="/chat" /> : <Navigate to="/login" />
-                        } />
+                        {/*<Route path="/chatOrLogin" element={*/}
+                        {/*    localStorage.getItem('token') ? <Navigate to="/chat" /> : <Navigate to="/login" />*/}
+                        {/*} />*/}
 
                         {underDevelopmentRoutes.map((route) => (
                             <Route path={route} element={<UnderConstruction />} key={route} />
