@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Box, Typography, Link, Stack, Button, Divider } from '@mui/joy';
 import { useTranslation } from 'react-i18next';
 import EmailIcon from '@mui/icons-material/Email';
-import AboutModal from './AboutModal';
+import AboutModal from "./AboutModal";
 
 const Footer: React.FC = () => {
     const { t } = useTranslation();
@@ -127,8 +127,8 @@ const Footer: React.FC = () => {
                         <Stack spacing={3}>
                             <motion.div whileHover={{ scale: 1.05 }}>
                                 <img
-                                    src="favicon.ico"
-                                    alt="DarkChat"
+                                    src="/favicon.ico"
+                                    alt="SolaChat"
                                     style={{ width: 60, height: 60 }}
                                 />
                             </motion.div>
@@ -287,7 +287,7 @@ const Footer: React.FC = () => {
                         fontSize: 14
                     }}
                 >
-                    © {new Date().getFullYear()} DarkChat. {t('footer.rightsReserved')}
+                    © {new Date().getFullYear()} SolaChat. {t('footer.rightsReserved')}
                     <br />
                     {t('footer.madeWith')} ❤️ {t('footer.team')}
                 </Typography>

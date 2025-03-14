@@ -9,7 +9,7 @@
   "rememberMe": "Remember me",
   "forgotPassword": "Forgot your password?",
   "signInButton": "Sign in",
-  "footerText": "© DarkChat {{year}}",
+  "footerText": "© SolaChat {{year}}",
   "rememberedPassword": "Remembered password?",
   "resetPassword": "Reset Password",
   "username": "Username",
@@ -181,7 +181,7 @@
     "compliance": "Compliance",
     "learnMore": "Learn More",
     "madeWith": "Made with",
-    "team": "by DarkChat Team",
+    "team": "by SolaChat Team",
     "rightsReserved": "All rights reserved"
   },
   "aboutSolacoinTitle": "About SolaCoin",
@@ -331,5 +331,8 @@
     "documents": "Documents",
     "signIn": "Sign In",
     "signUp": "Sign Up"
+  },
+  "team": {
+    "title": "Our Team"
   }
 }

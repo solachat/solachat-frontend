@@ -114,12 +114,11 @@ export default function HeroMain() {
                     </motion.div>
                 </motion.div>
 
-                {/* Логотип справа */}
                 <motion.div initial="hidden" animate="visible" variants={imageVariants} style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
                     <motion.div animate={floatingAnimation} style={{ maxWidth: 320 }}>
                         <img
                             src="/favicon.ico"
-                            alt="DarkChat Logo"
+                            alt="SolaChat Logo"
                             style={{
                                 width: '100%',
                                 transform: 'perspective(500px) rotateY(10deg)',

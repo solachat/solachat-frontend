@@ -9,7 +9,7 @@
   "rememberMe": "Запомнить меня",
   "forgotPassword": "Забыли пароль?",
   "signInButton": "Войти",
-  "footerText": "© DarkChat {{year}}",
+  "footerText": "© SolaChat {{year}}",
   "rememberedPassword": "Вспомнили свой пароль?",
   "resetPassword": "Сбросить пароль",
   "alreadyHaveAccount": "Зарегистрирован уже аккаунт?",
@@ -233,7 +233,7 @@
     "compliance": "Соответствие",
     "learnMore": "Узнать больше",
     "madeWith": "Сделано с",
-    "team": "командой DarkChat",
+    "team": "командой SolaChat",
     "rightsReserved": "Все права защищены"
   },
   "aboutSolacoinTitle": "О SolaChat",
@@ -399,5 +399,8 @@
     "documents": "Документы",
     "signIn": "Войти",
     "signUp": "Регистрация"
+  },
+  "team": {
+    "title": "Наша команда"
   }
 }

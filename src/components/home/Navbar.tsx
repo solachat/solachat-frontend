@@ -81,7 +81,6 @@ export default function Navbar() {
             backdropFilter: 'blur(10px)',
             position: 'relative'
         }}>
-            {/* Левая часть с логотипом */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, position: 'absolute', left: 16 }}>
                 <Link component={RouterLink} to="/" sx={{
                     cursor: 'pointer',
@@ -100,7 +99,6 @@ export default function Navbar() {
                 </Link>
             </Box>
 
-            {/* Центральная навигация */}
             <Box sx={{
                 display: 'flex',
                 gap: 2,

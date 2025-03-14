@@ -10,7 +10,6 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import LockIcon from '@mui/icons-material/Lock';
 import GppGoodIcon from '@mui/icons-material/GppGood';
 
-// Причины использовать SolanaChat
 const reasons = [
     {
         key: "security",

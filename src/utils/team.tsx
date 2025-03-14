@@ -13,7 +13,7 @@ export const teamMembers: TeamMember[] = [
         id: 1,
         name: 'yataknemogy',
         position: 'Chief Architect',
-        description: 'DarkChat Platform',
+        description: 'SolaChat Platform',
         avatar: '/img/avatars/yataknemogy.jpg'
     },
 ];

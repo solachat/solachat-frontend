@@ -2,8 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, Avatar } from '@mui/joy';
 import { teamMembers } from '../../utils/team';
+import {useTranslation} from "react-i18next";
 
 export default function TeamSection() {
+    const { t } = useTranslation();
     return (
         <Box sx={{
             py: 10,
@@ -21,7 +23,7 @@ export default function TeamSection() {
                     WebkitTextFillColor: 'transparent'
                 }}
             >
-                Наша команда
+                {t('team.title')}
             </Typography>
 
             <Box sx={{
