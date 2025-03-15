@@ -1,139 +1,165 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IconButton, Slider, Box, Typography } from '@mui/joy';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import { IconButton, Slider, Box, Typography, Tooltip } from '@mui/joy';
+import { PlayArrow, Pause, VolumeUp, VolumeOff } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 
-export default function CustomAudioPlayer({ audioSrc, isSent }: { audioSrc: string, isSent: boolean }) {
+export default function CustomAudioPlayer({ audioSrc, isSent }: { audioSrc: string; isSent: boolean }) {
     const audioRef = useRef<HTMLAudioElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [volume, setVolume] = useState(1);
+    const [isMuted, setIsMuted] = useState(false);
 
-    const playerColor = isSent ? '#76baff' : '#34a853';
+    // Цветовая схема в синих оттенках
+    const primaryColor = isSent ? '#1890ff' : '#40a9ff';
+    const secondaryColor = isSent ? 'rgba(24,144,255,0.15)' : 'rgba(64,169,255,0.15)';
 
     useEffect(() => {
-        const handleLoadedMetadata = () => {
-            if (audioRef.current) {
-                setDuration(audioRef.current.duration);
-            }
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        const updateData = () => {
+            setDuration(audio.duration);
+            setCurrentTime(audio.currentTime);
         };
 
-        const audio = audioRef.current;
-        if (audio) {
-            audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-        }
+        audio.addEventListener('loadedmetadata', updateData);
+        audio.addEventListener('ended', () => setIsPlaying(false));
 
         return () => {
-            if (audio) {
-                audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-            }
+            audio.removeEventListener('loadedmetadata', updateData);
+            audio.removeEventListener('ended', () => setIsPlaying(false));
         };
     }, []);
 
-    // Обработчик воспроизведения/паузы
     const togglePlayPause = () => {
-        if (!audioRef.current) return;
-        if (isPlaying) {
-            audioRef.current.pause();
-        } else {
-            audioRef.current.play();
-        }
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        isPlaying ? audio.pause() : audio.play();
         setIsPlaying(!isPlaying);
     };
 
-    // Обновление текущего времени аудио
-    const handleTimeUpdate = () => {
+    const handleTimeUpdate = () => setCurrentTime(audioRef.current?.currentTime || 0);
+
+    const handleSeek = (_: Event, value: number | number[]) => {
+        const time = Array.isArray(value) ? value[0] : value;
+        audioRef.current && (audioRef.current.currentTime = time);
+    };
+
+    const handleVolumeChange = (_: Event, value: number | number[]) => {
+        const vol = Array.isArray(value) ? value[0] : value;
+        setVolume(vol);
         if (audioRef.current) {
-            setCurrentTime(audioRef.current.currentTime);
+            audioRef.current.volume = vol;
+            setIsMuted(vol === 0);
         }
     };
 
-    const handleSliderChange = (event: Event, newValue: number | number[]) => {
+    const toggleMute = () => {
         if (audioRef.current) {
-            audioRef.current.currentTime = Array.isArray(newValue) ? newValue[0] : newValue;
+            const newMuted = !isMuted;
+            audioRef.current.muted = newMuted;
+            setIsMuted(newMuted);
+            setVolume(newMuted ? 0 : 1);
         }
     };
 
-    const handleVolumeChange = (event: Event, newValue: number | number[]) => {
-        const newVolume = Array.isArray(newValue) ? newValue[0] : newValue;
-        setVolume(newVolume);
-        if (audioRef.current) {
-            audioRef.current.volume = newVolume;
-        }
-    };
-
-    // Формат времени для отображения
     const formatTime = (time: number) => {
-        if (isNaN(time)) return '0:00';
         const minutes = Math.floor(time / 60);
         const seconds = Math.floor(time % 60).toString().padStart(2, '0');
         return `${minutes}:${seconds}`;
     };
 
     return (
-        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', backgroundColor: '#2e2e2e', padding: '10px', borderRadius: '8px' }}>
-            {/* Иконка воспроизведения / паузы */}
-            <IconButton onClick={togglePlayPause} sx={{ color: playerColor }}>
-                {isPlaying ? <PauseIcon sx={{ fontSize: 32 }} /> : <PlayArrowIcon sx={{ fontSize: 32 }} />}
-            </IconButton>
-            {/* Ползунок времени */}
-            <Slider
-                value={currentTime}
-                max={duration}
-                onChange={handleSliderChange}
-                sx={{
-                    flexGrow: 1,
-                    mx: 2,
-                    color: playerColor, // Цвет ползунка в зависимости от отправителя/получателя
-                    '& .MuiSlider-thumb': {
-                        width: '12px',
-                        height: '12px',
-                        backgroundColor: '#ffffff',
-                        border: `2px solid ${playerColor}`,
-                    },
-                    '& .MuiSlider-track': {
-                        height: '4px',
-                        backgroundColor: playerColor,
-                    },
-                    '& .MuiSlider-rail': {
-                        height: '4px',
-                        backgroundColor: '#cccccc',
-                    },
-                }}
-            />
-            {/* Текущее время / Продолжительность */}
-            <Typography sx={{ color: '#ffffff', minWidth: '50px' }}>
-                {formatTime(currentTime)} / {formatTime(duration)}
-            </Typography>
-            {/* Ползунок громкости */}
-            <VolumeUpIcon sx={{ ml: 2, color: playerColor }} />
-            <Slider
-                value={volume}
-                min={0}
-                max={1}
-                step={0.01}
-                onChange={handleVolumeChange}
-                sx={{
-                    width: '100px',
-                    color: playerColor,
-                    '& .MuiSlider-thumb': {
-                        width: '12px',
-                        height: '12px',
-                        backgroundColor: '#ffffff',
-                        border: `2px solid ${playerColor}`,
-                    },
-                    '& .MuiSlider-track': {
-                        height: '4px',
-                        backgroundColor: playerColor,
-                    },
-                    '& .MuiSlider-rail': {
-                        height: '4px',
-                        backgroundColor: '#cccccc',
-                    },
-                }}
-            />
+        <Box
+            component={motion.div}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            sx={{
+                width: '100%',
+                p: 1,
+                borderRadius: '12px',
+                bgcolor: 'transparent',
+                position: 'relative',
+            }}
+        >
+            {/* Временная шкала */}
+            <Box sx={{
+                position: 'relative',
+                height: '4px',
+                bgcolor: '#e8e8e8',
+                borderRadius: '2px',
+                mb: 1.5,
+                overflow: 'hidden'
+            }}>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        width: `${(currentTime / duration) * 100}%`,
+                        height: '100%',
+                        bgcolor: primaryColor,
+                        borderRadius: '2px',
+                    }}
+                />
+            </Box>
+
+            {/* Основные элементы управления */}
+            <Box display="flex" alignItems="center" justifyContent="space-between">
+                {/* Левая часть: кнопка управления и время */}
+                <Box display="flex" alignItems="center" gap={1.5}>
+                    <Tooltip title={isPlaying ? "Пауза" : "Воспроизвести"}>
+                        <IconButton
+                            variant="soft"
+                            onClick={togglePlayPause}
+                            sx={{
+                                borderRadius: '50%',
+                                bgcolor: primaryColor,
+                                '&:hover': { bgcolor: `${primaryColor}cc` }
+                            }}
+                        >
+                            {isPlaying ? (
+                                <Pause sx={{ fontSize: 20, color: '#fff' }} />
+                            ) : (
+                                <PlayArrow sx={{ fontSize: 20, color: '#fff' }} />
+                            )}
+                        </IconButton>
+                    </Tooltip>
+
+                    <Typography level="body-sm" sx={{ color: '#595959' }}>
+                        {formatTime(currentTime)} / {formatTime(duration)}
+                    </Typography>
+                </Box>
+
+                {/* Правая часть: управление громкостью */}
+                <Box display="flex" alignItems="center" gap={1} sx={{ width: 160 }}>
+                    <IconButton
+                        size="sm"
+                        onClick={toggleMute}
+                        sx={{ color: primaryColor }}
+                    >
+                        {isMuted ? <VolumeOff /> : <VolumeUp />}
+                    </IconButton>
+
+                    <Slider
+                        value={volume}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        onChange={handleVolumeChange}
+                        sx={{
+                            width: 100,
+                            '--Slider-thumbSize': '12px',
+                            '--Slider-trackHeight': '4px',
+                            color: primaryColor,
+                        }}
+                    />
+                </Box>
+            </Box>
+
             <audio
                 ref={audioRef}
                 src={audioSrc}

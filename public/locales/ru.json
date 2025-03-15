@@ -348,12 +348,12 @@
   "vacancies": "Вакансии",
   "documents": "Документы",
   "cta": {
-    "title": "Добро пожаловать в SolanaChat",
+    "title": "Добро пожаловать в SolaChat",
     "description": "Более 100 000 пользователей уже наслаждаются безопасной и анонимной связью",
     "download": "Скачать сейчас"
   },
   "reasons": {
-    "title": "7 причин выбрать SolanaChat",
+    "title": "7 причин выбрать SolaChat",
     "security": {
       "title": "Абсолютная безопасность",
       "description": "Мгновенное шифрование сообщений и данных, защищенных по военным стандартам."
@@ -405,5 +405,37 @@
   },
   "partners": {
     "title": "Наши партнеры"
-  }
+  },
+  "feedback": {
+    "title": "Обратная связь",
+    "bug": "Сообщить об ошибке",
+    "feature": "Предложить идею",
+    "other": "Другое",
+    "userId": "Ваш идентификатор",
+    "subject": "Тема обращения",
+    "description": "Подробное описание",
+    "attachments": "Прикрепить файлы",
+    "uploadFiles": "Выбрать файлы",
+    "filesSelected": "файлов выбрано",
+    "submit": "Отправить обращение"
+  },
+  "vacancies": {
+    "title": "Карьера у нас",
+    "read_more": "Читать подробнее",
+    "technologies": "Используемые технологии",
+    "requirements": "Требования",
+    "apply_all": "Откликнуться на вакансию",
+    "apply_title": "Отклик на вакансию",
+    "select_vacancy": "Выберите вакансию",
+    "full_name": "ФИО",
+    "contact_type": "Способ связи",
+    "contact_value": "Контактные данные",
+    "expected_salary": "Ожидаемая зарплата",
+    "available_from": "Доступен с",
+    "about_you": "Расскажите о себе",
+    "submit_application": "Отправить заявку",
+    "hide_details": "Скрыть"
+  },
+  "language": "Язык"
+
 }

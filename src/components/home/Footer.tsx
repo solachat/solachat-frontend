@@ -21,7 +21,7 @@ const Footer: React.FC = () => {
         { title: t('footer.company'), links: [
                 { text: t('footer.about'), url: '#', action: handleOpen },
                 { text: t('footer.blog'), url: '/blog' },
-                { text: t('footer.careers'), url: '/careers' }
+                { text: t('footer.careers'), url: '/jobs' }
             ]},
         { title: t('footer.legal'), links: [
                 { text: t('footer.privacy'), url: '/privacy' },
@@ -110,7 +110,7 @@ const Footer: React.FC = () => {
                 }}
             >
                 <Stack
-                    direction={{ xs: 'column', md: 'row' }}
+                    direction={{xs: 'column', md: 'row'}}
                     spacing={6}
                     divider={
                         <Divider
@@ -118,18 +118,18 @@ const Footer: React.FC = () => {
                             sx={{
                                 bgcolor: 'rgba(255,255,255,0.1)',
                                 height: 'auto',
-                                display: { xs: 'none', md: 'block' }
+                                display: {xs: 'none', md: 'block'}
                             }}
                         />
                     }
                 >
-                    <Box sx={{ flex: 1 }}>
+                    <Box sx={{flex: 1}}>
                         <Stack spacing={3}>
-                            <motion.div whileHover={{ scale: 1.05 }}>
+                            <motion.div whileHover={{scale: 1.05}}>
                                 <img
                                     src="/favicon.ico"
                                     alt="SolaChat"
-                                    style={{ width: 60, height: 60 }}
+                                    style={{width: 60, height: 60}}
                                 />
                             </motion.div>
                             <Typography
@@ -161,20 +161,20 @@ const Footer: React.FC = () => {
                     </Box>
 
                     {footerLinks.map((section, index) => (
-                        <Box key={index} sx={{ flex: 1 }}>
+                        <Box key={index} sx={{flex: 1}}>
                             <motion.div
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
+                                initial={{opacity: 0, scale: 0.8}}
+                                whileInView={{opacity: 1, scale: 1}}
                                 whileHover={{
                                     scale: 1.05,
                                     textShadow: '0 0 15px rgba(0,168,255,0.5)',
-                                    transition: { duration: 0.2 }
+                                    transition: {duration: 0.2}
                                 }}
-                                viewport={{ once: true, margin: "-30px" }}
+                                viewport={{once: true, margin: "-30px"}}
                             >
                                 <Typography
                                     component={motion.div}
-                                    whileHover={{ color: '#00d8ff' }}
+                                    whileHover={{color: '#00d8ff'}}
                                     fontWeight="bold"
                                     mb={3}
                                     sx={{
@@ -191,7 +191,7 @@ const Footer: React.FC = () => {
                                 {section.links.map((link, idx) => (
                                     <motion.div
                                         key={idx}
-                                        whileHover={{ x: 5 }}
+                                        whileHover={{x: 5}}
                                     >
                                         <Link
                                             href={link.url}
@@ -215,7 +215,7 @@ const Footer: React.FC = () => {
                         </Box>
                     ))}
 
-                    <Box sx={{ flex: 1 }}>
+                    <Box sx={{flex: 1}}>
                         <Typography
                             fontWeight="bold"
                             mb={3}
@@ -228,7 +228,7 @@ const Footer: React.FC = () => {
                         </Typography>
 
                         {/* Email Block */}
-                        <motion.div whileHover={{ scale: 1.02 }}>
+                        <motion.div whileHover={{scale: 1.02}}>
                             <Link
                                 href="mailto:support@solachat.org"
                                 sx={{
@@ -253,7 +253,7 @@ const Footer: React.FC = () => {
                                     color: '#00a8ff',
                                     fontSize: 32,
                                     flexShrink: 0
-                                }} />
+                                }}/>
                                 <Typography sx={{
                                     fontSize: '0.95rem',
                                     overflow: 'hidden',
@@ -270,30 +270,58 @@ const Footer: React.FC = () => {
                             spacing={2}
                             flexWrap="wrap"
                             gap={2}
-                            sx={{ mt: 2 }}
+                            sx={{mt: 2}}
                         >
                             {socialLinks.map((social, idx) => (
-                                <SocialLinkCard key={idx} icon={social.icon} url={social.url} />
+                                <SocialLinkCard key={idx} icon={social.icon} url={social.url}/>
                             ))}
                         </Stack>
                     </Box>
                 </Stack>
 
-                <Typography
-                    textAlign="center"
-                    mt={6}
-                    sx={{
-                        opacity: 0.7,
-                        fontSize: 14
-                    }}
-                >
-                    © {new Date().getFullYear()} SolaChat. {t('footer.rightsReserved')}
-                    <br />
-                    {t('footer.madeWith')} ❤️ {t('footer.team')}
-                </Typography>
+                <Stack direction="column" alignItems="center" spacing={2} mt={6}>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        <Typography
+                            textAlign="center"
+                            sx={{
+                                fontSize: 14,
+                                opacity: 0.8,
+                                fontWeight: 'bold',
+                                letterSpacing: '0.05rem',
+                                textTransform: 'uppercase',
+                                background: 'linear-gradient(90deg, #00a8ff 20%, #007bff 80%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent'
+                            }}
+                        >
+                            Crafted in {new Date().getFullYear()} ✨ SolaChat | {t('footer.rightsReserved')}
+                        </Typography>
+                    </motion.div>
+
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <Typography
+                            textAlign="center"
+                            sx={{
+                                fontSize: 16,
+                                opacity: 0.9,
+                                fontWeight: 500,
+                                color: 'rgba(255, 255, 255, 0.9)'
+                            }}
+                        >
+                            {t('footer.madeWith')} ❤️ {t('footer.team')}
+                        </Typography>
+                    </motion.div>
+                </Stack>
             </Box>
 
-            <AboutModal open={open} onClose={handleClose} />
+            <AboutModal open={open} onClose={handleClose}/>
         </Box>
     );
 };

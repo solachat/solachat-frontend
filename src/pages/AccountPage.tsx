@@ -28,7 +28,7 @@ import GlobalStyles from '@mui/joy/GlobalStyles';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {Helmet} from "react-helmet-async";
-import {CardActions, CardOverflow, Checkbox} from "@mui/joy";
+import {CardActions, CardOverflow, Checkbox, Sheet} from "@mui/joy";
 import Verified from '../components/core/Verified';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
@@ -43,9 +43,10 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useWebSocket } from '../api/useWebSocket';
 import {cacheAvatar, cacheProfile, getCachedAvatar, getCachedProfile} from "../utils/cacheStorage";
 import {cacheMedia, getCachedMedia} from "../utils/cacheMedia";
+import { motion } from 'framer-motion';
 
 export default function AccountPage() {
-    const { t } = useTranslation();
+    const {t} = useTranslation();
     const location = useLocation();
     const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
@@ -90,7 +91,7 @@ export default function AccountPage() {
 
     const handleOpenSecurityModal = () => setShowSecurityModal(true);
     const handleCloseSecurityModal = () => setShowSecurityModal(false);
-    const { identifier } = useParams<{ identifier: string }>();
+    const {identifier} = useParams<{ identifier: string }>();
     const [error, setError] = useState<string | null>(null);
     const [showTotpAlert, setShowTotpAlert] = useState<boolean>(totpSecret === null);
 
@@ -145,7 +146,7 @@ export default function AccountPage() {
 
                 // Загружаем профиль с сервера
                 const response = await axios.get(`${API_URL}/api/users/profile?${queryParam}`, {
-                    headers: { Authorization: `Bearer ${token}` },
+                    headers: {Authorization: `Bearer ${token}`},
                 });
 
                 const data = response.data;
@@ -202,10 +203,7 @@ export default function AccountPage() {
     }, [identifier]); // ❌ Убрали
 
 
-
-
-
-    const { connectWebSocket } = useWebSocket((message) => {
+    const {connectWebSocket} = useWebSocket((message) => {
         if (message.type === 'USER_CONNECTED' && message.publicKey === profileData.public_key) {
             setProfileData(prevData => ({
                 ...prevData,
@@ -303,7 +301,7 @@ export default function AccountPage() {
     };
 
     const handleAvatarUploadSuccess = (avatarUrl: string) => {
-        setProfileData((prevData) => ({ ...prevData, avatar: avatarUrl }));
+        setProfileData((prevData) => ({...prevData, avatar: avatarUrl}));
     };
 
     const handleCopyPublicKey = () => {
@@ -329,17 +327,17 @@ export default function AccountPage() {
     if (!accountExists) {
         return (
             <CssVarsProvider defaultMode="dark">
-                <CssBaseline />
-                <Box sx={{ flex: 1, width: '100%' }}>
-                    <Box sx={{ px: { xs: 2, md: 6 }, textAlign: 'center' }}>
+                <CssBaseline/>
+                <Box sx={{flex: 1, width: '100%'}}>
+                    <Box sx={{px: {xs: 2, md: 6}, textAlign: 'center'}}>
                         <Breadcrumbs
                             size="sm"
                             aria-label="breadcrumbs"
-                            separator={<ChevronRightRoundedIcon />}
-                            sx={{ pl: 0, justifyContent: 'center' }}
+                            separator={<ChevronRightRoundedIcon/>}
+                            sx={{pl: 0, justifyContent: 'center'}}
                         >
                             <Link underline="none" color="neutral" href="/" aria-label="Home">
-                                <HomeRoundedIcon />
+                                <HomeRoundedIcon/>
                             </Link>
                             <Typography
                             >
@@ -356,7 +354,7 @@ export default function AccountPage() {
                             textAlign: 'center',
                         }}
                     >
-                        {t('accountNotFound', { identifier })}
+                        {t('accountNotFound', {identifier})}
                     </Typography>
                 </Box>
                 <style>
@@ -377,21 +375,20 @@ export default function AccountPage() {
     }
 
 
-
     if (loading) {
         return (
             <CssVarsProvider defaultMode="dark">
-                <CssBaseline />
+                <CssBaseline/>
 
-                <Box sx={{ px: { xs: 2, md: 6 }, textAlign: 'center' }}>
+                <Box sx={{px: {xs: 2, md: 6}, textAlign: 'center'}}>
                     <Breadcrumbs
                         size="sm"
                         aria-label="breadcrumbs"
-                        separator={<ChevronRightRoundedIcon />}
-                        sx={{ justifyContent: 'center' }}
+                        separator={<ChevronRightRoundedIcon/>}
+                        sx={{justifyContent: 'center'}}
                     >
                         <Link underline="none" color="neutral" href="/" aria-label="Home">
-                            <HomeRoundedIcon />
+                            <HomeRoundedIcon/>
                         </Link>
                         <Typography
                         >
@@ -409,7 +406,7 @@ export default function AccountPage() {
                     justifyContent: 'center',
                     height: '50vh',
                 }}>
-                    <CircularProgress color="primary" size={60} />
+                    <CircularProgress color="primary" size={60}/>
                 </Box>
             </CssVarsProvider>
         );
@@ -459,77 +456,100 @@ export default function AccountPage() {
                 }}
             />
 
-            <Box sx={{ flex: 1, width: '100%' }}>
+            <Box sx={{
+                flex: 1,
+                width: '100%',
+                background: 'radial-gradient(circle at center, #0a192f 0%, #081428 100%)',
+                minHeight: '100vh'
+            }}>
                 <Box
                     sx={{
-                        top: { sm: -100, md: -110 },
-                        bgcolor: 'background.body',
+                        top: {sm: -100, md: -110},
                         zIndex: 9995,
                     }}
                 >
-                    <Box sx={{ px: { xs: 2, md: 6 }, textAlign: 'center' }}>
+                    <Box sx={{px: {xs: 2, md: 6}, textAlign: 'center'}}>
                         <Breadcrumbs
                             size="sm"
                             aria-label="breadcrumbs"
-                            separator={<ChevronRightRoundedIcon />}
-                            sx={{ justifyContent: 'center' }}
+                            separator={<ChevronRightRoundedIcon sx={{color: '#00a8ff'}}/>}
+                            sx={{justifyContent: 'center'}}
                         >
                             <Link underline="none" color="neutral" href="/" aria-label="Home">
-                                <HomeRoundedIcon />
+                                <HomeRoundedIcon sx={{color: '#00a8ff'}}/>
                             </Link>
-                            <Typography
-                            >
+                            <Typography sx={{color: '#a0d4ff'}}>
                                 {t('myProfile')} {profileData.public_key}
                             </Typography>
                         </Breadcrumbs>
-                        <Typography
-                            level="h2"
-                            component="h1"
-                            sx={{
-                                mt: 1,
-                                mb: 2,
-                                fontSize: { xs: '20px', sm: '24px' },
-                                fontWeight: 'bold',
-                                lineHeight: 1.2,
-                                textAlign: 'center',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                flexWrap: 'wrap',
-                            }}
-                        >
-                            {t('profile')}{' '}
-                            <ExpandablePublicKey
-                                publicKey={profileData.public_key}
-                            />
-                            {profileData.verified && (
-                                <Verified sx={{ fontSize: 20, verticalAlign: 'middle' }} />
-                            )}
-                        </Typography>
+
+                        <motion.div initial={{opacity: 0}} animate={{opacity: 1}} transition={{duration: 0.5}}>
+                            <Typography
+                                level="h2"
+                                component="h1"
+                                sx={{
+                                    mt: 1,
+                                    mb: 2,
+                                    fontSize: {xs: '20px', sm: '24px'},
+                                    fontWeight: 'bold',
+                                    lineHeight: 1.2,
+                                    textAlign: 'center',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    flexWrap: 'wrap',
+                                    background: 'linear-gradient(45deg, #00a8ff 30%, #007bff 90%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                }}
+                            >
+                                {t('profile')}{' '}
+                                <ExpandablePublicKey
+                                    publicKey={profileData.public_key}
+
+                                />
+                                {profileData.verified && (
+                                    <Verified sx={{fontSize: 20, verticalAlign: 'middle', color: '#00a8ff'}}/>
+                                )}
+                            </Typography>
+                        </motion.div>
                     </Box>
                     <Box
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            px: { xs: 2, md: 6 },
+                            px: {xs: 2, md: 6},
                             gap: 2,
                         }}
                     >
-                        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
-                            <ColorSchemeToggle />
+                        <Box sx={{display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1}}>
+                            <ColorSchemeToggle/>
                         </Box>
-                        <LanguageSwitcher />
+                        <LanguageSwitcher/>
                     </Box>
                 </Box>
+
                 <Stack spacing={4} sx={{ maxWidth: '800px', mx: 'auto', px: { xs: 2, md: 6 }, py: { xs: 2, md: 3 } }}>
-                    <Card>
-                        <Box sx={{ mb: 1 }}>
-                            <Typography level="title-md">{t('personalInfo')}</Typography>
+                    <Sheet
+                        component={motion.div}
+                        initial={{opacity: 0, y: 20}}
+                        animate={{opacity: 1, y: 0}}
+                        sx={{
+                            borderRadius: 'lg',
+                            p: 3,
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(0, 168, 255, 0.3)',
+                            boxShadow: '0 8px 32px rgba(0, 168, 255, 0.2)',
+                        }}
+                    >
+                        <Box sx={{mb: 1}}>
+                            <Typography level="title-md" sx={{color: '#00a8ff'}}>{t('personalInfo')}</Typography>
                         </Box>
-                        <Divider />
-                        <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ my: 1, width: '100%' }}>
-                            <Stack direction="column" spacing={1} sx={{ position: 'relative', alignItems: 'center' }}>
+                        <Divider sx={{borderColor: 'rgba(0, 168, 255, 0.3)'}}/>
+
+                        <Stack direction={{xs: 'column', md: 'row'}} spacing={3} sx={{my: 1, width: '100%'}}>
+                            <Stack direction="column" spacing={1} sx={{position: 'relative', alignItems: 'center'}}>
                                 <AspectRatio
                                     ratio="1"
                                     sx={{
@@ -549,125 +569,186 @@ export default function AccountPage() {
                                     <img src={profileData.avatar || defaultAvatarUrl} loading="lazy" alt="Avatar" />
                                 </AspectRatio>
 
-                                <Box sx={{ textAlign: 'center', mt: 2 }}>
-                                    <Typography sx={{ fontSize: '1.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Box sx={{textAlign: 'center', mt: 2}}>
+                                    <Typography sx={{
+                                        fontSize: '1.5rem',
+                                        fontWeight: 'bold',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#00a8ff'
+                                    }}>
                                         {profileData.rating}
-                                        <StarIcon fontSize="large" sx={{ color: 'warning.300', ml: 1 }} />
+                                        <StarIcon fontSize="large" sx={{color: '#ffd700', ml: 1}}/>
                                     </Typography>
-                                    <Typography sx={{ color: 'text.secondary', mt: 0 }}>
+                                    <Typography sx={{color: '#a0d4ff', mt: 0}}>
                                         {t('ratinguser')}
                                     </Typography>
-                                    <Typography sx={{ color: 'text.secondary', mt: 1, visibility: profileData.online ? 'hidden' : 'visible' }}>
-                                        {t('lastLogin')}: {new Date(profileData.lastOnline).toLocaleDateString()} {new Date(profileData.lastOnline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    <Typography sx={{
+                                        color: '#a0d4ff',
+                                        mt: 1,
+                                        visibility: profileData.online ? 'hidden' : 'visible'
+                                    }}>
+                                        {t('lastLogin')}: {new Date(profileData.lastOnline).toLocaleDateString()} {new Date(profileData.lastOnline).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
                                     </Typography>
                                 </Box>
                             </Stack>
 
-
-
-                            <Stack spacing={2} sx={{ flexGrow: 1, width: '100%' }}>
-                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: '100%' }}>
-                                    <FormControl sx={{ flexGrow: 1 }}>
-                                        <FormLabel>{t('username')}</FormLabel>
+                            <Stack spacing={2} sx={{flexGrow: 1, width: '100%'}}>
+                                <Stack direction={{xs: 'column', sm: 'row'}} spacing={2} sx={{width: '100%'}}>
+                                    <FormControl sx={{flexGrow: 1}}>
+                                        <FormLabel sx={{color: '#00a8ff'}}>{t('username')}</FormLabel>
                                         <Input
                                             size="sm"
                                             value={profileData.username}
-                                            onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
+                                            onChange={(e) => setProfileData({...profileData, username: e.target.value})}
                                             disabled={!isEditable}
                                             error={Boolean(usernameError)}
+                                            sx={{
+                                                bgcolor: 'rgba(0, 168, 255, 0.05)',
+                                                borderColor: 'rgba(0, 168, 255, 0.3)',
+                                                color: '#a0d4ff',
+                                                '&:focus-within': {borderColor: '#00a8ff'}
+                                            }}
                                         />
                                         {usernameError && (
-                                            <Typography color="danger" sx={{ mt: 0.5 }}>
+                                            <Typography color="danger" sx={{mt: 0.5}}>
                                                 {usernameError}
                                             </Typography>
                                         )}
                                     </FormControl>
                                     <FormControl>
-                                        <FormLabel>{t('aboutMe')}</FormLabel>
-                                        <Input size="sm"
-                                               value={profileData.aboutMe}
-                                               onChange={(e) =>
-                                                   setProfileData({ ...profileData, aboutMe: e.target.value })} disabled={!isEditable}
+                                        <FormLabel sx={{color: '#00a8ff'}}>{t('aboutMe')}</FormLabel>
+                                        <Input
+                                            size="sm"
+                                            value={profileData.aboutMe}
+                                            onChange={(e) =>
+                                                setProfileData({...profileData, aboutMe: e.target.value})}
+                                            disabled={!isEditable}
+                                            sx={{
+                                                bgcolor: 'rgba(0, 168, 255, 0.05)',
+                                                borderColor: 'rgba(0, 168, 255, 0.3)',
+                                                color: '#a0d4ff',
+                                                '&:focus-within': {borderColor: '#00a8ff'}
+                                            }}
                                         />
                                     </FormControl>
                                 </Stack>
                                 <FormControl>
-                                    <FormLabel>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <FormLabel sx={{color: '#00a8ff'}}>
+                                        <Box sx={{display: 'flex', alignItems: 'center'}}>
                                             {t('wallet')}
-                                            {/*{isOwner || sharePublicKey ? (*/}
-                                            {/*    <> ({balance} SOL, {tokenBalance} {t('tokens')})</>*/}
-                                            {/*) : null}*/}
-                                            {/*{isOwner && (*/}
-                                            {/*    <>*/}
-                                            {/*        <Checkbox*/}
-                                            {/*            size="sm"*/}
-                                            {/*            checked={sharePublicKey}*/}
-                                            {/*            onChange={() => setPublicKey(!sharePublicKey)}*/}
-                                            {/*            disabled={!isEditable}*/}
-                                            {/*            sx={{ ml: 1 }}*/}
-                                            {/*        />*/}
-                                            {/*        {t('Share public key')}*/}
-                                            {/*    </>*/}
-                                            {/*)}*/}
                                         </Box>
                                     </FormLabel>
                                     <Input
                                         size="sm"
                                         value={profileData.public_key}
-                                        startDecorator={<WalletIcon />}
+                                        startDecorator={<WalletIcon sx={{color: '#00a8ff'}}/>}
                                         endDecorator={
                                             profileData.public_key ? (
-                                                <IconButton
-                                                    variant="plain"
-                                                    size="sm"
-                                                    color="neutral"
-                                                    onClick={handleCopyPublicKey}
-                                                    sx={{ cursor: 'pointer' }}
-                                                >
-                                                    {copied ? <CheckIcon color="success" /> : <ContentCopyIcon />}
-                                                </IconButton>
+                                                <motion.div whileHover={{scale: 1.1}}>
+                                                    <IconButton
+                                                        variant="plain"
+                                                        size="sm"
+                                                        color="neutral"
+                                                        onClick={handleCopyPublicKey}
+                                                        sx={{color: '#00a8ff', cursor: 'pointer'}}
+                                                    >
+                                                        {copied ? <CheckIcon color="success"/> : <ContentCopyIcon/>}
+                                                    </IconButton>
+                                                </motion.div>
                                             ) : null
                                         }
                                         readOnly
-                                        sx={{ pointerEvents: 'auto' }}
+                                        sx={{
+                                            pointerEvents: 'auto',
+                                            bgcolor: 'rgba(0, 168, 255, 0.05)',
+                                            borderColor: 'rgba(0, 168, 255, 0.3)',
+                                            color: '#a0d4ff'
+                                        }}
                                     />
                                 </FormControl>
                             </Stack>
                         </Stack>
-                        <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
-                            <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
-                                {!isOwner && (
-                                    <Button variant="outlined" color="danger" onClick={() => setShowReportModal(true)}>
-                                        {t('report')}
-                                    </Button>
-                                )}
-                                {isOwner && !isEditable && (
-                                    <Button variant="outlined" color="primary" onClick={handleOpenSecurityModal}>
-                                        {t('Security')}
-                                    </Button>
-                                )}
-                                <SecurityModal username={profileData.username} open={showSecurityModal} onClose={handleCloseSecurityModal} />
+                        <Divider sx={{borderColor: 'rgba(0, 168, 255, 0.3)', my: 2}}/>
+                        <CardActions sx={{justifyContent: 'flex-end', gap: 1.5}}>
+                            {!isOwner && (
+                                <Button
+                                    variant="outlined"
+                                    sx={{
+                                        bgcolor: 'rgba(255, 0, 0, 0.1)',
+                                        borderColor: 'rgba(255, 0, 0, 0.3)',
+                                        color: '#ff4444',
+                                        '&:hover': {bgcolor: 'rgba(255, 0, 0, 0.2)'}
+                                    }}
+                                    onClick={() => setShowReportModal(true)}
+                                >
+                                    {t('report')}
+                                </Button>
+                            )}
                             {isOwner && !isEditable && (
-                                <Button variant="outlined" color="primary" onClick={() => setIsEditable(true)}>
+                                <Button
+                                    variant="outlined"
+                                    sx={{
+                                        bgcolor: 'rgba(0, 168, 255, 0.1)',
+                                        borderColor: 'rgba(0, 168, 255, 0.3)',
+                                        color: '#00a8ff',
+                                        '&:hover': {bgcolor: 'rgba(0, 168, 255, 0.2)'}
+                                    }}
+                                    onClick={handleOpenSecurityModal}
+                                >
+                                    {t('Security')}
+                                </Button>
+                            )}
+                            <SecurityModal username={profileData.public_key} open={showSecurityModal} onClose={handleCloseSecurityModal} />
+                            {isOwner && !isEditable && (
+                                <Button
+                                    variant="outlined"
+                                    sx={{
+                                        bgcolor: 'rgba(0, 168, 255, 0.1)',
+                                        borderColor: 'rgba(0, 168, 255, 0.3)',
+                                        color: '#00a8ff',
+                                        '&:hover': {bgcolor: 'rgba(0, 168, 255, 0.2)'}
+                                    }}
+                                    onClick={() => setIsEditable(true)}
+                                >
                                     {t('edit')}
                                 </Button>
                             )}
-                                {isEditable && (
-                                    <>
-                                        <Button variant="solid" color="success" onClick={handleSave}>
-                                            {t('save')}
-                                        </Button>
-                                        <Button variant="outlined" color="danger" onClick={handleCancelEdit}>
-                                            {t('cancel')}
-                                        </Button>
-                                    </>
-                                )}
-                            </CardActions>
-                        </CardOverflow>
-                    </Card>
-                    {/*<ConnectButtons />*/}
+                            {isEditable && (
+                                <>
+                                    <Button
+                                        variant="solid"
+                                        sx={{
+                                            bgcolor: 'rgba(0, 255, 136, 0.2)',
+                                            color: '#00ff88',
+                                            '&:hover': {bgcolor: 'rgba(0, 255, 136, 0.3)'}
+                                        }}
+                                        onClick={handleSave}
+                                    >
+                                        {t('save')}
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        sx={{
+                                            bgcolor: 'rgba(255, 0, 0, 0.1)',
+                                            borderColor: 'rgba(255, 0, 0, 0.3)',
+                                            color: '#ff4444',
+                                            '&:hover': {bgcolor: 'rgba(255, 0, 0, 0.2)'}
+                                        }}
+                                        onClick={handleCancelEdit}
+                                    >
+                                        {t('cancel')}
+                                    </Button>
+                                </>
+                            )}
+                        </CardActions>
+                    </Sheet>
 
+                    {/* Модальные окна */}
                     <ReportModal
                         open={showReportModal}
                         onClose={() => setShowReportModal(false)}
@@ -682,6 +763,7 @@ export default function AccountPage() {
                         onSuccess={handleAvatarUploadSuccess}
                     />
 
+                    {/* Уведомления */}
                     {showAlert && (
                         <Box
                             sx={{
@@ -696,16 +778,20 @@ export default function AccountPage() {
                         >
                             <Alert
                                 variant="outlined"
-                                color="neutral"
-                                startDecorator={<AccountCircleRoundedIcon />}
+                                sx={{
+                                    bgcolor: 'rgba(0, 22, 45, 0.9)',
+                                    borderColor: 'rgba(0, 168, 255, 0.3)',
+                                    color: '#00a8ff'
+                                }}
+                                startDecorator={<AccountCircleRoundedIcon sx={{color: '#00a8ff'}}/>}
                                 endDecorator={
                                     <IconButton
                                         variant="plain"
                                         size="sm"
-                                        color="neutral"
+                                        sx={{color: '#00a8ff'}}
                                         onClick={() => setShowAlert(false)}
                                     >
-                                        <CloseRoundedIcon />
+                                        <CloseRoundedIcon/>
                                     </IconButton>
                                 }
                             >
@@ -784,7 +870,6 @@ export default function AccountPage() {
                             </Alert>
                         </Box>
                     )}
-
                 </Stack>
             </Box>
         </CssVarsProvider>

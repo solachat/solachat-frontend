@@ -16,6 +16,7 @@ import {jwtDecode} from "jwt-decode";
 import {JwtPayload} from "jsonwebtoken";
 import CustomAudioPlayer from '../core/CustomAudioPlayer';
 import CheckIcon from "@mui/icons-material/Check";
+import {motion} from "framer-motion";
 
 type DecodedToken = JwtPayload & { id?: number };
 
@@ -33,46 +34,33 @@ type ChatBubbleProps = MessageProps & {
     pending?: boolean;
 };
 
-const isImageFile = (file: File | string, fileType?: string) => {
+
+const isFile = (filePath: string, fileType?: string) => {
+    return !isImageFile(filePath, fileType) &&
+        !isVideoFile(filePath, fileType) &&
+        !isAudioFile(filePath, fileType);
+};
+
+
+const isImageFile = (filePath: string, fileType?: string) => {
     if (fileType?.startsWith("image/")) return true;
-    if (typeof file === "string" && file.startsWith("blob:")) return true;
-
     const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
-
-    if (typeof file === "string") {
-        const fileExtension = file.split(".").pop()?.toLowerCase();
-        return fileExtension ? imageExtensions.includes(fileExtension) : false;
-    }
-
-    return false;
+    const ext = filePath.split('.').pop()?.toLowerCase();
+    return ext ? imageExtensions.includes(ext) : false;
 };
 
-const isVideoFile = (file: File | string, fileType?: string) => {
+const isVideoFile = (filePath: string, fileType?: string) => {
     if (fileType?.startsWith("video/")) return true;
-
-    if (typeof file === "string" && file.startsWith("blob:")) return fileType?.startsWith("video/") || false;
-
     const videoExtensions = ["mp4", "webm", "ogg", "mov", "mkv"];
-    if (typeof file === "string") {
-        const fileExtension = file.split(".").pop()?.toLowerCase();
-        return fileExtension ? videoExtensions.includes(fileExtension) : false;
-    }
-
-    return false;
+    const ext = filePath.split('.').pop()?.toLowerCase();
+    return ext ? videoExtensions.includes(ext) : false;
 };
 
-const isAudioFile = (file: File | string, fileType?: string) => {
+const isAudioFile = (filePath: string, fileType?: string) => {
     if (fileType?.startsWith("audio/")) return true;
-
-    if (typeof file === "string" && file.startsWith("blob:")) return fileType?.startsWith("audio/") || false;
-
     const audioExtensions = ["mp3", "wav", "ogg", "aac", "flac"];
-    if (typeof file === "string") {
-        const fileExtension = file.split(".").pop()?.toLowerCase();
-        return fileExtension ? audioExtensions.includes(fileExtension) : false;
-    }
-
-    return false;
+    const ext = filePath.split('.').pop()?.toLowerCase();
+    return ext ? audioExtensions.includes(ext) : false;
 };
 
 
@@ -147,7 +135,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const getAttachmentUrl = () => {
         return attachment?.filePath || '';
     };
-
 
     const isImage = isImageFile(attachment?.filePath || '', attachment?.fileType);
     const isVideo = isVideoFile(attachment?.filePath || '', attachment?.fileType);
@@ -251,9 +238,19 @@ export default function ChatBubble(props: ChatBubbleProps) {
         currentUserId = decodedToken.id || 0;
     }
 
+    const getFileExtension = (fileName: string) => {
+        return fileName.split('.').pop()?.toUpperCase() || 'FILE';
+    };
+
+    const isFileAttachment = isFile(
+        attachment?.filePath || '',
+        attachment?.fileType
+    );
     return (
         <Box
-            component="div"
+            component={motion.div}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             sx={{
                 display: 'flex',
                 justifyContent: isSent ? 'flex-end' : 'flex-start',
@@ -298,19 +295,24 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 )}
 
                 <Sheet
-                    color={isSent ? 'primary' : 'neutral'}
-                    variant={isSent ? 'solid' : 'soft'}
-                    sx={{
+                    component={motion.div}
+                    whileHover={{
+                        scale: 1.02,
+                        transition: {
+                            duration: 0.2,
+                            ease: "easeOut"
+                        }
+                    }}
+                    sx={(theme) => ({
                         maxWidth: isEdited ? '75%' : '70%',
                         minWidth: 'fit-content',
-                        padding: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 8px' } : 0,
-                        borderRadius: '12px',
-                        backgroundColor:
-                            (isImage || isVideo || isAudio) && !content
-                                ? 'transparent'
-                                : isSent
-                                    ? 'var(--joy-palette-primary-solidBg)'
-                                    : 'background.body',
+                        p: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 8px' } : 0,
+                        borderRadius: 'lg',
+                        bgcolor: isSent
+                            ? 'rgba(0, 168, 255, 0.15)'
+                            : 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(0, 168, 255, 0.3)',
+                        boxShadow: '0 4px 16px rgba(0, 168, 255, 0.1)',
                         wordWrap: 'break-word',
                         overflowWrap: 'break-word',
                         whiteSpace: 'pre-wrap',
@@ -318,15 +320,28 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         fontSize: '14px',
                         lineHeight: '18px',
                         position: 'relative',
-                        '@media (max-width: 600px)': {
-                            maxWidth: '85%',
-                            width: 'auto',
-                        },
-
-                    }}
+                        overflow: 'hidden',
+                        '@media (max-width: 600px)': { maxWidth: '85%' },
+                        '&:before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backdropFilter: 'blur(10px)',
+                            zIndex: -1,
+                        }
+                    })}
                 >
                     {isGroupChat && !isSent && (
-                        <Typography>{user.public_key}</Typography>
+                        <Typography sx={{
+                            color: '#00a8ff',
+                            fontWeight: 'bold',
+                            mb: 0.5
+                        }}>
+                            {user.public_key}
+                        </Typography>
                     )}
 
                     {isVideo && (
@@ -419,20 +434,21 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         </Box>
                     )}
                     {isAudio && !isVideo && (
-                        <CustomAudioPlayer audioSrc={getAttachmentUrl()} isSent={isSent} />
+                        <Box sx={{
+                            width: '100%',
+                            maxWidth: { xs: '280px', md: '600px' },
+                            mt: 1,
+                            mb: content ? 1 : 0
+                        }}>
+                            <CustomAudioPlayer audioSrc={getAttachmentUrl()} isSent={isSent} />
+                        </Box>
                     )}
 
                     {content && (
                         <Typography
                             sx={{
                                 fontSize: { xs: '14px', sm: '14px' },
-                                color: isSent
-                                    ? {
-                                        color: 'var(--joy-palette-common-white)',
-                                    }
-                                    : {
-                                        color: 'var(--joy-palette-text-primary)',
-                                    },
+                                color: isSent ? '#a0d4ff' : '#8ab4f8',
                                 marginLeft: isImage || isVideo || isAudio ? '12px' : '0px',
                                 marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',
                                 textAlign: 'left',
@@ -464,31 +480,24 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         }}
                     >
                         {isEdited && (
-                            <Typography
-                                sx={{
-                                    fontSize: '12px',
-                                    color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
-                                }}
-                            >
+                            <Typography sx={{
+                                fontSize: '12px',
+                                opacity: 0.8
+                            }}>
                                 {t('edited')}
                             </Typography>
                         )}
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                fontSize: '12px',
-                                color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
-                            }}
-                        >
-                            <Typography
-                                component="span"
-                                sx={{
-                                    fontSize: '12px',
-                                    color: isSent ? 'var(--joy-palette-common-white)' : 'inherit',
-                                }}
-                            >
-                                {new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            fontSize: '12px',
+                            color: '#00a8ff'
+                        }}>
+                            <Typography component="span" sx={{ fontSize: '12px' }}>
+                                {new Date(createdAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
                             </Typography>
 
                             {isSent && (
@@ -497,46 +506,134 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                         size="sm"
                                         sx={{
                                             fontSize: "12px",
-                                            marginLeft: { xs: '1px', sm: '4px' },
+                                            ml: { xs: '1px', sm: '4px' },
+                                            color: '#00a8ff'
                                         }}
                                     />
                                 ) : (
                                     isRead ? (
-                                        <DoneAllIcon
-                                            sx={{
-                                                fontSize: '18px',
-                                                marginLeft: { xs: '1px', sm: '4px' },
-                                            }}
-                                        />
+                                        <DoneAllIcon sx={{
+                                            fontSize: '18px',
+                                            ml: { xs: '1px', sm: '4px' }
+                                        }} />
                                     ) : (
-                                        <CheckIcon
-                                            sx={{
-                                                fontSize: '18px',
-                                                marginLeft: { xs: '1px', sm: '4px' },
-                                            }}
-                                        />
+                                        <CheckIcon sx={{
+                                            fontSize: '18px',
+                                            ml: { xs: '1px', sm: '4px' }
+                                        }} />
                                     )
                                 )
                             )}
                         </Box>
                     </Stack>
-                    {!isImage && !isVideo && !isAudio && attachment && (
-                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                            <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
-                            <Typography sx={{ fontSize: 'sm' }}>{attachment.fileName}</Typography>
-                            <IconButton
+                    {isFileAttachment && attachment && (
+                        <Box
+                            sx={{
+                                width: '100%',
+                                p: '8px',
+                                maxWidth: '300px',
+                            }}
+                        >
+                            <Stack
+                                direction="row"
+                                spacing={1.5}
+                                sx={{
+                                    alignItems: 'center',
+                                    width: '100%',
+                                    position: 'relative',
+                                }}
                                 component="a"
                                 href={getAttachmentUrl()}
-                                download={attachment?.fileName}
-                                sx={{
-                                    ml: 0.5,
-                                    color: isSent ? 'white' : '#0B6BCB',
-                                    transition: 'color 0.3s ease',
-                                }}
+                                download={attachment.fileName}
                             >
-                                <DownloadIcon />
-                            </IconButton>
-                        </Stack>
+                                <Box
+                                    sx={{
+                                        position: 'relative',
+                                        flexShrink: 0,
+                                        width: '48px',
+                                        height: '48px',
+                                        cursor: 'pointer',
+                                        '&:hover .download-icon': {
+                                            opacity: 1,
+                                            visibility: 'visible',
+                                        },
+                                        '&:hover .file-type': {
+                                            opacity: 0,
+                                            visibility: 'hidden',
+                                        },
+                                    }}
+                                >
+                                    <InsertDriveFileRoundedIcon
+                                        sx={{
+                                            fontSize: '48px',
+                                            color: isSent ? '#a0d4ff' : '#8ab4f8',
+                                            width: '100%',
+                                            height: '100%'
+                                        }}
+                                    />
+
+                                    {/* File type text */}
+                                    <Typography
+                                        className="file-type"
+                                        sx={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            fontSize: '14px',
+                                            fontWeight: '700',
+                                            color: 'white',
+                                            textShadow: '0 1px 3px rgba(0, 0, 0, 0.4)',
+                                            transition: 'all 0.2s ease',
+                                            textTransform: 'uppercase',
+                                            pointerEvents: 'none',
+                                            userSelect: 'none',
+                                        }}
+                                    >
+                                        {(() => {
+                                            const ext = attachment.fileName.split('.').pop()?.toUpperCase();
+                                            return ext && ext.length > 5 ? ext.slice(0, 4) + '…' : ext;
+                                        })()}
+                                    </Typography>
+
+                                    {/* Download icon overlay */}
+                                    <DownloadIcon
+                                        className="download-icon"
+                                        sx={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            fontSize: '24px',
+                                            opacity: 0,
+                                            visibility: 'hidden',
+                                            color: 'white',
+                                            transition: 'all 0.2s ease',
+                                            bgcolor: 'rgba(0, 0, 0, 0.3)',
+                                            borderRadius: '50%',
+                                            p: '4px',
+                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                                            pointerEvents: 'none',
+                                        }}
+                                    />
+                                </Box>
+
+                                <Typography
+                                    sx={{
+                                        fontSize: '13px',
+                                        flexGrow: 1,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        color: isSent ? '#a0d4ff' : '#8ab4f8',
+                                        pl: 1,
+                                        pr: 1,
+                                    }}
+                                >
+                                    {attachment.fileName}
+                                </Typography>
+                            </Stack>
+                        </Box>
                     )}
                 </Sheet>
             </Box>

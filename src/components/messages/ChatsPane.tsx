@@ -16,6 +16,8 @@ import SettingsScreen from '../screen/SettingsScreen';
 import {useState} from "react";
 import {cacheChats, getCachedChats} from "../../utils/cacheChats";
 import {cacheMedia, getCachedMedia} from "../../utils/cacheMedia";
+import { motion } from 'framer-motion';
+import LanguageScreen from "../screen/LanguageScreen";
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -33,7 +35,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     const [error, setError] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();
-    const [activeScreen, setActiveScreen] = useState<'chats' | 'settings'>('chats');
+    const [activeScreen, setActiveScreen] = useState<'chats' | 'settings' | 'language'>('chats');
 
     const {wsRef, isConnecting} = useWebSocket((data) => {
         console.log("Received WebSocket message:", data);
@@ -311,143 +313,210 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
         setIsSidebarOpen(false);
     };
 
+    const headerHeight = 68; // Общая высота заголовков
+    const borderStyle = '1px solid rgba(0, 168, 255, 0.3)';
+    const gradientBorder = 'linear-gradient(90deg, transparent 0%, rgba(0, 168, 255, 0.4) 50%, transparent 100%)';
+    const backdropStyles = {
+        backgroundColor: 'rgba(0, 22, 45, 0.85)',
+        backdropFilter: 'blur(20px)',
+    };
+
+
     return (
-        <CssVarsProvider>
+        <CssVarsProvider defaultMode="dark">
             <Box
                 sx={{
                     display: "flex",
                     flexDirection: "column",
                     overflowY: "auto",
                     maxWidth: "100%",
-
+                    background: 'radial-gradient(circle at center, #0a192f 0%, #081428 100%)',
+                    minHeight: '100vh',
                 }}
             >
                 {activeScreen === 'settings' ? (
                     <SettingsScreen onBack={handleCloseSettings} />
+                ) : activeScreen === 'language' ? (
+                    <LanguageScreen onBack={() => setActiveScreen('settings')} />
                 ) : (
                     <>
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        height: "56px",
-                        width: "100%",
-                        flexShrink: 0,
-                    }}
-                >
-                    <IconButton
-                        sx={{
-                            mr: 2,
-                            ml: "16px",
-                            backgroundColor: isSidebarOpen ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-                            '&:hover': {
-                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            },
-                        }}
-                        onClick={() => {
-                            setIsSidebarOpen(!isSidebarOpen);
-                            setActiveScreen('chats');
-                        }}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <Input
-                            size="sm"
-                            startDecorator={isConnecting ? <CircularProgress size="sm" /> : <SearchRoundedIcon />}
-                            onChange={handleSearchChange}
-                            value={searchTerm}
-                            aria-label={isConnecting ? "Connecting" : "Search"}
-                            placeholder={isConnecting ? t("Connecting") : t("Search")}
+                        {/* Header Section */}
+                        <Box
                             sx={{
-                                flex: 1,
-                                maxWidth: "600px",
-                                minWidth: "420px",
-                                height: "40px",
-                                fontSize: "16px",
-                                textAlign: "center",
+                                display: "flex",
+                                alignItems: "center",
+                                height: `${headerHeight}px`,
+                                width: "100%",
+                                flexShrink: 0,
+                                borderBottom: borderStyle,
+                                position: 'relative',
+                                ...backdropStyles,
+                                '&:after': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    height: '1px',
+                                    background: gradientBorder,
+                                },
                             }}
-                        />
-                    </Box>
-                </Box>
+                        >
+                            <IconButton
+                                component={motion.div}
+                                whileHover={{ scale: 1.05 }}
+                                sx={{
+                                    mr: 2,
+                                    ml: "16px",
+                                    color: '#00a8ff',
+                                    bgcolor: isSidebarOpen ? 'rgba(0, 168, 255, 0.1)' : 'transparent',
+                                    '&:hover': {
+                                        bgcolor: 'rgba(0, 168, 255, 0.2)',
+                                    },
+                                }}
+                                onClick={() => {
+                                    setIsSidebarOpen(!isSidebarOpen);
+                                    setActiveScreen('chats');
+                                }}
+                            >
+                                <MenuIcon />
+                            </IconButton>
 
-                <Box
-                    sx={{
-                        position: "absolute",
-                        top: "56px",
-                        left: 0,
-                        width: "auto",
-                        zIndex: 9,
-                        boxShadow: "4px 4px 20px rgba(0, 0, 0, 0.5)",
-                        maxHeight: isSidebarOpen ? "400px" : "0px",
-                        opacity: isSidebarOpen ? 1 : 0,
-                        overflow: "hidden",
-                        transition: "max-height 0.3s ease-in-out, opacity 0.3s ease-in-out",
-                        ml: 2,
-                    }}
-                >
-                    <Sidebar
-                        isOpen={isSidebarOpen}
-                        onClose={() => setIsSidebarOpen(false)}
-                        setActiveScreen={setActiveScreen}
-                    />
-                </Box>
-
-                <Box
-                    sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "flex-end",
-                        overflowY: "auto",
-                        maxWidth: "100%",
-                        pb: 2,
-                    }}
-                >
-                    {searchResults.length > 0 ? (
-                        <List>
-                            {searchResults
-                                .filter((user) => user.id !== currentUser.id)
-                                .map((user) => (
-                                    <ChatListItem
-                                        key={user.id}
-                                        id={user.id.toString()}
-                                        sender={user}
-                                        messages={user.lastMessage ? [{ ...user.lastMessage }] : []}
-                                        setSelectedChat={setSelectedChat}
-                                        currentUserId={currentUser.id}
-                                        chats={chats}
-                                        setChats={setChats}
-                                    />
-                                ))}
-                        </List>
-                    ) : chats.length > 0 ? (
-                        <List>
-                            {chats.map((chat) => (
-                                <ChatListItem
-                                    key={chat.id}
-                                    id={chat.id.toString()}
-                                    sender={
-                                        chat.isGroup
-                                            ? undefined
-                                            : chat.users.find((user) => user.id !== currentUser.id)
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                                <Input
+                                    size="sm"
+                                    startDecorator={isConnecting ?
+                                        <CircularProgress size="sm" sx={{ color: '#00a8ff' }} /> :
+                                        <SearchRoundedIcon sx={{ color: '#00a8ff' }} />
                                     }
-                                    messages={chat.messages || []}
-                                    setSelectedChat={setSelectedChat}
-                                    currentUserId={currentUser.id}
-                                    chats={chats}
-                                    setChats={setChats}
-                                    selectedChatId={selectedChatId}
-                                    isGroup={chat.isGroup}
+                                    onChange={handleSearchChange}
+                                    value={searchTerm}
+                                    aria-label={isConnecting ? "Connecting" : "Search"}
+                                    placeholder={isConnecting ? t("Connecting") : t("Search")}
+                                    sx={{
+                                        flex: 1,
+                                        maxWidth: "600px",
+                                        minWidth: "420px",
+                                        height: "40px",
+                                        fontSize: "16px",
+                                        bgcolor: 'rgba(0, 168, 255, 0.05)',
+                                        borderColor: 'rgba(0, 168, 255, 0.3)',
+                                        color: '#a0d4ff',
+                                        '&:focus-within': {
+                                            borderColor: '#00a8ff',
+                                        },
+                                    }}
                                 />
-                            ))}
-                        </List>
-                    ) : (
-                        <Typography sx={{ textAlign: "center", mt: 3 }}>{t("")}</Typography>
-                    )}
-                </Box>
+                            </Box>
+                        </Box>
+
+                        {/* Sidebar */}
+                        <Box
+                            component={motion.div}
+                            initial={false}
+                            animate={{
+                                maxHeight: isSidebarOpen ? "400px" : "0px",
+                                opacity: isSidebarOpen ? 1 : 0,
+                            }}
+                            transition={{ duration: 0.3 }}
+                            sx={{
+                                position: "absolute",
+                                top: "56px",
+                                left: 0,
+                                width: "auto",
+                                zIndex: 9,
+                                bgcolor: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(0, 168, 255, 0.3)',
+                                boxShadow: '0 8px 32px rgba(0, 168, 255, 0.2)',
+                                borderRadius: 'lg',
+                                overflow: "hidden",
+                                ml: 2,
+                            }}
+                        >
+                            <Sidebar
+                                isOpen={isSidebarOpen}
+                                onClose={() => setIsSidebarOpen(false)}
+                                setActiveScreen={setActiveScreen}
+                            />
+                        </Box>
+
+                        {/* Chat List */}
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "flex-end",
+                                overflowY: "auto",
+                                maxWidth: "100%",
+                                pb: 2,
+                                px: 2,
+                            }}
+                        >
+                            {searchResults.length > 0 ? (
+                                <List sx={{ gap: 1 }}>
+                                    {searchResults
+                                        .filter((user) => user.id !== currentUser.id)
+                                        .map((user) => (
+                                            <motion.div
+                                                key={user.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                            >
+                                                <ChatListItem
+                                                    id={user.id.toString()}
+                                                    sender={user}
+                                                    messages={user.lastMessage ? [{ ...user.lastMessage }] : []}
+                                                    setSelectedChat={setSelectedChat}
+                                                    currentUserId={currentUser.id}
+                                                    chats={chats}
+                                                    setChats={setChats}
+                                                />
+                                            </motion.div>
+                                        ))}
+                                </List>
+                            ) : chats.length > 0 ? (
+                                <List sx={{ gap: 1 }}>
+                                    {chats.map((chat) => (
+                                        <motion.div
+                                            key={chat.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                        >
+                                            <ChatListItem
+                                                id={chat.id.toString()}
+                                                sender={
+                                                    chat.isGroup
+                                                        ? undefined
+                                                        : chat.users.find((user) => user.id !== currentUser.id)
+                                                }
+                                                messages={chat.messages || []}
+                                                setSelectedChat={setSelectedChat}
+                                                currentUserId={currentUser.id}
+                                                chats={chats}
+                                                setChats={setChats}
+                                                selectedChatId={selectedChatId}
+                                                isGroup={chat.isGroup}
+                                            />
+                                        </motion.div>
+                                    ))}
+                                </List>
+                            ) : (
+                                <Typography
+                                    sx={{
+                                        textAlign: "center",
+                                        mt: 3,
+                                        color: '#a0d4ff',
+                                        background: 'linear-gradient(45deg, #00a8ff 30%, #007bff 90%)',
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent',
+                                    }}
+                                >
+                                    {t('')}
+                                </Typography>
+                            )}
+                        </Box>
                     </>
-                    )}
+                )}
             </Box>
         </CssVarsProvider>
     );

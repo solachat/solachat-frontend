@@ -6,26 +6,35 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ForwardIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { styled } from '@mui/material/styles';
-import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+    padding: '8px 14px',
+    borderRadius: '6px',
+
+    transition: 'all 0.3s ease',
+    color: '#a0d4ff',
     '&:hover': {
-        backgroundColor: theme.palette.primary.light,
-        transition: 'background-color 0.3s ease',
-        borderRadius: '8px',
+        background: 'rgba(0, 168, 255, 0.15)',
+        boxShadow: '0 3px 10px rgba(0, 168, 255, 0.2)'
     },
-    display: 'flex',
-    alignItems: 'center',
-    fontSize: '0.875rem',
-    color: theme.palette.primary.contrastText,
+    '& svg': {
+        color: '#00a8ff',
+        marginRight: '10px',
+        fontSize: '20px',
+    },
 }));
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
     '& .MuiPaper-root': {
-        background: theme.palette.primary.main,
-        minWidth: '160px',
-        borderRadius: '12px',
+        background: 'rgba(0, 22, 45, 0.98)',
+        backdropFilter: 'blur(18px)',
+        borderRadius: '10px',
+        border: '1px solid rgba(0, 168, 255, 0.3)',
+        boxShadow: '0 10px 28px rgba(0, 168, 255, 0.2)',
+        minWidth: '180px',
+        padding: '6px 0',
+        overflow: 'hidden'
     },
 }));
 
@@ -54,7 +63,6 @@ export default function ContextMenu({
                                     }: ContextMenuProps) {
     const { t } = useTranslation();
 
-
     return (
         <StyledMenu
             anchorReference="anchorPosition"
@@ -65,21 +73,24 @@ export default function ContextMenu({
             {currentUserId === messageCreatorId && (
                 <>
                     <StyledMenuItem onClick={() => { onEdit(); onClose(); }}>
-                        <EditIcon sx={{ marginRight: 1 }} />
+                        <EditIcon />
                         {t('edit')}
                     </StyledMenuItem>
+
                     <StyledMenuItem onClick={() => { onDelete(); onClose(); }}>
-                        <DeleteIcon sx={{ marginRight: 1 }} />
+                        <DeleteIcon />
                         {t('delete')}
                     </StyledMenuItem>
                 </>
             )}
+
             <StyledMenuItem onClick={() => { onCopy(); onClose(); }}>
-                <ContentCopyIcon sx={{ marginRight: 1 }} />
+                <ContentCopyIcon />
                 {t('copy')}
             </StyledMenuItem>
+
             <StyledMenuItem onClick={() => { onForward(); onClose(); }}>
-                <ForwardIcon sx={{ marginRight: 1 }} />
+                <ForwardIcon />
                 {t('forward')}
             </StyledMenuItem>
         </StyledMenu>

@@ -44,10 +44,6 @@ export default function ReportModal({ open, onClose, onSubmit, loading, username
                     alignItems: 'center',
                     position: 'relative',
                     animation: 'slideIn 0.5s ease-in-out',
-                    '@keyframes slideIn': {
-                        from: { transform: 'translateY(-50%)' },
-                        to: { transform: 'translateY(0)' },
-                    },
                 }}
             >
                 <IconButton

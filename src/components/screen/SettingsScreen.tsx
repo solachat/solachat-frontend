@@ -1,15 +1,32 @@
-import React, { useState } from 'react';
-import { Box, IconButton, Typography, Avatar, Divider, Menu, MenuItem } from '@mui/joy';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+    Box,
+    IconButton,
+    Typography,
+    Avatar,
+    Divider,
+    ListItemButton,
+    ListItemContent,
+    Sheet,
+    Menu,
+    MenuItem,
+    Select,
+    Option
+} from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import KeyIcon from '@mui/icons-material/VpnKey';
-import PersonIcon from '@mui/icons-material/Person';
-import InfoIcon from '@mui/icons-material/Info';
+import LanguageIcon from '@mui/icons-material/Language';
 import SettingsIcon from '@mui/icons-material/Settings';
 import StorageIcon from '@mui/icons-material/Storage';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import InfoIcon from '@mui/icons-material/Info';
+import PolicyIcon from '@mui/icons-material/Policy';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from "react-i18next";
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import { getCachedAvatar, cacheAvatar } from '../../utils/cacheStorage';
+import LanguageScreen from "./LanguageScreen";
 
 interface DecodedToken {
     avatar: string;
@@ -19,218 +36,387 @@ interface DecodedToken {
     id: string;
 }
 
-export default function SettingsScreen({ onBack }: { onBack: () => void }) {
-    const { t } = useTranslation();
-    const token = localStorage.getItem('token');
-    let avatarUrl = '';
-    let publicKey = '';
-    let username = '';
-    let bio = '';
-    let id = '';
-
-    if (token) {
-        try {
-            const decoded: DecodedToken = jwtDecode(token);
-            avatarUrl = decoded.avatar || 'https://via.placeholder.com/300';
-            publicKey = decoded.publicKey || 'Unknown';
-            username = decoded.username || '';
-            bio = decoded.bio || '';
-            id = decoded.id || '';
-        } catch (error) {
-            console.error('Invalid token', error);
-        }
+const menuItemStyle = {
+    p: 1.0,
+    transition: 'all 0.2s ease',
+    '&:hover': {
+        bgcolor: 'rgba(0,168,255,0.1)',
+        transform: 'translateX(4px)',
+        boxShadow: '0 4px 12px rgba(0,168,255,0.2)'
+    },
+    '&:not(:last-child)': {
+        borderBottom: '1px solid rgba(0,168,255,0.1)'
     }
+};
 
-    // Состояние для управления открытием меню
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [isOpen, setIsOpen] = useState(false);
+const contentStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    flexGrow: 1,
+    gap: 2
+};
 
-    const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
-        setIsOpen(!isOpen);
-    };
+const textStyle = {
+    color: '#a0d4ff',
+    fontSize: '0.95rem',
+    flexGrow: 1
+};
 
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-        setIsOpen(false);
-    };
+export default function SettingsScreen({ onBack }: { onBack: () => void }) {
+    const {t, i18n} = useTranslation();
+    const [avatarUrl, setAvatarUrl] = useState('');
+    const [profile, setProfile] = useState<Partial<DecodedToken>>({});
+    const [menuOpen, setMenuOpen] = useState(false);
+    const anchorRef = useRef<HTMLButtonElement>(null);
+    const [currentScreen, setCurrentScreen] = useState<'settings' | 'language'>('settings');
+
+    useEffect(() => {
+        const loadProfile = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            try {
+                const decoded: DecodedToken = jwtDecode(token);
+                const cachedAvatar = await getCachedAvatar(decoded.avatar);
+
+                if (cachedAvatar) {
+                    setAvatarUrl(URL.createObjectURL(cachedAvatar));
+                } else if (decoded.avatar) {
+                    const response = await fetch(decoded.avatar);
+                    const blob = await response.blob();
+                    await cacheAvatar(decoded.avatar, blob);
+                    setAvatarUrl(URL.createObjectURL(blob));
+                }
+
+                setProfile({
+                    publicKey: decoded.publicKey,
+                    username: decoded.username,
+                    bio: decoded.bio,
+                    id: decoded.id
+                });
+
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        };
+
+        loadProfile();
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
-        handleMenuClose();
-        console.log('Logged out');
+        window.location.reload();
     };
 
-    const hoverSx = {
-        height: '32px',
-        borderRadius: '8px',
-        transition: 'background-color 0.1s ease',
-        '&:hover': {
-            backgroundColor: 'rgba(76, 175, 80, 0.2)',
+    const changeLanguage = (lng: string) => {
+        i18n.changeLanguage(lng);
+    };
+
+    const menuItems = [
+        {
+            icon: <SettingsIcon sx={{fontSize: 20}}/>,
+            text: t('general_settings'),
+            onClick: () => console.log('Settings clicked')
         },
-    };
+        {
+            icon: <StorageIcon sx={{fontSize: 20}}/>,
+            text: t('data_storage'),
+            onClick: () => console.log('Storage clicked')
+        },
+        {
+            icon: <LanguageIcon sx={{ fontSize: 20 }} />,
+            text: t('language'),
+            rightText: i18n.language === 'en' ? t('english') : t('russian'),
+            onClick: () => setCurrentScreen('language')
+        }
+    ];
 
-    return (
-        <Box
+    const supportItems = [
+        {
+            icon: <HelpOutlineIcon sx={{fontSize: 20}}/>,
+            text: t('ask_question'),
+            onClick: () => console.log('Ask question clicked')
+        },
+        {
+            icon: <InfoIcon sx={{fontSize: 20}}/>,
+            text: t('solchat_faq'),
+            onClick: () => console.log('FAQ clicked')
+        },
+        {
+            icon: <PolicyIcon sx={{fontSize: 20}}/>,
+            text: t('privacy_policy'),
+            onClick: () => console.log('Privacy Policy clicked')
+        }
+    ];
+
+    const renderMenuButton = () => (
+        <ListItemButton
+            component="button"
+            ref={anchorRef}
+            onClick={() => setMenuOpen(!menuOpen)}
             sx={{
-                height: '100vh',
+
+                borderRadius: '50%',
                 display: 'flex',
-                maxWidth: '100%',
-                flexDirection: 'column',
                 alignItems: 'center',
-                backgroundColor: 'background.surface',
-                position: 'relative',
-                overflow: 'hidden',
+                justifyContent: 'center',
+                '&:hover': {
+                    bgcolor: 'rgba(0,168,255,0.1)',
+                    boxShadow: '0 0 8px rgba(0,168,255,0.2)'
+                }
             }}
         >
-            <Box
-                sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '12px 16px',
-                    gap: 1,
-                    zIndex: 10,
-                    backgroundColor: 'background.surface',
-                }}
-            >
-                <IconButton onClick={onBack} sx={{ padding: 0 }}>
-                    <ArrowBackIcon />
-                </IconButton>
-                <Typography level="h4" sx={{ lineHeight: 'normal' }}>{t('settings')}</Typography>
+            <MoreVertIcon sx={{color: '#a0d4ff'}}/>
+        </ListItemButton>
+    );
 
-                <Box sx={{ marginLeft: '60%', display: 'flex' }}>
-                    <IconButton onClick={handleMenuClick}>
-                        <MoreVertIcon sx={{
-                            transition: 'transform 0.3s ease',
-                        }} />
-                    </IconButton>
-                    <Menu
-                        anchorEl={anchorEl}
-                        open={isOpen}
-                        onClose={handleMenuClose}
-                        sx={{
-                            position: { xs: 'fixed', md: 'sticky' },
-                            maxWidth: '200px',
-                            width: '100%',
-                            zIndex: 10,
-                            flexShrink: 0,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 2,
-                            borderRight: '1px solid',
-                            borderColor: 'divider',
-                            outline: 'none',
-                            border: 'none',
-                            opacity: isOpen ? 1 : 0,
-                            maxHeight: isOpen ? '300px' : '0',
-                            overflow: 'hidden',
-                            transition: "max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, background-color 0.3s ease",
-
-                        }}
-                    >
-                        <MenuItem onClick={handleLogout} sx={{ display: 'flex', alignItems: 'center', gap: 1, hoverSx }}>
-                            <ExitToAppIcon sx={{ fontSize: 20 }} />
-                            <Typography sx={{ fontSize: '16px' }}>{t('logout')}</Typography>
-                        </MenuItem>
-                    </Menu>
-                </Box>
-            </Box>
-
-            <Box sx={{ position: 'relative', width: '100%', height: '100%', maxHeight: '60vh', marginTop: '65px' }}>
-                <Avatar
-                    src={avatarUrl}
-                    alt="Avatar"
+    return (
+        <>
+            {currentScreen === 'language' ? (
+                <LanguageScreen onBack={() => setCurrentScreen('settings')}/>
+                ) : (
+                <Sheet
                     sx={{
-                        width: '100%',
-                        height: '100%',
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        borderRadius: 0,
-                        objectFit: 'cover',
-                    }}
-                />
-
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        bottom: 8,
-                        left: 8,
-                        color: 'white',
-                        fontSize: 14,
-                        padding: '6px 12px',
-                        borderRadius: '4px',
+                        height: '100dvh',
                         display: 'flex',
                         flexDirection: 'column',
+                        background: 'linear-gradient(180deg, #00162d 0%, #000d1a 100%)',
+                        position: 'relative',
+                        overflow: 'auto',
+                        '&::-webkit-scrollbar': {
+                            display: 'none'
+                        }
                     }}
                 >
-                    <Typography sx={{ fontWeight: 'bold', fontSize: '20px', color: 'white' }}>
-                        {publicKey}
-                    </Typography>
-                </Box>
-            </Box>
+                    {/* Header Section */}
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            p: 2,
+                            borderBottom: '1px solid rgba(0,168,255,0.3)',
+                            background: 'rgba(0,22,45,0.9)',
+                            backdropFilter: 'blur(12px)',
+                        }}
+                    >
+                        <IconButton onClick={onBack} sx={{color: '#00a8ff', mr: 2}}>
+                            <ArrowBackIcon sx={{fontSize: 24, color: '#a0d4ff'}}/>
+                        </IconButton>
+                        <Typography level="h4" sx={{
+                            color: '#a0d4ff',
+                            flexGrow: 1,
+                            textShadow: '0 2px 4px rgba(0,168,255,0.3)'
+                        }}>
+                            {t('settings')}
+                        </Typography>
 
-            <Box sx={{ width: '100%', padding: '16px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, paddingLeft: '15px' }}>
-                    <KeyIcon sx={{ color: 'gray' }} />
-                    <Box>
-                        <Typography sx={{ fontWeight: 'bold', fontSize: '16px' }}>
-                            {publicKey}
-                        </Typography>
-                        <Typography sx={{ fontSize: '16px' }}>
-                            ID
-                        </Typography>
+                        {renderMenuButton()}
+
+                        <Menu
+                            open={menuOpen}
+                            anchorEl={anchorRef.current}
+                            onClose={() => setMenuOpen(false)}
+                            sx={{
+                                '& .MuiPaper-root': {
+                                    background: 'rgba(0,22,45,0.98)',
+                                    border: '1px solid rgba(0,168,255,0.4)',
+                                    boxShadow: '0 8px 32px rgba(0,168,255,0.3)',
+                                    minWidth: 180,
+                                    p: 1
+                                }
+                            }}
+                        >
+                            <MenuItem
+                                onClick={handleLogout}
+                                sx={{
+                                    color: '#ff5050',
+                                    borderRadius: '6px',
+                                    p: 1.5,
+                                    '&:hover': {
+                                        background: 'rgba(255,80,80,0.1)',
+                                    },
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <ExitToAppIcon sx={{mr: 1.5, fontSize: 24}}/>
+                                <Typography sx={{fontSize: '1rem'}}>
+                                    {t('logout')}
+                                </Typography>
+                            </MenuItem>
+                        </Menu>
                     </Box>
-                </Box>
 
-                {/* Username (если есть) */}
-                {username && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, paddingLeft: '16px' }}>
-                        <PersonIcon sx={{ color: 'gray' }} />
-                        <Box>
-                            <Typography sx={{ fontWeight: 'bold', fontSize: '16px' }}>
-                                @{username}
+                    {/* Avatar Section */}
+                    <Box sx={{
+                        flex: '0 0 30%',
+                        position: 'relative',
+                        borderBottom: '1px solid rgba(0,168,255,0.3)'
+                    }}>
+                        <Avatar
+                            src={avatarUrl}
+                            sx={{
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: 0,
+                                objectFit: 'cover'
+                            }}
+                        />
+                        <Box sx={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            background: 'linear-gradient(transparent 0%, rgba(0,22,45,0.9) 100%)',
+                            p: 2,
+                        }}>
+                            <Typography level="h3" sx={{
+                                color: '#00a8ff',
+                                fontSize: '1.3rem',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                            }}>
+                                {profile.username || profile.publicKey}
                             </Typography>
-                            <Typography sx={{ fontSize: '12px', color: 'gray' }}>
-                                {username}
-                            </Typography>
+                            {profile.bio && (
+                                <Typography sx={{
+                                    color: '#a0d4ff',
+                                    fontSize: '0.9rem',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    overflow: 'hidden'
+                                }}>
+                                    {profile.bio}
+                                </Typography>
+                            )}
                         </Box>
                     </Box>
-                )}
 
-                {/* Bio (если есть) */}
-                {bio && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, paddingLeft: '16px' }}>
-                        <InfoIcon sx={{ color: 'gray' }} />
-                        <Typography sx={{ fontSize: '14px' }}>
-                            {bio}
-                        </Typography>
+                    {/* Public Key Section */}
+                    <Box sx={{p: 3, pt: 4,}}>
+                        <Sheet
+                            sx={{
+                                borderRadius: '12px',
+                                background: 'rgba(0,22,45,0.6)',
+                                border: '1px solid rgba(0,168,255,0.3)',
+                                p: 3
+                            }}
+                        >
+                            <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                <KeyIcon sx={{
+                                    color: '#00a8ff',
+                                    mr: 2,
+                                    fontSize: 32,
+                                    flexShrink: 0
+                                }}/>
+                                <Box>
+                                    <Typography level="body-sm" sx={{
+                                        color: '#a0d4ff',
+                                        fontSize: '1rem',
+                                        mb: 1
+                                    }}>
+                                        {t('public_key')}
+                                    </Typography>
+                                    <Typography sx={{
+                                        color: '#8ab4f8',
+                                        wordBreak: 'break-all',
+                                        fontSize: '0.9rem',
+                                        lineHeight: 1.5
+                                    }}>
+                                        {profile.publicKey}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Sheet>
                     </Box>
-                )}
 
-                {/* Разделитель */}
-                <Divider sx={{ marginY: '12px' }} />
+                    {/* Main Content */}
+                    <Box sx={{
+                        p: 3,
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 3,
+                    }}>
+                        {/* Settings Section */}
+                        <Sheet
+                            sx={{
+                                borderRadius: '16px',
+                                background: 'rgba(0,22,45,0.6)',
+                                border: '1px solid rgba(0,168,255,0.3)',
+                                boxShadow: '0 4px 24px rgba(0,168,255,0.1)',
+                                p: 2
+                            }}
+                        >
+                            {menuItems.map((item, index) => (
+                                <ListItemButton
+                                    key={`menu-${index}`}
+                                    onClick={item.onClick}
+                                    sx={{
+                                        ...menuItemStyle,
+                                        p: 2,
+                                        '& svg': {fontSize: 24}
+                                    }}
+                                >
+                                    <Box sx={{
+                                        ...contentStyle,
+                                        justifyContent: 'space-between'
+                                    }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                            {item.icon}
+                                            <Typography sx={{...textStyle, fontSize: '1.1rem'}}>
+                                                {item.text}
+                                            </Typography>
+                                        </Box>
+                                        {item.rightText && (
+                                            <Typography
+                                                sx={{
+                                                    color: '#00a8ff',
+                                                    fontSize: '0.95rem',
+                                                    pr: 1
+                                                }}
+                                            >
+                                                {item.rightText}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                </ListItemButton>
+                            ))}
+                        </Sheet>
 
-                {/* Настройки */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, paddingLeft: '16px' }}>
-                        <SettingsIcon sx={{ color: 'gray' }} />
-                        <Typography sx={{ fontSize: '16px' }}>
-                            General Settings
-                        </Typography>
+                        {/* Support Section */}
+                        <Sheet
+                            sx={{
+                                borderRadius: '16px',
+                                background: 'rgba(0,22,45,0.6)',
+                                border: '1px solid rgba(0,168,255,0.3)',
+                                boxShadow: '0 4px 24px rgba(0,168,255,0.1)',
+                                p: 2
+                            }}
+                        >
+                            {supportItems.map((item, index) => (
+                                <ListItemButton
+                                    key={`support-${index}`}
+                                    onClick={item.onClick}
+                                    sx={{
+                                        ...menuItemStyle,
+                                        p: 2,
+                                        '& svg': {fontSize: 24}
+                                    }}
+                                >
+                                    <Box sx={contentStyle}>
+                                        {item.icon}
+                                        <Typography sx={{...textStyle, fontSize: '1.1rem'}}>
+                                            {item.text}
+                                        </Typography>
+                                    </Box>
+                                </ListItemButton>
+                            ))}
+                        </Sheet>
                     </Box>
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, paddingLeft: '16px' }}>
-                        <StorageIcon sx={{ color: 'gray' }} />
-                        <Typography sx={{ fontSize: '16px' }}>
-                            Data and Storage
-                        </Typography>
-                    </Box>
-                </Box>
-            </Box>
-        </Box>
+                </Sheet>
+            )}
+        </>
     );
 }

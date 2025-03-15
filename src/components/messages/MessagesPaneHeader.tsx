@@ -115,19 +115,38 @@ export default function MessagesPaneHeader({
         });
     };
 
+    const headerHeight = 68; // Общая высота заголовков
+    const borderStyle = '1px solid rgba(0, 168, 255, 0.3)';
+    const gradientBorder = 'linear-gradient(90deg, transparent 0%, rgba(0, 168, 255, 0.4) 50%, transparent 100%)';
+    const backdropStyles = {
+        backgroundColor: 'rgba(0, 22, 45, 0.85)',
+        backdropFilter: 'blur(20px)',
+    };
+
+
     return isGroup || sender ? (
         <>
             <Stack
                 direction="row"
                 sx={{
                     justifyContent: 'space-between',
-                    py: { xs: 2, md: 1 },
+                    height: `${headerHeight}px`,
                     px: { xs: 2, md: 1 },
-                    borderBottom: '1px solid',
-                    borderColor: 'divider',
-                    backgroundColor: 'background.body',
+                    borderBottom: borderStyle,
+                    position: 'relative',
+                    ...backdropStyles,
+                    '&:after': {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: '1px',
+                        background: gradientBorder,
+                    },
                 }}
             >
+                {/* Левый блок с аватаром и информацией */}
                 <Stack
                     direction="row"
                     spacing={{ xs: 1, md: 1 }}
@@ -142,7 +161,13 @@ export default function MessagesPaneHeader({
                         variant="plain"
                         color="neutral"
                         size="sm"
-                        sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+                        sx={{
+                            display: { xs: 'inline-flex', sm: 'none' },
+                            color: '#00a8ff',
+                            '&:hover': {
+                                backgroundColor: 'rgba(0, 168, 255, 0.1)',
+                            },
+                        }}
                         onClick={onBack}
                     >
                         <ArrowBackIosNewRoundedIcon />
@@ -153,7 +178,15 @@ export default function MessagesPaneHeader({
                         src={isGroup ? groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
                         alt={isGroup ? chatName : sender?.public_key}
                         onClick={handleAvatarClick}
-                        sx={{ cursor: 'pointer' }}
+                        sx={{
+                            cursor: 'pointer',
+                            border: '2px solid transparent',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                                borderColor: '#00a8ff',
+                                boxShadow: '0 0 12px rgba(0, 168, 255, 0.3)',
+                            },
+                        }}
                     />
 
                     <div style={{ width: '100%' }}>
@@ -163,22 +196,27 @@ export default function MessagesPaneHeader({
                             component="h2"
                             noWrap
                             sx={{
-                                fontWeight: 'lg',
-                                fontSize: 'lg',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
+                                color: '#a0d4ff',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    color: '#00a8ff',
+                                    textShadow: '0 0 8px rgba(0, 168, 255, 0.4)',
+                                },
                             }}
                             onClick={handleAvatarClick}
                         >
                             {isGroup ? chatName : sender?.public_key}
-                            {sender?.verified && <Verified sx={{ ml: 1 }} />}
+                            {sender?.verified && <Verified sx={{ ml: 1, color: '#00a8ff' }} />}
                         </Typography>
 
-                        <Typography level="body-sm" color={sender?.online ? "primary" : "neutral"}>
+                        <Typography
+                            level="body-sm"
+                            sx={{
+                                color: sender?.online ? '#00a8ff' : 'rgba(160, 212, 255, 0.6)',
+                                fontSize: '0.8rem',
+                                letterSpacing: '0.5px',
+                            }}
+                        >
                             {sender?.online
                                 ? t("online")
                                 : sender?.lastOnline
@@ -187,43 +225,57 @@ export default function MessagesPaneHeader({
                         </Typography>
 
                         {isGroup && (
-                            <Typography level="body-sm">
+                            <Typography
+                                level="body-sm"
+                                sx={{
+                                    color: 'rgba(160, 212, 255, 0.6)',
+                                    fontSize: '0.8rem',
+                                    letterSpacing: '0.5px',
+                                }}
+                            >
                                 {members.length} {getMemberLabel(members.length, i18n.language)}
                             </Typography>
                         )}
                     </div>
                 </Stack>
 
+                {/* Правая часть с меню */}
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ position: 'relative' }}>
                     <IconButton
                         onClick={() => setIsOpen(prev => !prev)}
                         aria-label="Toggle menu"
                         sx={{
-                            borderRadius: "50%",
-                            backgroundColor: isOpen ? "rgba(255, 255, 255, 0.2)" : "transparent",
-                            "&:hover": {
-                                backgroundColor: "rgba(255, 255, 255, 0.2)",
+                            color: '#00a8ff',
+                            transition: 'all 0.3s ease',
+                            borderRadius: "8px",
+                            backgroundColor: isOpen ? 'rgba(0, 168, 255, 0.15)' : 'transparent',
+                            '&:hover': {
+                                backgroundColor: "rgba(0, 168, 255, 0.15)",
+                                boxShadow: '0 0 8px rgba(0, 168, 255, 0.3)',
                             },
                         }}
                     >
                         <MoreVertRoundedIcon />
                     </IconButton>
 
+                    {/* Выпадающее меню */}
                     <Box
                         sx={{
                             position: "absolute",
-                            top: "60px",
+                            top: "48px",
                             right: 0,
-                            mt: 0,
-                            width: "auto",
+                            mt: 1,
                             zIndex: 9,
-
-                            boxShadow: "4px 4px 20px rgba(0, 0, 0, 0.5)",
-                            maxHeight: isOpen ? "400px" : "0px",
+                            background: 'rgba(0, 22, 45, 0.98)',
+                            backdropFilter: 'blur(24px)',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(0, 168, 255, 0.4)',
+                            boxShadow: '0 12px 40px rgba(0, 168, 255, 0.25)',
+                            transformOrigin: 'top right',
+                            transition: 'opacity 0.2s ease, transform 0.2s ease',
                             opacity: isOpen ? 1 : 0,
-                            overflow: "hidden",
-                            transition: "max-height 0.3s ease-in-out, opacity 0.3s ease-in-out",
-                            ml: 2,
+                            transform: isOpen ? 'scale(1)' : 'scale(0.95)',
+                            visibility: isOpen ? 'visible' : 'hidden',
                         }}
                     >
                         <MessagesMenu
@@ -237,6 +289,7 @@ export default function MessagesPaneHeader({
                 </Stack>
             </Stack>
 
+            {/* Модальные окна */}
             {isGroup && currentUserId !== null && (
                 <GroupInfoModal
                     open={isGroupModalOpen}
@@ -269,7 +322,6 @@ export default function MessagesPaneHeader({
                     status={"incoming"}
                 />
             )}
-
         </>
     ) : null;
 }

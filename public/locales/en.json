@@ -280,12 +280,12 @@
   "date_format": "{{month}} {{day}}",
   "date_format_with_year": "{{month}} {{day}}, {{year}}",
   "cta": {
-    "title": "Welcome to SolanaChat",
+    "title": "Welcome to SolaChat",
     "description": "More than 100,000 users are already enjoying secure and anonymous communication",
     "download": "Download now"
   },
   "reasons": {
-    "title": "7 reasons to choose SolanaChat",
+    "title": "7 reasons to choose SolaChat",
     "security": {
       "title": "Absolute Security",
       "description": "Instant message encryption and military-grade data protection."
@@ -337,5 +337,38 @@
   },
   "partners": {
     "title": "Our Partners"
-  }
+  },
+  "feedback": {
+    "title": "Feedback",
+    "bug": "Report a Bug",
+    "feature": "Suggest an Idea",
+    "other": "Other",
+    "userId": "Your ID",
+    "subject": "Subject",
+    "description": "Detailed Description",
+    "attachments": "Attach Files",
+    "uploadFiles": "Select Files",
+    "filesSelected": "files selected",
+    "submit": "Submit Request",
+    "hide_details": "Hide"
+  },
+  "vacancies": {
+    "title": "Career with Us",
+    "read_more": "Read More",
+    "technologies": "Used Technologies",
+    "requirements": "Requirements",
+    "apply_all": "Apply for the Vacancy",
+    "apply_title": "Job Application",
+    "select_vacancy": "Select a Vacancy",
+    "full_name": "Full Name",
+    "contact_type": "Contact Method",
+    "contact_value": "Contact Information",
+    "expected_salary": "Expected Salary",
+    "available_from": "Available From",
+    "about_you": "Tell Us About Yourself",
+    "submit_application": "Submit Application",
+    "hide_details": "Hide"
+  },
+  "language": "Language"
+
 }

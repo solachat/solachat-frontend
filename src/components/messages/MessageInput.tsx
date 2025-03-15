@@ -17,6 +17,7 @@ import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
 import EmojiPickerPopover from "./EmojiPickerPopover";
 import {toast} from "react-toastify";
 import {ChatProps, MessageProps} from "../core/types";
+import {motion} from "framer-motion";
 
 export type UploadedFileData = {
     file: File;
@@ -262,36 +263,42 @@ export default function MessageInput(props: MessageInputProps) {
         >
             {isDragging && (
                 <Box
+                    component={motion.div}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     sx={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        color: 'white',
+                        bgcolor: 'rgba(0, 168, 255, 0.1)',
+                        color: '#00a8ff',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: '1.25rem',
                         zIndex: 20,
+                        border: '2px dashed rgba(0, 168, 255, 0.3)',
+                        borderRadius: 'lg',
                     }}
                 >
                     {t('Drop your files here')}
                 </Box>
             )}
+
             <FormControl sx={{ position: 'sticky', zIndex: 10 }}>
                 <Stack
                     direction="column"
                     alignItems="center"
                     justifyContent="space-between"
                     sx={{
-                        border: '1px solid',
-                        borderColor: 'divider',
-
-                        padding: '6px',
-                        backgroundColor: 'background.level1',
+                        border: '1px solid rgba(0, 168, 255, 0.3)',
+                        borderRadius: 'lg',
+                        padding: '8px',
+                        bgcolor: 'rgba(0, 168, 255, 0.05)',
                         maxWidth: '100%',
+                        boxShadow: '0 4px 16px rgba(0, 168, 255, 0.1)',
                     }}
                 >
                     {editingMessage && editingMessage.content && (
@@ -301,11 +308,11 @@ export default function MessageInput(props: MessageInputProps) {
                             justifyContent="space-between"
                             sx={{
                                 width: '100%',
-                                height: 'auto',
+                                height: '100%',
                                 padding: '8px',
-                                borderRadius: '4px',
+                                borderRadius: 'lg',
                                 marginBottom: '8px',
-                                mr: '1px',
+
                             }}
                         >
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -313,39 +320,54 @@ export default function MessageInput(props: MessageInputProps) {
                                     sx={{
                                         marginRight: '20px',
                                         marginLeft: '5px',
-                                        color: 'neutral.main',
+                                        color: '#00a8ff',
                                         fontSize: '1.50rem',
                                     }}
                                 />
                                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    <Typography>{t('Editing')}</Typography>
+                                    <Typography sx={{ color: '#00a8ff' }}>{t('Editing')}</Typography>
                                     <Typography
                                         sx={{
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             maxWidth: '1000px',
+                                            color: '#a0d4ff',
                                         }}
                                     >
                                         {editingMessage.content}
                                     </Typography>
                                 </Box>
                             </Box>
-                            <IconButton size="sm" onClick={() => setEditingMessage(null)}>
+                            <IconButton
+                                size="sm"
+                                onClick={() => setEditingMessage(null)}
+                                sx={{ color: '#00a8ff' }}
+                            >
                                 <CloseIcon />
                             </IconButton>
                         </Stack>
                     )}
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+
+                    <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        sx={{ width: '100%' }}
+                    >
                         <IconButton
                             size="sm"
                             variant="plain"
-                            color="neutral"
+                            sx={{
+                                mr: 1,
+                                color: '#00a8ff',
+                                '&:hover': { bgcolor: 'rgba(0, 168, 255, 0.1)' }
+                            }}
                             onClick={() => setFileUploadOpen(true)}
-                            sx={{ mr: 1 }}
                         >
                             <AttachFileIcon />
                         </IconButton>
+
                         <CustomTextarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
@@ -358,17 +380,19 @@ export default function MessageInput(props: MessageInputProps) {
                                 maxWidth: '100%',
                                 border: 'none',
                                 outline: 'none',
-                                boxShadow: 'none',
+                                color: '#a0d4ff',
+                                bgcolor: 'transparent',
+                                '&::placeholder': { color: '#8ab4f8' },
                                 '--Textarea-focusedHighlight': 'transparent',
-                                '&:focus': {
-                                    outline: 'none',
-                                    boxShadow: 'none',
-                                },
+                                '&:focus': { outline: 'none', boxShadow: 'none' },
                             }}
                         />
 
                         <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                            <IconButton onClick={toggleEmojiMenu}>
+                            <IconButton
+                                sx={{ color: '#00a8ff', '&:hover': { bgcolor: 'rgba(0, 168, 255, 0.1)' } }}
+                                onClick={toggleEmojiMenu}
+                            >
                                 <EmojiEmotionsIcon />
                             </IconButton>
                             <EmojiPickerPopover
@@ -377,11 +401,15 @@ export default function MessageInput(props: MessageInputProps) {
                                 onClose={() => setAnchorEl(null)}
                             />
                         </Box>
+
                         <IconButton
                             size="sm"
-                            color={message.trim() !== '' || uploadedFiles.length > 0 ? 'primary' : 'neutral'}
+                            sx={{
+                                ml: 1,
+                                color: (message.trim() !== '' || uploadedFiles.length > 0) ? '#00a8ff' : '#8ab4f8',
+                                '&:hover': { bgcolor: 'rgba(0, 168, 255, 0.1)' }
+                            }}
                             onClick={handleClick}
-                            sx={{ ml: 1 }}
                         >
                             <SendRoundedIcon />
                         </IconButton>
@@ -400,15 +428,18 @@ export default function MessageInput(props: MessageInputProps) {
                             return (
                                 <Box
                                     key={index}
+                                    component={motion.div}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
                                     sx={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         padding: '8px 16px',
-                                        border: '1px solid',
-                                        borderColor: 'divider',
-                                        borderRadius: '8px',
-                                        backgroundColor: 'background.level2',
+                                        border: '1px solid rgba(0, 168, 255, 0.3)',
+                                        borderRadius: 'lg',
+                                        bgcolor: 'rgba(0, 168, 255, 0.05)',
                                         minWidth: '200px',
+                                        backdropFilter: 'blur(10px)',
                                     }}
                                 >
                                     <Stack direction="row" spacing={1} alignItems="center">
@@ -420,6 +451,7 @@ export default function MessageInput(props: MessageInputProps) {
                                                     borderRadius: '4px',
                                                     objectFit: 'cover',
                                                     cursor: 'pointer',
+                                                    border: '1px solid rgba(0, 168, 255, 0.3)',
                                                 }}
                                                 src={fileUrl}
                                                 alt="preview"
@@ -433,6 +465,7 @@ export default function MessageInput(props: MessageInputProps) {
                                                     borderRadius: '4px',
                                                     overflow: 'hidden',
                                                     cursor: 'pointer',
+                                                    border: '1px solid rgba(0, 168, 255, 0.3)',
                                                 }}
                                                 onClick={() => handleVideoClick(fileUrl)}
                                             >
@@ -441,15 +474,19 @@ export default function MessageInput(props: MessageInputProps) {
                                                 </video>
                                             </Box>
                                         ) : (
-                                            <Avatar sx={{ backgroundColor: 'primary.main' }}>
+                                            <Avatar sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }}>
                                                 <InsertDriveFileIcon />
                                             </Avatar>
                                         )}
-                                        <Typography noWrap sx={{ maxWidth: '120px' }}>
+                                        <Typography noWrap sx={{ maxWidth: '120px', color: '#a0d4ff' }}>
                                             {file.file.name}
                                         </Typography>
                                     </Stack>
-                                    <IconButton onClick={() => removeUploadedFile(index)} size="sm">
+                                    <IconButton
+                                        onClick={() => removeUploadedFile(index)}
+                                        size="sm"
+                                        sx={{ color: '#00a8ff' }}
+                                    >
                                         <DeleteIcon />
                                     </IconButton>
                                 </Box>

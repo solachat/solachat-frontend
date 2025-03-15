@@ -18,6 +18,7 @@ import CallModal from './CallModal';
 import {cacheChats, getCachedChats} from "../../utils/cacheChats";
 import {cacheMessages, getCachedMessages} from "../../utils/cacheMessages";
 import {cacheMedia, getCachedMedia} from "../../utils/cacheMedia";
+import GlobalStyles from "@mui/joy/GlobalStyles";
 
 
 export default function MyProfile() {
@@ -274,9 +275,20 @@ export default function MyProfile() {
         loadChatsAndMessages();
     }, [currentUser]);
 
+    const GlobalStyle = () => (
+        <GlobalStyles
+            styles={{
+                '@keyframes glow': {
+                    '0%, 100%': { opacity: 0.6 },
+                    '50%': { opacity: 1 }
+                }
+            }}
+        />
+    );
 
     return (
         <>
+            <GlobalStyle />
             <PageTitle
                 title={
                     selectedChat
@@ -286,7 +298,6 @@ export default function MyProfile() {
                         : 'Messenger'
                 }
             />
-
 
             <Sheet
                 sx={{
@@ -300,6 +311,25 @@ export default function MyProfile() {
                         sm: 'minmax(min-content, 250px) 1fr',
                         md: 'minmax(min-content, 550px) 1fr',
                     },
+                    position: 'relative',
+                    '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        left: { sm: '250px', md: '550px' },
+                        top: 0,
+                        bottom: 0,
+                        width: '1px',
+                        background: `
+              linear-gradient(
+                180deg,
+                transparent 0%,
+                rgba(0, 168, 255, 0.6) 50%,
+                transparent 100%
+              )`,
+                        boxShadow: '0 0 20px rgba(0, 168, 255, 0.3)',
+                        zIndex: 999,
+                        animation: 'glow 2s ease-in-out infinite',
+                    }
                 }}
             >
                 {currentUser ? (
@@ -320,6 +350,7 @@ export default function MyProfile() {
                                 flexDirection: 'column',
                                 justifyContent: 'center',
                                 backgroundColor: 'background.level1',
+                                position: 'relative',
                             }}
                         >
                             {error ? (

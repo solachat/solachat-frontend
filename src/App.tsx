@@ -14,6 +14,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import HomePage from './pages/HomePage';
 import AccessDeniedPage from './pages/AccessDeniedPage';
+import FeedbackPage from "./pages/FeedbackPage";
+import VacanciesPage from "./pages/VacanciesPage";
 
 const underDevelopmentRoutes = [
     '/connect/telegram',
@@ -36,7 +38,9 @@ const App: React.FC = () => {
                         <Route path="/:identifier" element={<MyAccount />} />
 
                         <Route path="/" element={<HomePage/>} />
+                        <Route path="/feedback" element={<FeedbackPage/>} />
                         <Route path="/contacts" element={<ContactsPage />} />
+                        <Route path="/jobs" element={<VacanciesPage />} />
                         <Route path="/chat" element={<PrivateRoute element={<MyMessages />} />} />
                         {/*<Route path="/chatOrLogin" element={*/}
                         {/*    localStorage.getItem('token') ? <Navigate to="/chat" /> : <Navigate to="/login" />*/}

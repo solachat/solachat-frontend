@@ -16,6 +16,7 @@ import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import Verified from "../core/Verified";
 import {useEffect, useState} from "react";
 import {fetchChatsFromServer} from "../../api/api";
+import {motion} from "framer-motion";
 
 type NewMessageEvent =
     | {
@@ -191,28 +192,41 @@ export default function ChatListItem(props: ChatListItemProps) {
         <React.Fragment>
             <ListItem>
                 <ListItemButton
+                    component={motion.div}
+                    whileHover={{ scale: 1.02 }}
                     onClick={handleClick}
                     selected={selected}
                     sx={{
                         flexDirection: 'column',
                         alignItems: 'initial',
                         gap: { xs: 0.5, sm: 1 },
-                        padding: { xs: '6px', sm: '10px' },
-                        borderRadius: '2px',
-                        mx: '1px',
+                        padding: { xs: '8px', sm: '12px' },
+                        borderRadius: 'lg',
+                        mx: '4px',
+                        bgcolor: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(0, 168, 255, 0.3)',
+                        transition: 'all 0.3s ease',
                         '&.Mui-selected': {
-                            backgroundColor: 'var(--joy-palette-primary-solidBg)',
+                            background: 'linear-gradient(45deg, #00a8ff 30%, #007bff 90%)',
                             color: 'white',
-                            borderRadius: '2px',
+                            boxShadow: '0 4px 16px rgba(0, 168, 255, 0.3)',
+                            border: '1px solid rgba(0, 168, 255, 0.5)',
+                        },
+                        '&:hover': {
+                            bgcolor: 'rgba(0, 168, 255, 0.1)',
                         },
                     }}
                 >
-                    <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
+                    <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} sx={{ width: '100%' }}>
                         {isGroup ? (
                             <Avatar
-                                src={existingChat?.avatar || 'path/to/default-group-avatar.jpg'}
+                                src={existingChat?.avatar || '/default-group-avatar.png'}
                                 alt={existingChat?.name || 'Group Chat'}
-                                sx={{ width: { xs: 40, sm: 56 }, height: { xs: 40, sm: 56 } }}
+                                sx={{
+                                    width: { xs: 40, sm: 56 },
+                                    height: { xs: 40, sm: 56 },
+                                    border: '2px solid rgba(0, 168, 255, 0.3)'
+                                }}
                             />
                         ) : (
                             <Box sx={{ position: 'relative', width: { xs: 40, sm: 56 }, height: { xs: 40, sm: 56 } }}>
@@ -224,6 +238,8 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         width: { xs: 40, sm: 56 },
                                         height: { xs: 40, sm: 56 },
                                         fontSize: { xs: 12, sm: 15 },
+                                        border: '2px solid rgba(0, 168, 255, 0.3)',
+                                        bgcolor: 'rgba(0, 168, 255, 0.1)',
                                     }}
                                 >
                                     {(!sender?.avatar && sender?.public_key)
@@ -236,22 +252,26 @@ export default function ChatListItem(props: ChatListItemProps) {
                                             position: 'absolute',
                                             bottom: -2,
                                             right: -2,
-                                            backgroundColor: '#007bff',
+                                            bgcolor: '#007bff',
                                             borderRadius: '50%',
                                             width: { xs: 18, sm: 24 },
                                             height: { xs: 18, sm: 24 },
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
+                                            boxShadow: '0 2px 8px rgba(0, 168, 255, 0.3)',
                                         }}
                                     >
-                                        <BookmarkBorderIcon sx={{ color: 'white', fontSize: { xs: 14, sm: 18 } }} />
+                                        <BookmarkBorderIcon sx={{
+                                            color: 'white',
+                                            fontSize: { xs: 14, sm: 18 }
+                                        }} />
                                     </Box>
                                 )}
                             </Box>
                         )}
 
-                        <Box sx={{ flex: 1 }}>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography
                                 level="body-md"
                                 fontSize={{ xs: 'sm', sm: 'md' }}
@@ -261,10 +281,9 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     flexWrap: 'wrap',
                                     lineHeight: 1.3,
                                     wordBreak: 'break-word',
-                                    color: selected
-                                        ? 'var(--joy-palette-common-white)'
-                                        : 'var(--joy-palette-text-primary)',
+                                    color: selected ? 'white' : '#a0d4ff',
                                     fontWeight: 'bold',
+                                    textShadow: selected ? '0 2px 4px rgba(0,0,0,0.2)' : 'none',
                                 }}
                             >
                                 {isGroup ? existingChat?.name || 'Group Chat' : sender?.public_key || 'No Name'}
@@ -280,11 +299,10 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         WebkitBoxOrient: 'vertical',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
-                                        color: selected
-                                            ? 'var(--joy-palette-common-white)'
-                                            : 'var(--joy-palette-text-primary)',
+                                        color: selected ? 'white' : '#8ab4f8',
                                         maxWidth: { xs: '260px', sm: '380px' },
                                         width: '100%',
+                                        mt: 0.5,
                                     }}
                                 >
                                     {lastMessage.attachment && isImage(lastMessage.attachment.fileName) ? (
@@ -293,10 +311,11 @@ export default function ChatListItem(props: ChatListItemProps) {
                                                 src={lastMessage.attachment.filePath}
                                                 alt="attachment preview"
                                                 style={{
-                                                    width: '18px',
-                                                    height: '18px',
-                                                    marginRight: '6px',
-                                                    borderRadius: '2px',
+                                                    width: '20px',
+                                                    height: '20px',
+                                                    marginRight: '8px',
+                                                    borderRadius: '4px',
+                                                    border: '1px solid rgba(0, 168, 255, 0.3)'
                                                 }}
                                             />
                                             <span>{lastMessage.content ? lastMessage.content : t('image')}</span>
@@ -312,19 +331,19 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     )}
                                 </Typography>
                             ) : (
-                                <Typography level="body-sm">{t('No messages')}</Typography>
+                                <Typography level="body-sm" sx={{ color: '#8ab4f8' }}>
+                                    {t('No messages')}
+                                </Typography>
                             )}
                         </Box>
 
                         {lastMessage && (
                             <Box
                                 sx={{
-                                    lineHeight: 1.5,
-                                    textAlign: 'center',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    alignItems: 'center',
-                                    position: 'relative',
+                                    alignItems: 'flex-end',
+                                    minWidth: '60px',
                                 }}
                             >
                                 <Typography
@@ -332,8 +351,8 @@ export default function ChatListItem(props: ChatListItemProps) {
                                     fontSize={{ xs: 'xs', sm: 'sm' }}
                                     noWrap
                                     sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
+                                        color: selected ? 'white' : '#8ab4f8',
+                                        opacity: 0.8,
                                     }}
                                 >
                                     {getFormattedDate(new Date(lastMessage.createdAt), locale)}
@@ -342,17 +361,17 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 {unreadCount > 0 && lastMessage.userId !== currentUserId && (
                                     <Box
                                         sx={{
-                                            width: { xs: 18, sm: 22 },
-                                            height: { xs: 18, sm: 22 },
+                                            width: { xs: 20, sm: 24 },
+                                            height: { xs: 20, sm: 24 },
                                             borderRadius: '50%',
-                                            backgroundColor: '#007bff',
+                                            bgcolor: '#007bff',
                                             color: 'white',
                                             fontSize: { xs: 12, sm: 14 },
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             mt: 1,
-                                            marginLeft: { xs: '8px', sm: '15px' },
+                                            boxShadow: '0 2px 8px rgba(0, 168, 255, 0.3)',
                                         }}
                                     >
                                         {unreadCount}

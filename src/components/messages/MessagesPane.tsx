@@ -16,6 +16,7 @@ import {sendMessage, updateMessageStatus} from '../../api/api';
 import dayjs from "dayjs";
 import {IconButton} from "@mui/joy";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import {motion} from "framer-motion";
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
@@ -387,7 +388,8 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                 height: '100vh',
                 display: 'flex',
                 flexDirection: 'column',
-                backgroundColor: 'background.level1',
+                background: 'radial-gradient(circle at center, #0a192f 0%, #081428 100%)',
+
                 overflow: 'hidden',
             }}
         >
@@ -397,7 +399,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                     chatId={chat.id}
                     isGroup={chat.isGroup}
                     chatName={chat.isGroup ? chat.name : undefined}
-                    groupAvatar={chat.isGroup ? chat.avatar || 'path/to/default-group-avatar.jpg' : undefined}
+                    groupAvatar={chat.isGroup ? chat.avatar || '/default-group-avatar.png' : undefined}
                     members={chat?.users || []}
                     onBack={() => setSelectedChat(null)}
                 />
@@ -405,18 +407,23 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
 
             {visibleDate && (
                 <Box
+                    component={motion.div}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
                     sx={{
                         position: 'fixed',
                         top: 10,
                         left: '50%',
                         transform: 'translateX(-50%)',
-                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                        color: 'white',
-                        padding: '5px 10px',
-                        borderRadius: '5px',
+                        bgcolor: 'rgba(0, 168, 255, 0.2)',
+                        color: '#00a8ff',
+                        padding: '6px 12px',
+                        borderRadius: 'lg',
                         fontSize: '14px',
                         fontWeight: 'bold',
-                        zIndex: 1000
+                        zIndex: 1000,
+                        border: '1px solid rgba(0, 168, 255, 0.3)',
+                        boxShadow: '0 4px 16px rgba(0, 168, 255, 0.2)',
                     }}
                 >
                     {visibleDate}
@@ -437,16 +444,16 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                         width: '8px',
                     },
                     '&::-webkit-scrollbar-track': {
-                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                        bgcolor: 'rgba(0, 168, 255, 0.1)',
                         borderRadius: '4px',
                     },
                     '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        bgcolor: 'rgba(0, 168, 255, 0.3)',
                         borderRadius: '4px',
                     },
+
                 }}
             >
-
                 <>
                     {chatMessages.length > 0 ? (
                         <Stack spacing={2} sx={{ width: { xs: '100%', sm: '80%', md: '60%' } }}>
@@ -456,8 +463,8 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                                         sx={{
                                             textAlign: 'center',
                                             fontSize: '14px',
-                                            color: 'white',
-                                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                            color: '#a0d4ff',
+                                            bgcolor: 'rgba(0, 168, 255, 0.1)',
                                             padding: '4px 8px',
                                             borderRadius: '8px',
                                             display: 'flex',
@@ -465,6 +472,8 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                                             alignItems: 'center',
                                             maxWidth: 'fit-content',
                                             margin: '7px auto',
+                                            border: '1px solid rgba(0, 168, 255, 0.3)',
+                                            boxShadow: '0 2px 8px rgba(0, 168, 255, 0.2)',
                                         }}
                                     >
                                         {formatDate(date)}
@@ -474,35 +483,35 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                                         {messages
                                             .filter((message) => message.content || (message.attachment && message.attachment.filePath))
                                             .map((message: MessageProps, index: number) => {
-                                            const isCurrentUser = message.userId === currentUserId;
-                                            return (
-                                                <Stack
-                                                    key={message.id}
-                                                    direction="row"
-                                                    spacing={1}
-                                                    flexDirection={isCurrentUser ? 'row-reverse' : 'row'}
-                                                >
-                                                    <ChatBubble
-                                                        id={message.id}
-                                                        chatId={message.chatId}
-                                                        userId={message.userId}
-                                                        variant={isCurrentUser ? 'sent' : 'received'}
-                                                        user={message.user}
-                                                        content={message.content}
-                                                        createdAt={message.createdAt}
-                                                        attachment={message.attachment}
-                                                        isRead={message.isRead ?? false}
-                                                        isDelivered={message.isDelivered ?? false}
-                                                        unread={message.unread}
-                                                        isEdited={message.isEdited}
-                                                        onEditMessage={handleEditMessage}
-                                                        messageCreatorId={message.userId}
-                                                        isGroupChat={chat?.isGroup || false}
-                                                        pending={message.pending}
-                                                    />
-                                                </Stack>
-                                            );
-                                        })}
+                                                const isCurrentUser = message.userId === currentUserId;
+                                                return (
+                                                    <Stack
+                                                        key={message.id}
+                                                        direction="row"
+                                                        spacing={1}
+                                                        flexDirection={isCurrentUser ? 'row-reverse' : 'row'}
+                                                    >
+                                                        <ChatBubble
+                                                            id={message.id}
+                                                            chatId={message.chatId}
+                                                            userId={message.userId}
+                                                            variant={isCurrentUser ? 'sent' : 'received'}
+                                                            user={message.user}
+                                                            content={message.content}
+                                                            createdAt={message.createdAt}
+                                                            attachment={message.attachment}
+                                                            isRead={message.isRead ?? false}
+                                                            isDelivered={message.isDelivered ?? false}
+                                                            unread={message.unread}
+                                                            isEdited={message.isEdited}
+                                                            onEditMessage={handleEditMessage}
+                                                            messageCreatorId={message.userId}
+                                                            isGroupChat={chat?.isGroup || false}
+                                                            pending={message.pending}
+                                                        />
+                                                    </Stack>
+                                                );
+                                            })}
                                     </Stack>
                                 </div>
                             ))}
@@ -523,30 +532,29 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                             {t('')}
                         </Typography>
                     )}
-                    {showScrollToBottom && (
-                        <IconButton
-                            onClick={handleScrollToBottom}
-                            size="lg"
-                            sx={{
-                                position: 'absolute',
-                                right: 20,
-                                width: 40,
-                                height: 40,
-                                backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                                color: 'white',
-                                fontSize: 32,
-                                opacity: showScrollToBottom ? 1 : 0,
-                                transition: 'opacity 0.3s ease-in-out',
-                                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.8)' }
-                            }}
-                        >
-                            <KeyboardArrowDownIcon fontSize="inherit" />
-                        </IconButton>
-
-
-                    )}
+                    {/*{showScrollToBottom && (*/}
+                    {/*    <IconButton*/}
+                    {/*        onClick={handleScrollToBottom}*/}
+                    {/*        size="lg"*/}
+                    {/*        sx={{*/}
+                    {/*            position: 'absolute',*/}
+                    {/*            right: 20,*/}
+                    {/*            width: 40,*/}
+                    {/*            height: 40,*/}
+                    {/*            backgroundColor: 'rgba(0, 0, 0, 0.6)',*/}
+                    {/*            color: 'white',*/}
+                    {/*            fontSize: 32,*/}
+                    {/*            opacity: showScrollToBottom ? 1 : 0,*/}
+                    {/*            transition: 'opacity 0.3s ease-in-out',*/}
+                    {/*            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.8)' }*/}
+                    {/*        }}*/}
+                    {/*    >*/}
+                    {/*        <KeyboardArrowDownIcon fontSize="inherit" />*/}
+                    {/*    </IconButton>*/}
+                    {/*)}*/}
                 </>
             </Box>
+
 
             {chat && (
                 <Box sx={{ width: { xs: '100%', sm: '80%', md: '60%' }, margin: '0px auto' }}>
