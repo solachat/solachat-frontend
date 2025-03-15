@@ -51,7 +51,7 @@ export default function VacanciesPage() {
             <CssVarsProvider disableTransitionOnChange theme={framesxTheme}>
             <Navbar />
             <Box sx={{
-                minHeight: 'auto',
+                minHeight: '100vh',
                 py: 8,
                 px: 2,
                 background: 'radial-gradient(circle at center, #0a192f 0%, #081428 100%)'
