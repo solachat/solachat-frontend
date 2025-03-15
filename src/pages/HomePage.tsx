@@ -12,6 +12,7 @@ import Navbar from "../components/home/Navbar";
 import {Header} from '../components/core/ColorSchemeToggle';
 import Footer from "../components/home/Footer";
 import TeamSection from "../components/home/TeamSeaction";
+import PartnersSection from "../components/home/PartnersSection";
 
 
 export default function HomePage() {
@@ -39,6 +40,7 @@ export default function HomePage() {
                     <HeroLeft01 />
                     <HeroLeft02 />
                     <HeroLeft03 />
+                    <PartnersSection/>
                     <TeamSection/>
                 </Box>
             </Box>
