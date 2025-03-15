@@ -240,5 +240,37 @@
     "documents": "文档",
     "signIn": "登录",
     "signUp": "注册"
+  },
+  "reasons": {
+    "title": "选择 SolaChat 的 7 大理由",
+    "security": {
+      "title": "绝对安全",
+      "description": "即时消息加密和军用级数据保护。"
+    },
+    "anonymity": {
+      "title": "网络匿名性",
+      "description": "无需绑定手机号或邮箱进行通讯，全面保护隐私。"
+    },
+    "transactions": {
+      "title": "闪电般快速的交易",
+      "description": "Solana 支持即时转账和微交易。"
+    },
+    "decentralization": {
+      "title": "全球去中心化",
+      "description": "无中央服务器，任何人都无法封锁访问。"
+    },
+    "web3": {
+      "title": "Web3 集成",
+      "description": "连接加密钱包，直接在聊天中管理 NFT 和代币。"
+    },
+    "wallets": {
+      "title": "安全钱包",
+      "description": "内置加密钱包，轻松存储数字资产。"
+    },
+    "transparency": {
+      "title": "透明生态系统",
+      "description": "开源、无隐藏费用，极致诚信。"
+    }
   }
+
 }

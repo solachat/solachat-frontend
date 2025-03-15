@@ -3,7 +3,7 @@ import { Box, Typography, IconButton, Sheet, ListItemButton } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useTranslation } from "react-i18next";
 
-type LanguageCode = 'en' | 'ru';
+type LanguageCode = 'en' | 'ru' | 'ch';
 
 interface LanguageNames {
     native: Record<LanguageCode, string>;
@@ -13,17 +13,19 @@ interface LanguageNames {
 export default function LanguageScreen({ onBack }: { onBack: () => void }) {
     const { t, i18n } = useTranslation();
     const [currentLang, setCurrentLang] = useState<LanguageCode>(i18n.language as LanguageCode);
-    const languages: LanguageCode[] = ['en', 'ru'];
+    const languages: LanguageCode[] = ['en', 'ru', 'ch'];
 
     const languageNames: LanguageNames = {
         native: {
             en: 'English',
-            ru: 'Русский'
+            ru: 'Русский',
+            ch: '中文'
         },
         english: {
             en: 'English',
-            ru: 'Russian'
-        }
+            ru: 'Russian',
+            ch: 'Chinese'
+        },
     };
 
     useEffect(() => {
