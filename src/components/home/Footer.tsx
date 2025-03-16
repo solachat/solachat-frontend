@@ -16,7 +16,7 @@ const Footer: React.FC = () => {
         { title: t('footer.product'), links: [
                 { text: t('footer.features'), url: '#features' },
                 { text: t('footer.security'), url: '#security' },
-                { text: t('footer.download'), url: '#download' }
+                { text: t('footer.download'), url: '/apps' }
             ]},
         { title: t('footer.company'), links: [
                 { text: t('footer.about'), url: '#', action: handleOpen },
@@ -67,7 +67,7 @@ const Footer: React.FC = () => {
                     style={{
                         width: 28,
                         height: 28,
-                        filter: 'brightness(2)'
+                        // filter: 'brightness(0) saturate(100%) invert(50%) sepia(100%) saturate(500%) hue-rotate(170deg)'
                     }}
                 />
             </Link>

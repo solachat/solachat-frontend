@@ -16,6 +16,8 @@ import HomePage from './pages/HomePage';
 import AccessDeniedPage from './pages/AccessDeniedPage';
 import FeedbackPage from "./pages/FeedbackPage";
 import VacanciesPage from "./pages/VacanciesPage";
+import BlogPage from "./pages/BlogPage";
+import ApplicationsPage from "./pages/ApplicationsPage";
 
 const underDevelopmentRoutes = [
     '/connect/telegram',
@@ -51,6 +53,8 @@ const App: React.FC = () => {
                         ))}
 
                         <Route path="/access-denied" element={<AccessDeniedPage />} />
+                        <Route path="/blog" element={<BlogPage/>} />
+                        <Route path="/apps" element={<ApplicationsPage/>} />
                         <Route path="*" element={<NotFoundPage />} />
                         <Route path="/new-feature" element={<UnderConstruction />} />
                         <Route path="/main" element={<HomePage />} />

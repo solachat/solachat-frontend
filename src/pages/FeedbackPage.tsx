@@ -22,6 +22,7 @@ import Footer from "../components/home/Footer";
 import Navbar from "../components/home/Navbar";
 import {CssVarsProvider} from '@mui/joy/styles';
 import {Helmet} from "react-helmet-async";
+import framesxTheme from "../theme/theme";
 
 const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -44,11 +45,12 @@ export default function FeedbackPage() {
         }
     };
 
+
     return (
         <>
-            <CssVarsProvider defaultMode="dark" disableTransitionOnChange>
+            <CssVarsProvider disableTransitionOnChange theme={framesxTheme}>
                 <Helmet>
-                    <title>{t('feedback.title')}</title>
+                    <title>SolaChat {t('feedback.title')}</title>
                 </Helmet>
             <Navbar/>
         <Box sx={{
@@ -57,7 +59,6 @@ export default function FeedbackPage() {
             alignItems: 'center',
             justifyContent: 'center',
             background: 'radial-gradient(circle at center, #0a192f 0%, #081428 100%)',
-
         }}>
             <Sheet
                 component={motion.div}

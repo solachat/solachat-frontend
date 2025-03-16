@@ -330,7 +330,8 @@
     "vacancies": "Careers",
     "documents": "Documents",
     "signIn": "Sign In",
-    "signUp": "Sign Up"
+    "signUp": "Sign Up",
+    "apps": "Apps"
   },
   "team": {
     "title": "Our Team"
@@ -369,6 +370,18 @@
     "submit_application": "Submit Application",
     "hide_details": "Hide"
   },
-  "language": "Language"
-
+  "language": "Language",
+  "applications": {
+    "title": "SolaChat Applications",
+    "subtitle": "SolaChat apps are open source and support reproducible builds...",
+    "mobile": "Mobile Apps",
+    "desktop": "Desktop Apps",
+    "web": "Web Apps",
+    "source": "Source Code",
+    "androidDesc": "Secure messaging for Android devices...",
+    "iosDesc": "Optimized for iOS ecosystem...",
+    "windowsDesc": "Native Windows client...",
+    "macosDesc": "macOS optimized version...",
+    "webDesc": "Browser-based solution..."
+  }
 }

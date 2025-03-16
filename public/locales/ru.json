@@ -345,7 +345,7 @@
   "date_format": "{{day}} {{month}}",
   "date_format_with_year": "{{day}} {{month}} {{year}}",
   "feedback": "Обратная связь",
-  "vacancies": "Вакансии",
+  "vacancies": "Карьера",
   "documents": "Документы",
   "cta": {
     "title": "Добро пожаловать в SolaChat",
@@ -395,10 +395,11 @@
   },
   "navbar": {
     "feedback": "Обратная связь",
-    "vacancies": "Вакансии",
+    "vacancies": "Карьера",
     "documents": "Документы",
     "signIn": "Войти",
-    "signUp": "Регистрация"
+    "signUp": "Регистрация",
+    "apps": "Приложения"
   },
   "team": {
     "title": "Наша команда"
@@ -427,7 +428,7 @@
     "apply_all": "Откликнуться на вакансию",
     "apply_title": "Отклик на вакансию",
     "select_vacancy": "Выберите вакансию",
-    "full_name": "ФИО",
+    "full_name": "Полное имя",
     "contact_type": "Способ связи",
     "contact_value": "Контактные данные",
     "expected_salary": "Ожидаемая зарплата",
@@ -436,6 +437,18 @@
     "submit_application": "Отправить заявку",
     "hide_details": "Скрыть"
   },
-  "language": "Язык"
-
+  "language": "Язык",
+  "applications": {
+    "title": "Приложения SolaChat",
+    "subtitle": "Приложения SolaChat имеют открытый исходный код и поддерживают воспроизводимые сборки...",
+    "mobile": "Мобильные приложения",
+    "desktop": "Настольные приложения",
+    "web": "Веб-приложения",
+    "source": "Исходный код",
+    "androidDesc": "Безопасный мессенджер для устройств Android...",
+    "iosDesc": "Оптимизировано для экосистемы iOS...",
+    "windowsDesc": "Нативный клиент для Windows...",
+    "macosDesc": "Оптимизированная версия для macOS...",
+    "webDesc": "Решение для браузера..."
+  }
 }

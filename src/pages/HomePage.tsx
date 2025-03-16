@@ -19,9 +19,6 @@ export default function HomePage() {
     const { t } = useTranslation();
     return (
         <CssVarsProvider disableTransitionOnChange theme={framesxTheme}>
-            <Helmet>
-                <title>{t('title.homepage')}</title>
-            </Helmet>
             <CssBaseline />
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                 <Navbar/>

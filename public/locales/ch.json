@@ -239,7 +239,8 @@
     "vacancies": "招聘",
     "documents": "文档",
     "signIn": "登录",
-    "signUp": "注册"
+    "signUp": "注册",
+    "apps": "应用程序"
   },
   "reasons": {
     "title": "选择 SolaChat 的 7 大理由",
@@ -271,6 +272,19 @@
       "title": "透明生态系统",
       "description": "开源、无隐藏费用，极致诚信。"
     }
+  },
+  "applications": {
+    "title": "SolaChat 应用程序",
+    "subtitle": "SolaChat 应用程序是开源的，并支持可重现的构建……",
+    "mobile": "移动应用",
+    "desktop": "桌面应用",
+    "web": "网页应用",
+    "source": "源代码",
+    "androidDesc": "适用于 Android 设备的安全消息传递……",
+    "iosDesc": "针对 iOS 生态系统进行了优化……",
+    "windowsDesc": "原生 Windows 客户端……",
+    "macosDesc": "macOS 优化版本……",
+    "webDesc": "基于浏览器的解决方案……"
   }
 
 }

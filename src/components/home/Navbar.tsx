@@ -20,6 +20,37 @@ import LanguageIcon from '@mui/icons-material/Language';
 import CheckIcon from '@mui/icons-material/Check';
 import Link from "@mui/joy/Link";
 import ClickAwayListener from '@mui/material/ClickAwayListener';
+import {Apps} from "@mui/icons-material";
+import CloseIcon from "@mui/icons-material/Close";
+
+interface BurgerIconProps {
+    open: boolean;
+    onClick: () => void;
+}
+const BurgerIcon: React.FC<BurgerIconProps> = ({ open, onClick }) => (
+    <Box
+        sx={{
+            display: { xs: 'flex', md: 'none' },
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            width: 30,
+            height: 20,
+            cursor: 'pointer',
+            zIndex: 1200,
+        }}
+        onClick={onClick}
+    >
+        {open ? (
+            <CloseIcon sx={{ color: '#00a8ff', fontSize: 30 }} />
+        ) : (
+            <>
+                <Box sx={{ height: 2, width: '100%', bgcolor: '#00a8ff', borderRadius: 1 }} />
+                <Box sx={{ height: 2, width: '100%', bgcolor: '#00a8ff', borderRadius: 1 }} />
+                <Box sx={{ height: 2, width: '100%', bgcolor: '#00a8ff', borderRadius: 1 }} />
+            </>
+        )}
+    </Box>
+);
 
 type NavButtonProps = ButtonProps & LinkProps & {
     component?: React.ElementType;
@@ -45,6 +76,7 @@ const NavButton = styled(Button)<NavButtonProps>(() => ({
 export default function Navbar() {
     const { t, i18n } = useTranslation();
     const [isAuthenticated] = React.useState(!!localStorage.getItem('token'));
+    const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
     const languages = [
         { code: 'en', label: 'EN', fullLabel: 'English' },
@@ -80,7 +112,7 @@ export default function Navbar() {
             px: { xs: 2, md: 6 },
             py: 2,
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            background: 'rgba(10, 25, 47, 0.9)',
+            background: 'linear-gradient(180deg, #0a192f, #081428)',
             backdropFilter: 'blur(10px)',
             position: 'relative'
         }}>
@@ -102,8 +134,10 @@ export default function Navbar() {
                 </Link>
             </Box>
 
+            <BurgerIcon open={isMenuOpen} onClick={() => setIsMenuOpen(!isMenuOpen)} />
+
             <Box sx={{
-                display: 'flex',
+                display: { xs: 'none', md: 'flex' },
                 gap: 2,
                 justifyContent: 'center',
                 flexWrap: 'wrap',
@@ -139,7 +173,19 @@ export default function Navbar() {
                 >
                     <DescriptionIcon /> {t('navbar.documents')}
                 </NavButton>
+                <NavButton
+                    component={RouterLink}
+                    to="/apps"
+                    sx={{
+                        background: isActive('/apps') ? 'rgba(0, 168, 255, 0.5)' : 'linear-gradient(45deg, #00a8ff30 30%, #007bff30 90%)',
+                        color: isActive('/apps') ? 'white' : '#00a8ff'
+                    }}
+                >
+                    <Apps /> {t('navbar.apps')}
+                </NavButton>
             </Box>
+
+
 
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', position: 'absolute', right: 16 }}>
                 <ClickAwayListener onClickAway={handleClose}>

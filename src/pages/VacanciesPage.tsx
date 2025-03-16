@@ -29,6 +29,7 @@ import framesxTheme from "../theme/theme";
 import {CssVarsProvider} from "@mui/joy/styles";
 import {Code} from "@mui/icons-material";
 import { AnimatePresence } from "framer-motion";
+import {Helmet} from "react-helmet-async";
 
 const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -49,6 +50,9 @@ export default function VacanciesPage() {
     return (
         <>
             <CssVarsProvider disableTransitionOnChange theme={framesxTheme}>
+                <Helmet>
+                    <title>SolaChat {t('navbar.vacancies')}</title>
+                </Helmet>
             <Navbar />
             <Box sx={{
                 minHeight: '100vh',
@@ -268,49 +272,144 @@ export default function VacanciesPage() {
                                         <Select
                                             value={selectedVacancy}
                                             onChange={(_, value) => setSelectedVacancy(value)}
-                                            sx={{ bgcolor: 'rgba(0, 168, 255, 0.05)' }}
+                                            slotProps={{
+                                                listbox: {
+                                                    sx: {
+                                                        bgcolor: 'rgba(0, 22, 45, 0.95)',
+                                                        border: '1px solid rgba(0, 168, 255, 0.3)',
+                                                        borderRadius: '8px',
+                                                        boxShadow: '0 10px 30px rgba(0, 168, 255, 0.2)'
+                                                    }
+                                                }
+                                            }}
+                                            sx={{
+                                                bgcolor: 'rgba(0, 168, 255, 0.1)',
+                                                color: '#00a8ff',
+                                                '&:hover': { bgcolor: 'rgba(0, 168, 255, 0.15)' }
+                                            }}
                                         >
                                             {vacanciesData.map((vacancy) => (
-                                                <Option key={vacancy.id} value={vacancy.id}>
+                                                <Option
+                                                    key={vacancy.id}
+                                                    value={vacancy.id}
+                                                    sx={{
+                                                        bgcolor: 'transparent',
+                                                        color: '#00a8ff',
+                                                        '&[aria-selected="true"]': {
+                                                            bgcolor: 'rgba(0, 168, 255, 0.2) !important',
+                                                            color: 'white'
+                                                        },
+                                                        '&:hover': {
+                                                            bgcolor: 'rgba(0, 168, 255, 0.3)',
+                                                            color: 'white'
+                                                        }
+                                                    }}
+                                                >
                                                     {vacancy.title}
                                                 </Option>
                                             ))}
                                         </Select>
                                     </FormControl>
 
+
                                     <FormControl sx={{ mb: 2 }}>
                                         <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.full_name')}</FormLabel>
-                                        <Input sx={{ bgcolor: 'rgba(0, 168, 255, 0.05)' }} />
+                                        <Input sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
                                     </FormControl>
 
                                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                                         <FormControl sx={{ flex: 1 }}>
                                             <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.contact_type')}</FormLabel>
-                                            <Select defaultValue="telegram" sx={{ bgcolor: 'rgba(0, 168, 255, 0.05)' }}>
-                                                <Option value="telegram">Telegram</Option>
-                                                <Option value="discord">Discord</Option>
-                                                <Option value="email">Email</Option>
+                                            <Select
+                                                defaultValue="telegram"
+                                                slotProps={{
+                                                    listbox: {
+                                                        sx: {
+                                                            bgcolor: 'rgba(0, 22, 45, 0.95)',
+                                                            border: '1px solid rgba(0, 168, 255, 0.3)',
+                                                            borderRadius: '8px',
+                                                            boxShadow: '0 10px 30px rgba(0, 168, 255, 0.2)'
+                                                        }
+                                                    }
+                                                }}
+                                                sx={{
+                                                    bgcolor: 'rgba(0, 168, 255, 0.1)',
+                                                    color: '#00a8ff',
+                                                    '&:hover': { bgcolor: 'rgba(0, 168, 255, 0.15)' }
+                                                }}
+                                            >
+                                                <Option
+                                                    value="telegram"
+                                                    sx={{
+                                                        bgcolor: 'transparent',
+                                                        color: '#00a8ff',
+                                                        '&[aria-selected="true"]': {
+                                                            bgcolor: 'rgba(0, 168, 255, 0.2) !important',
+                                                            color: 'white'
+                                                        },
+                                                        '&:hover': {
+                                                            bgcolor: 'rgba(0, 168, 255, 0.3)',
+                                                            color: 'white'
+                                                        }
+                                                    }}
+                                                >
+                                                    Telegram
+                                                </Option>
+                                                <Option
+                                                    value="discord"
+                                                    sx={{
+                                                        bgcolor: 'transparent',
+                                                        color: '#00a8ff',
+                                                        '&[aria-selected="true"]': {
+                                                            bgcolor: 'rgba(0, 168, 255, 0.2) !important',
+                                                            color: 'white'
+                                                        },
+                                                        '&:hover': {
+                                                            bgcolor: 'rgba(0, 168, 255, 0.3)',
+                                                            color: 'white'
+                                                        }
+                                                    }}
+                                                >
+                                                    Discord
+                                                </Option>
+                                                <Option
+                                                    value="email"
+                                                    sx={{
+                                                        bgcolor: 'transparent',
+                                                        color: '#00a8ff',
+                                                        '&[aria-selected="true"]': {
+                                                            bgcolor: 'rgba(0, 168, 255, 0.2) !important',
+                                                            color: 'white'
+                                                        },
+                                                        '&:hover': {
+                                                            bgcolor: 'rgba(0, 168, 255, 0.3)',
+                                                            color: 'white'
+                                                        }
+                                                    }}
+                                                >
+                                                    Email
+                                                </Option>
                                             </Select>
                                         </FormControl>
                                         <FormControl sx={{ flex: 1 }}>
                                             <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.contact_value')}</FormLabel>
-                                            <Input sx={{ bgcolor: 'rgba(0, 168, 255, 0.05)' }} />
+                                            <Input sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
                                         </FormControl>
                                     </Box>
 
                                     <FormControl sx={{ mb: 2 }}>
                                         <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.expected_salary')}</FormLabel>
-                                        <Input sx={{ bgcolor: 'rgba(0, 168, 255, 0.05)' }} />
+                                        <Input sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
                                     </FormControl>
 
                                     <FormControl sx={{ mb: 2 }}>
                                         <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.available_from')}</FormLabel>
-                                        <Input type="date" sx={{ bgcolor: 'rgba(0, 168, 255, 0.05)' }} />
+                                        <Input type="date" sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
                                     </FormControl>
 
                                     <FormControl>
                                         <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.about_you')}</FormLabel>
-                                        <Textarea minRows={3} sx={{ bgcolor: 'rgba(0, 168, 255, 0.05)' }} />
+                                        <Textarea minRows={3} sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
                                     </FormControl>
 
                                     <Button
@@ -330,7 +429,7 @@ export default function VacanciesPage() {
                     )}
                 </AnimatePresence>
 
-            <Footer />
+                <Footer />
             </CssVarsProvider>
         </>
     );
