@@ -22,10 +22,11 @@ type MessagesPaneProps = {
     chat: ChatProps | null;
     members?: UserProps[];
     chats: ChatProps[];
+    selectedChat: ChatProps | null;
     setSelectedChat: (chat: ChatProps | null) => void;
 };
 
-export default function MessagesPane({ chat, chats, members = [], setSelectedChat }: MessagesPaneProps) {
+export default function MessagesPane({ chat, chats, members = [], setSelectedChat, selectedChat }: MessagesPaneProps) {
     const { t, i18n } = useTranslation();
     const [chatIdFromUrl, setChatIdFromUrl] = useState<string | undefined>();
 
@@ -107,7 +108,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
 
         const isAtBottom = container.scrollTop === 0;
 
-        console.log("Scroll position:", container.scrollTop, "Container height:", container.clientHeight, "Content height:", container.scrollHeight);
 
         if (isAtBottom) {
             setShowScrollToBottom(false);
@@ -270,16 +270,25 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         setChatMessages((prevMessages) => prevMessages.filter((msg) => Number(msg.id) !== messageId));
     };
 
+    const selectedChatRef = useRef<ChatProps | null>(null);
+    useEffect(() => {
+        selectedChatRef.current = selectedChat;
+    }, [selectedChat]);
 
     useWebSocket((data) => {
         if (data.type === 'newMessage' && data.message) {
             const serverMessage = data.message;
 
-            if (chatIdRef.current !== serverMessage.chatId) {
-                console.log(`📩 Сообщение ID ${serverMessage.id} пришло в другой чат (ID: ${serverMessage.chatId}), игнорируем.`);
+            const currentChatId = selectedChatRef.current?.id;
+            console.log(`🎯 [newMessage] Текущий selectedChat: ${selectedChat?.id || "❌ не установлен"}`);
+            console.log(`📩 Новое сообщение относится к чату: ${serverMessage.chatId}`);
+
+            if (currentChatId !== data.message.chatId) {
+                console.warn(`Сообщение для ${data.message.chatId}, текущий: ${currentChatId}`);
                 return;
             }
 
+            console.log(selectedChat + "Выбранный чат")
             console.log("📥 Получено новое сообщение:", serverMessage);
 
             console.log("Дата с сервера:", serverMessage.createdAt);

@@ -21,15 +21,16 @@ import {
 import { motion } from 'framer-motion';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import WorkIcon from '@mui/icons-material/Work';
 import Footer from "../components/home/Footer";
 import Navbar from "../components/home/Navbar";
-import { vacanciesData } from '../utils/vacancies';
+
 import framesxTheme from "../theme/theme";
 import {CssVarsProvider} from "@mui/joy/styles";
 import {Code} from "@mui/icons-material";
 import { AnimatePresence } from "framer-motion";
 import {Helmet} from "react-helmet-async";
+import {applyForVacancy, fetchVacancies} from "../api/api";
+import {Vacancy} from "../components/core/types";
 
 const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -41,11 +42,68 @@ export default function VacanciesPage() {
     const [openModal, setOpenModal] = useState(false);
     const [selectedVacancy, setSelectedVacancy] = useState<string | null>(null);
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [formData, setFormData] = useState({
+        fullName: '',
+        contactType: 'telegram',
+        contactValue: '',
+        expectedSalary: '',
+        availableFrom: '',
+        aboutYou: '',
+        vacancyId: ''
+    });
 
-    const handleApply = (vacancyId?: string) => {
-        if (vacancyId) setSelectedVacancy(vacancyId);
-        setOpenModal(true);
+
+    React.useEffect(() => {
+        const loadVacancies = async () => {
+            setLoading(true);
+            const data = await fetchVacancies();
+            setVacancies(data);
+            setLoading(false);
+        };
+        loadVacancies();
+    }, []);
+
+
+    const handleApply = async () => {
+        if (!selectedVacancy) return alert("Select a vacancy!");
+        try {
+            await applyForVacancy({ ...formData, vacancyId: selectedVacancy });
+            alert("Заявка отправлена успешно!");
+            setOpenModal(false);
+            setFormData({
+                fullName: "",
+                contactType: "telegram",
+                contactValue: "",
+                expectedSalary: "",
+                availableFrom: "",
+                aboutYou: "",
+                vacancyId: "",
+            });
+
+            const updatedVacancies = await fetchVacancies();
+            setVacancies(updatedVacancies);
+        } catch (error: any) {
+            alert("Error sending request: " + (error.message || error));
+        }
     };
+
+    const SkeletonLoader = () => (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {[...Array(3)].map((_, i) => (
+                <motion.div key={i} variants={fadeIn}>
+                    <Sheet sx={{
+                        p: 3,
+                        borderRadius: 'lg',
+                        background: 'rgba(255,255,255,0.05)',
+                        height: 150,
+                        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }}/>
+                </motion.div>
+            ))}
+        </Box>
+    );
 
     return (
         <>
@@ -80,10 +138,13 @@ export default function VacanciesPage() {
                         {t('vacancies.title')}
                     </Typography>
 
+                    {loading ? (
+                        <SkeletonLoader />
+                    ) : (
                     <List sx={{ gap: 3, display: 'flex', flexDirection: 'column' }}>
-                        {vacanciesData.map((vacancy) => (
+                        {vacancies.map((vacancy) =>  (
                             <motion.div
-                                key={vacancy.id}
+                                key={vacancy._id}
                                 initial="hidden"
                                 animate="visible"
                                 variants={fadeIn}
@@ -127,7 +188,7 @@ export default function VacanciesPage() {
                                                     endDecorator={
                                                         <motion.div
                                                             animate={{
-                                                                rotate: expandedId === vacancy.id ? 180 : 0
+                                                                rotate: expandedId === vacancy._id ? 180 : 0
                                                             }}
                                                             transition={{duration: 0.3}}
                                                         >
@@ -141,7 +202,7 @@ export default function VacanciesPage() {
                                                         display: 'inline-flex',
                                                         '&:hover': {bgcolor: 'transparent'}
                                                     }}
-                                                    onClick={() => setExpandedId(expandedId === vacancy.id ? null : vacancy.id)}
+                                                    onClick={() => setExpandedId(expandedId === vacancy._id ? null : vacancy._id)}
                                                 >
                                                     <motion.span
 
@@ -149,7 +210,7 @@ export default function VacanciesPage() {
                                                             display: 'inline-block',
                                                         }}
                                                     >
-                                                        {expandedId === vacancy.id ? t('vacancies.hide_details') : t('vacancies.read_more')}
+                                                        {expandedId === vacancy._id ? t('vacancies.hide_details') : t('vacancies.read_more')}
                                                     </motion.span>
                                                 </Button>
                                             </motion.div>
@@ -157,9 +218,9 @@ export default function VacanciesPage() {
 
 
                                             <AnimatePresence>
-                                                {expandedId === vacancy.id && (
+                                                {expandedId === vacancy._id && (
                                                     <motion.div
-                                                        key={vacancy.id}
+                                                        key={vacancy._id}
                                                         initial={{ opacity: 0, height: 0 }}
                                                         animate={{ opacity: 1, height: "auto" }}
                                                         exit={{ opacity: 0, height: 0 }}
@@ -216,6 +277,7 @@ export default function VacanciesPage() {
                             </motion.div>
                         ))}
                     </List>
+                    )}
 
                     <Box sx={{textAlign: 'center', mt: 6}}>
                         <Button
@@ -227,7 +289,7 @@ export default function VacanciesPage() {
                                 px: 6,
                                 '&:hover': {bgcolor: 'rgba(0, 168, 255, 0.4)'}
                             }}
-                            onClick={() => handleApply()}
+                            onClick={() => setOpenModal(true)}
                         >
                             {t('vacancies.apply_all')}
                         </Button>
@@ -270,8 +332,9 @@ export default function VacanciesPage() {
                                     <FormControl sx={{ mb: 2 }}>
                                         <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.select_vacancy')}</FormLabel>
                                         <Select
-                                            value={selectedVacancy}
-                                            onChange={(_, value) => setSelectedVacancy(value)}
+                                            value={selectedVacancy ?? ""}
+                                            onChange={(_, value) => setSelectedVacancy(value ?? "")}
+                                            defaultValue=""
                                             slotProps={{
                                                 listbox: {
                                                     sx: {
@@ -288,10 +351,10 @@ export default function VacanciesPage() {
                                                 '&:hover': { bgcolor: 'rgba(0, 168, 255, 0.15)' }
                                             }}
                                         >
-                                            {vacanciesData.map((vacancy) => (
+                                            {vacancies.map((vacancy) => (
                                                 <Option
-                                                    key={vacancy.id}
-                                                    value={vacancy.id}
+                                                    key={vacancy._id}
+                                                    value={vacancy._id}
                                                     sx={{
                                                         bgcolor: 'transparent',
                                                         color: '#00a8ff',
@@ -314,13 +377,23 @@ export default function VacanciesPage() {
 
                                     <FormControl sx={{ mb: 2 }}>
                                         <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.full_name')}</FormLabel>
-                                        <Input sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
+                                        <Input
+                                            value={formData.fullName}
+                                            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                            sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }}
+                                        />
                                     </FormControl>
 
                                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                                         <FormControl sx={{ flex: 1 }}>
                                             <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.contact_type')}</FormLabel>
                                             <Select
+                                                value={formData.contactType}
+                                                onChange={(event, value) => {
+                                                    if (value) {
+                                                        setFormData((prev) => ({ ...prev, contactType: value }));
+                                                    }
+                                                }}
                                                 defaultValue="telegram"
                                                 slotProps={{
                                                     listbox: {
@@ -393,27 +466,39 @@ export default function VacanciesPage() {
                                         </FormControl>
                                         <FormControl sx={{ flex: 1 }}>
                                             <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.contact_value')}</FormLabel>
-                                            <Input sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
+                                            <Input onChange={(e) => setFormData({ ...formData, contactValue: e.target.value })}
+                                                   sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
                                         </FormControl>
                                     </Box>
 
                                     <FormControl sx={{ mb: 2 }}>
                                         <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.expected_salary')}</FormLabel>
-                                        <Input sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
+                                        <Input
+                                            type="text"
+                                            onKeyDown={(e) => {
+                                                if (!/[\d]/.test(e.key) && e.key !== 'Backspace') {
+                                                    e.preventDefault();
+                                                }
+                                            }}
+                                            onChange={(e) => setFormData({ ...formData, expectedSalary: e.target.value })}
+                                            sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }}
+                                        />
                                     </FormControl>
+
 
                                     <FormControl sx={{ mb: 2 }}>
                                         <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.available_from')}</FormLabel>
-                                        <Input type="date" sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
+                                        <Input onChange={(e) => setFormData({ ...formData, availableFrom: e.target.value })} type="date" sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
                                     </FormControl>
 
                                     <FormControl>
                                         <FormLabel sx={{ color: '#00a8ff' }}>{t('vacancies.about_you')}</FormLabel>
-                                        <Textarea minRows={3} sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} />
+                                        <Textarea minRows={3} sx={{ bgcolor: 'rgba(0, 168, 255, 0.1)', color: '#00a8ff' }} onChange={(e) => setFormData({ ...formData, aboutYou: e.target.value })} />
                                     </FormControl>
 
                                     <Button
                                         fullWidth
+                                        onClick={handleApply}
                                         sx={{
                                             mt: 3,
                                             bgcolor: 'rgba(0, 168, 255, 0.3)',

@@ -23,10 +23,11 @@ type ChatsPaneProps = {
     chats: ChatProps[];
     setSelectedChat: (chat: ChatProps) => void;
     selectedChatId: string;
+    selectedChat: ChatProps | null;
     currentUser: { id: number };
 };
 
-export default function ChatsPane({ chats: initialChats, setSelectedChat, selectedChatId, currentUser }: ChatsPaneProps) {
+export default function ChatsPane({ chats: initialChats, setSelectedChat, selectedChatId, currentUser, selectedChat }: ChatsPaneProps) {
     const {t} = useTranslation();
     const [chats, setChats] = useState<ChatProps[]>(initialChats);
     const [searchTerm, setSearchTerm] = useState('');
@@ -37,14 +38,28 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     const navigate = useNavigate();
     const [activeScreen, setActiveScreen] = useState<'chats' | 'settings' | 'language'>('chats');
 
+    React.useEffect(() => {
+        if (selectedChat) {
+            console.log(`🔄 selectedChat обновлён в ChatsPane: ${selectedChat.id}`);
+        } else {
+            console.warn("⚠️ selectedChat всё ещё не установлен в ChatsPane!");
+        }
+    }, [selectedChat]);
+
+
     const {wsRef, isConnecting} = useWebSocket((data) => {
         console.log("Received WebSocket message:", data);
-        if (data.type === 'chatCreated' || data.type === 'groupChatCreated') {
+        if (data.type === 'chatCreated') {
             const newChat = data.chat;
             setChats((prevChats) => {
                 if (prevChats.some((chat) => chat.id === newChat.id)) return prevChats;
                 return [...prevChats, newChat].sort((a, b) => b.id - a.id);
             });
+
+            if (selectedChat?.id === -1) {
+                console.log(`✅ Принудительно обновляем selectedChat: ${newChat.id}`);
+                setSelectedChat(newChat);
+            }
         }
 
         if (data.type === 'chatDeleted') {
@@ -91,9 +106,9 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 updatedChats = updatedChats.sort((a, b) => {
                     if (a.id === selectedChatIdNum) return -1;
                     if (b.id === selectedChatIdNum) return 1;
-                    const aUpdated = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
-                    const bUpdated = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;
-                    return bUpdated - aUpdated;
+
+                    return (b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0) -
+                        (a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0);
                 });
 
                 console.log("✅ Чаты после сортировки:", updatedChats.map(chat => chat.id));
@@ -166,17 +181,21 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
         }
 
         if (data.type === 'USER_CONNECTED' && 'publicKey' in data) {
-            setChats((prevChats) => {
-                const updatedChats = prevChats.map((chat) => ({
-                    ...chat,
-                    users: (chat.users || []).map((user) =>
+            setChats((prevChats) =>
+                prevChats.map((chat) => {
+                    if (!chat.users) return chat;
+
+                    const updatedUsers = chat.users.map((user) =>
                         user.public_key === data.publicKey ? { ...user, online: true } : user
-                    ),
-                }));
-                console.log("Updated chats:", updatedChats);
-                return updatedChats;
-            });
+                    );
+
+                    return { ...chat, users: updatedUsers };
+                })
+            );
+
+            console.log("✅ Обновленный статус пользователя в чатах:", data.publicKey);
         }
+
 
         if (data.type === 'USER_DISCONNECTED' && 'publicKey' in data) {
             const publicKey = data.publicKey;

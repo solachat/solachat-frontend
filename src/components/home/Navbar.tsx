@@ -237,6 +237,7 @@ export default function Navbar() {
                                         color: lang.code === i18n.language ? '#00a8ff' : '#a0d4ff',
                                         py: 1.5,
                                         px: 2.5,
+                                        transition: 'background 0.3s ease, border-left 0.3s ease',
                                         minWidth: 120,
                                         '&:hover': {
                                             background: 'rgba(0, 168, 255, 0.1)'

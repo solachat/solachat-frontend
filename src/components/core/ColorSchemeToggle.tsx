@@ -5,9 +5,9 @@ import { useColorScheme } from "@mui/joy/styles";
 import React from "react";
 import Typography from "@mui/joy/Typography";
 import Box, { BoxProps } from "@mui/joy/Box";
-import LanguageSwitcher from "./LanguageSwitcher";
+import {LanguageSwitcher} from "./LanguageSwitcher";
 import SolanaIcon from "./SolanaIcon";
-import {Switch} from "@mui/joy";
+import {Divider, Switch} from "@mui/joy";
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import {useTranslation} from "react-i18next";
 import BitcoinIcon from "./BitcoinIcon";
@@ -72,18 +72,30 @@ export function ColorSchemeToggle(props: IconButtonProps) {
         <IconButton
             aria-label="toggle light/dark mode"
             size="sm"
-            variant="outlined"
+            variant="soft"
             disabled={!mounted}
             onClick={(event) => {
                 setMode(mode === 'light' ? 'dark' : 'light');
                 onClick?.(event);
             }}
+            sx={{
+                transition: 'all 0.3s ease',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '50%',
+                backdropFilter: 'blur(8px)',
+                '&:hover': {
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    boxShadow: '0 0 12px rgba(0, 168, 255, 0.3)',
+                }
+            }}
             {...other}
         >
-            {mode === 'light' ? <DarkModeRoundedIcon /> : <LightModeRoundedIcon />}
+            {mode === 'light' ? <DarkModeRoundedIcon sx={{ color: '#ffcc00' }} /> : <LightModeRoundedIcon sx={{ color: '#00a8ff' }} />}
         </IconButton>
     );
 }
+
 
 interface HeaderProps extends BoxProps {}
 
@@ -93,25 +105,51 @@ export function Header({ sx, ...props }: HeaderProps) {
             component="header"
             sx={{
                 py: 3,
-                px: 2,
-                display: 'flex',
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-                width: '100%',
+                px: 3,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+                backdropFilter: "blur(12px)",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
+                transition: "all 0.3s ease",
                 ...sx,
             }}
             {...props}
         >
-            <Box sx={{ gap: 2, display: 'flex', alignItems: 'center' }}>
-                <IconButton variant="soft" size="sm">
+            {/* Логотип и заголовок */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <IconButton
+                    variant="soft"
+                    size="sm"
+                    sx={{
+                        borderRadius: "50%",
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                            transform: "scale(1.1)",
+                            boxShadow: "0 0 15px rgba(0, 168, 255, 0.4)",
+                        },
+                    }}
+                >
                     <SolanaIcon />
                 </IconButton>
-                <Typography component="h1">DarkChat</Typography>
+                <Typography
+                    component="h1"
+                    sx={{
+                        fontSize: "1.5rem",
+                        fontWeight: 700,
+                        background: "linear-gradient(45deg, var(--accent-blue), var(--accent-dark-blue))",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                    }}
+                >
+                    SolaChat
+                </Typography>
             </Box>
-            <Box sx={{ gap: 2, display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
-                <ColorSchemeToggle />
+
+
+            {/* Переключатели */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <LanguageSwitcher />
             </Box>
         </Box>

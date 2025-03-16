@@ -2,6 +2,7 @@ import axios from 'axios';
 import {jwtDecode} from "jwt-decode";
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+const VACANCIES_API_URL = process.env.VACANCIES_API_URL || 'http://localhost:5000';
 
 export const searchUsers = async (searchTerm: string) => {
     try {
@@ -482,6 +483,55 @@ export const verifyTotp = async (totpCode: string, token: string): Promise<{ suc
         return response.data;
     } catch (error) {
         console.error('Error verifying TOTP:', error);
+        throw error;
+    }
+};
+
+export const fetchVacancies = async () => {
+    try {
+        const response = await fetch(`${VACANCIES_API_URL}/api/vacancies`);
+        if (!response.ok) {
+            throw new Error("Ошибка при загрузке вакансий");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Ошибка при получении списка вакансий:", error);
+        return [];
+    }
+};
+
+
+export const postVacancy = async (vacancyData: any) => {
+    try {
+        const response = await fetch(`${VACANCIES_API_URL}/api/vacancies`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(vacancyData),
+        });
+
+        if (!response.ok) throw new Error("Ошибка при добавлении вакансии");
+        return await response.json();
+    } catch (error) {
+        console.error("Ошибка при отправке вакансии:", error);
+        throw error;
+    }
+};
+
+export const applyForVacancy = async (formData: any) => {
+    if (!formData.vacancyId) {
+        throw new Error("vacancyId отсутствует!");
+    }
+    try {
+        const response = await fetch(`${VACANCIES_API_URL}/api/applications/create`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) throw new Error("Ошибка отправки заявки");
+        return await response.json();
+    } catch (error) {
+        console.error("Ошибка при отправке заявки:", error);
         throw error;
     }
 };

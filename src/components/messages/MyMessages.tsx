@@ -110,12 +110,16 @@ export default function MyProfile() {
             )
         );
     };
+    const chatDeletedRef = useRef(false);
 
     const removeChatFromList = (chatId: number) => {
         chatDeletedRef.current = true;
+        console.log(`✅ Удаляем чат ${chatId} из списка.`);
 
         setChats((prevChats) => prevChats.filter(chat => chat.id !== chatId));
         setSelectedChat(null)
+        console.log(`⚠️ Чат ${chatId} удален, сбрасываем выбор.`);
+        chatDeletedRef.current = false;
 
         if (selectedChat?.id === chatId) {
             setSelectedChat(null);
@@ -123,8 +127,21 @@ export default function MyProfile() {
         }
     };
 
+    useEffect(() => {
+        if (!selectedChat) return;
 
-    const chatDeletedRef = useRef(false);
+        const foundChat = chats.find(chat => chat.id === selectedChat.id);
+        if (!foundChat) {
+            if (chatDeletedRef.current) {
+                console.log(`⚠️ Чат ${selectedChat.id} удален, сбрасываем выбор.`);
+                setSelectedChat(null);
+                navigate('/chat');
+            }
+        } else {
+            console.log(`✅ Чат ${selectedChat.id} найден, обновляем данные.`);
+            setSelectedChat(foundChat);
+        }
+    }, [chats, selectedChat, navigate]);
 
     const handleWebSocketMessage = (message: any) => {
         switch (message.type) {
@@ -261,8 +278,20 @@ export default function MyProfile() {
                     })
                 );
 
-                console.log("📌 Обновлённые чаты:", updatedChats);
-                setChats(prevChats => [...prevChats, ...updatedChats]);
+                const sortedChats = updatedChats.sort((a, b) => {
+                    const getLastMessageTime = (chat: any) => {
+                        if (chat.lastMessage) return new Date(chat.lastMessage.createdAt).getTime();
+                        if (chat.messages.length > 0) {
+                            return new Date(chat.messages[chat.messages.length - 1].createdAt).getTime();
+                        }
+                        return 0;
+                    };
+
+                    return getLastMessageTime(b) - getLastMessageTime(a);
+                });
+
+                console.log("📌 Обновлённые и отсортированные чаты:", sortedChats);
+                setChats(sortedChats);
 
             } catch (error) {
                 console.error("❌ Ошибка загрузки чатов:", error);
@@ -336,6 +365,7 @@ export default function MyProfile() {
                     <>
                         <ChatsPane
                             chats={chats}
+                            selectedChat={selectedChat}
                             selectedChatId={selectedChat ? String(selectedChat.id) : ''}
                             setSelectedChat={(chat: ChatProps) => {
                                 setSelectedChat(chat);
@@ -361,13 +391,15 @@ export default function MyProfile() {
                                 </Box>
                             ) : selectedChat ? (
                                 <MessagesPane
-                                    chat={selectedChat}
+                                    chat={selectedChat} // Передаём `selectedChat`
                                     chats={chats}
+                                    selectedChat={selectedChat}
                                     members={selectedChat?.users || []}
                                     setSelectedChat={setSelectedChat}
                                 />
+
                             ) : (
-                                <MessagesPane chat={null} chats={chats} setSelectedChat={setSelectedChat}   />
+                                <MessagesPane chat={null}   selectedChat={selectedChat}  chats={chats} setSelectedChat={setSelectedChat}   />
                             )}
                         </Sheet>
                     </>

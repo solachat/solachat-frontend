@@ -9,7 +9,6 @@ import HeroLeft01 from '../components/home/HeroLeft01';
 import HeroLeft02 from '../components/home/HeroLeft02';
 import HeroLeft03 from '../components/home/HeroLeft03';
 import Navbar from "../components/home/Navbar";
-import {Header} from '../components/core/ColorSchemeToggle';
 import Footer from "../components/home/Footer";
 import TeamSection from "../components/home/TeamSeaction";
 import PartnersSection from "../components/home/PartnersSection";
@@ -19,6 +18,9 @@ export default function HomePage() {
     const { t } = useTranslation();
     return (
         <CssVarsProvider disableTransitionOnChange theme={framesxTheme}>
+            <Helmet>
+                <title>SolaChat</title>
+            </Helmet>
             <CssBaseline />
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                 <Navbar/>

@@ -10,6 +10,14 @@ export type UserProps = {
     sessionToken?: string;
 };
 
+export interface Vacancy {
+    _id: string;
+    title: string;
+    description: string;
+    requirements: string[];
+    technologies: string[];
+    logo?: string;
+}
 
 export type MessageProps = {
     id: number;

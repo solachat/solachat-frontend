@@ -18,6 +18,7 @@ import EmojiPickerPopover from "./EmojiPickerPopover";
 import {toast} from "react-toastify";
 import {ChatProps, MessageProps} from "../core/types";
 import {motion} from "framer-motion";
+import {useNavigate} from "react-router-dom";
 
 export type UploadedFileData = {
     file: File;
@@ -51,6 +52,7 @@ export default function MessageInput(props: MessageInputProps) {
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [isVideoOpen, setIsVideoOpen] = useState(false);
     const [videoSrc, setVideoSrc] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     const handleImageClick = (imageUrl: string) => {
         setImageSrc(imageUrl);
@@ -135,8 +137,21 @@ export default function MessageInput(props: MessageInputProps) {
                 console.log(`🔄 Создаем новый чат с userId ${recipientId} перед отправкой...`);
                 const newChat = await createPrivateChat(currentUserId, recipientId, token);
 
-                finalChatId = recipientId;
-                setSelectedChat(newChat);
+                if (!newChat || !newChat.id) {
+                    console.error("❌ Ошибка: Сервер не вернул ID нового чата!");
+                    return;
+                }
+
+                finalChatId = newChat.id;
+
+                console.log(`✅ Чат создан с ID: ${newChat.id}, обновляем selectedChat.`);
+
+                if (!selectedChat || selectedChat.id !== newChat.id) {
+                    console.log(`🔄 Устанавливаем selectedChat: ${newChat.id}`);
+                    setSelectedChat(newChat);
+                }
+
+                navigate(`/chat/#${recipientId}`);
             }
 
 

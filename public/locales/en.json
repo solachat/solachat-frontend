@@ -383,5 +383,9 @@
     "windowsDesc": "Native Windows client...",
     "macosDesc": "macOS optimized version...",
     "webDesc": "Browser-based solution..."
-  }
+  },
+  "enterTOTPCode": "Enter TOTP code",
+  "public_key": "Public Key",
+  "general_settings": "General Settings",
+  "data_storage": "Data Storage"
 }

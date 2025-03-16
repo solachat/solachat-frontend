@@ -3,7 +3,7 @@ import Box from '@mui/joy/Box';
 import Stack from '@mui/joy/Stack';
 import IconButton from '@mui/joy/IconButton';
 import Typography from '@mui/joy/Typography';
-import LanguageSwitcher from '../core/LanguageSwitcher';
+import {LanguageSwitcher} from '../core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../core/ColorSchemeToggle';
 import { useTranslation } from 'react-i18next';
 import SolanaIcon from "../core/SolanaIcon";

@@ -33,7 +33,7 @@ import Verified from '../components/core/Verified';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
-import LanguageSwitcher from '../components/core/LanguageSwitcher';
+import {LanguageSwitcher} from '../components/core/LanguageSwitcher';
 import AvatarUploadModal from '../components/profile/AvatarUploadModal';
 import ReportModal from "../components/profile/ReportModal";
 import WalletIcon from '@mui/icons-material/Wallet';

@@ -450,5 +450,9 @@
     "windowsDesc": "Нативный клиент для Windows...",
     "macosDesc": "Оптимизированная версия для macOS...",
     "webDesc": "Решение для браузера..."
-  }
+  },
+  "enterTOTPCode": "Введите код TOTP",
+  "public_key": "Публичный ключ",
+  "general_settings": "Общие настройки",
+  "data_storage": "Данные и память"
 }

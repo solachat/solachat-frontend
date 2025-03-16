@@ -22,6 +22,7 @@ import PhantomConnectButton from '../components/core/PhantomConnectButton';
 import Person from '@mui/icons-material/Person';
 import { Helmet } from "react-helmet-async";
 import MetamaskConnectButton from "../components/core/MetamaskConnectButton";
+import {motion} from "framer-motion";
 
 interface PhantomProvider extends Window {
     solana?: {
@@ -51,6 +52,12 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 interface SignUpFormElement extends HTMLFormElement {
     readonly elements: FormElements;
 }
+
+const fadeIn = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.8 } }
+};
+
 
 const RegisterPage: React.FC = () => {
     const { t } = useTranslation();
@@ -160,22 +167,58 @@ const RegisterPage: React.FC = () => {
                     ':root': {
                         '--Form-maxWidth': '800px',
                         '--Transition-duration': '0.4s',
+                        '--main-gradient': 'linear-gradient(45deg, #0a192f 0%, #081428 100%)',
+                        '--accent-blue': '#00a8ff',
+                        '--accent-dark-blue': '#007bff',
+                        '--glass-bg': 'rgba(10, 25, 47, 0.8)',
+                        '--dark-glass-bg': 'rgba(8, 20, 40, 0.8)',
                     },
                 }}
             />
+
+            {/* Светящиеся эффекты фона */}
+            <Box sx={{
+                position: 'fixed',
+                width: '100%',
+                height: '100%',
+                background: 'var(--main-gradient)',
+                '&::before, &::after': {
+                    content: '""',
+                    position: 'absolute',
+                    borderRadius: '50%',
+                    filter: 'blur(120px)',
+                },
+                '&::before': {
+                    width: 300,
+                    height: 300,
+                    background: 'rgba(0, 168, 255, 0.15)',
+                    top: '10%',
+                    left: '10%',
+                },
+                '&::after': {
+                    width: 250,
+                    height: 250,
+                    background: 'rgba(0, 110, 255, 0.1)',
+                    bottom: '15%',
+                    right: '15%',
+                }
+            }} />
+
             <Box
+                component={motion.div}
+                initial="hidden"
+                animate="visible"
+                variants={fadeIn}
                 sx={(theme) => ({
                     width: { xs: '100%', md: '50vw' },
-                    transition: 'width var(--Transition-duration)',
-                    transitionDelay: 'calc(var(--Transition-duration) + 0.1s)',
                     position: 'relative',
-                    zIndex: 1,
+                    zIndex: 2,
                     display: 'flex',
                     justifyContent: 'flex-end',
                     backdropFilter: 'blur(12px)',
-                    backgroundColor: 'rgba(255 255 255 / 0.2)',
+                    backgroundColor: 'var(--glass-bg)',
                     [theme.getColorSchemeSelector('dark')]: {
-                        backgroundColor: 'rgba(19 19 24 / 0.4)',
+                        backgroundColor: 'var(--dark-glass-bg)',
                     },
                 })}
             >
@@ -198,49 +241,91 @@ const RegisterPage: React.FC = () => {
                             pb: 5,
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 2,
+                            gap: 3,
                             width: 400,
                             maxWidth: '100%',
                             mx: 'auto',
-                            borderRadius: 'sm',
-                            '& form': {
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 2,
-                            },
-                            [`& .MuiFormLabel-asterisk`]: {
-                                visibility: 'hidden',
-                            },
                         }}
                     >
-                        <Stack gap={1}>
-                            <Typography component="h1" level="h3">
+                        <Stack gap={2}>
+                            <Typography
+                                component="h1"
+                                level="h2"
+                                sx={{
+                                    background: 'linear-gradient(45deg, var(--accent-blue), var(--accent-dark-blue))',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700
+                                }}
+                            >
                                 {t('signUp')}
                             </Typography>
-                            <Typography level="body-sm">
+
+                            <Typography
+                                level="body-sm"
+                                sx={{
+                                    color: 'rgba(255,255,255,0.7)',
+                                    '& a': {
+                                        color: 'var(--accent-blue)',
+                                        textDecoration: 'none',
+                                        '&:hover': { textDecoration: 'underline' }
+                                    }
+                                }}
+                            >
                                 {t('alreadyHaveAccount')}{' '}
-                                <Link component={RouterLink} to="/login" level="title-sm">
+                                <Link component={RouterLink} to="/login">
                                     {t('signIn')}
                                 </Link>
                             </Typography>
                         </Stack>
+
                         {errorMessage && (
-                            <Alert color="danger" sx={{ mb: 2 }}>
+                            <Alert
+                                color="danger"
+                                sx={{
+                                    background: 'rgba(255, 76, 81, 0.15)',
+                                    border: '1px solid rgba(255, 76, 81, 0.3)'
+                                }}
+                            >
                                 {errorMessage}
                             </Alert>
                         )}
-                        <PhantomConnectButton onConnect={handlePhantomConnect} />
-                        <MetamaskConnectButton onConnect={handleMetaMaskConnect} />
+
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2,
+                            '& button': {
+                                background: 'linear-gradient(45deg, var(--accent-dark-blue), var(--accent-blue))',
+                                border: '1px solid rgba(0, 168, 255, 0.3)',
+                                color: '#fff',
+                                py: 1,
+                                fontSize: '1rem',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 4px 15px rgba(0, 168, 255, 0.3)'
+                                }
+                            }
+                        }}>
+                            <PhantomConnectButton onConnect={handlePhantomConnect} />
+                            <MetamaskConnectButton onConnect={handleMetaMaskConnect} />
+                        </Box>
                     </Box>
 
                     <Box component="footer" sx={{ py: 3 }}>
-                        <Typography level="body-xs" textAlign="center">
+                        <Typography
+                            level="body-xs"
+                            sx={{
+                                textAlign: 'center',
+                                color: 'rgba(255,255,255,0.5)'
+                            }}
+                        >
                             {t('footerText', { year: new Date().getFullYear() })}
                         </Typography>
                     </Box>
                 </Box>
             </Box>
-
             <Box
                 sx={(theme) => ({
                     height: '100%',
@@ -265,6 +350,6 @@ const RegisterPage: React.FC = () => {
             />
         </CssVarsProvider>
     );
-};
+}
 
 export default RegisterPage;

@@ -37,25 +37,25 @@ export default function MessagesMenu({
     };
 
     const hoverSx = {
-        height: '36px', // Уменьшено с 40px
-        borderRadius: '6px', // Уменьшено с 8px
+        height: '36px',
+        borderRadius: '6px',
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-            backgroundColor: 'rgba(0, 168, 255, 0.12)', // Уменьшена прозрачность
-            boxShadow: '0 2px 8px rgba(0, 168, 255, 0.15)', // Уменьшена тень
-            transform: 'translateX(3px)', // Уменьшено смещение
+            backgroundColor: 'rgba(0, 168, 255, 0.12)',
+            boxShadow: '0 2px 8px rgba(0, 168, 255, 0.15)',
+            transform: 'translateX(3px)',
             '& .MuiSvgIcon-root': {
-                transform: 'scale(1.05)', // Уменьшено увеличение
+                transform: 'scale(1.05)',
                 filter: 'drop-shadow(0 1px 2px rgba(0,168,255,0.25))'
             }
         }
     };
 
     const iconSx = {
-        marginRight: 1, // Уменьшено с 1.5
+        marginRight: 1,
         color: '#00a8ff',
         transition: 'all 0.2s ease',
-        fontSize: '20px' // Уменьшено с 22px
+        fontSize: '20px'
     };
 
     const handleDeleteChat = async () => {
@@ -85,14 +85,14 @@ export default function MessagesMenu({
                 position: 'absolute',
                 right: 0,
                 top: '100%',
-                mt: 0.5, // Уменьшено с 1
-                borderRadius: '10px', // Уменьшено с 12px
+                mt: 0.5,
+                borderRadius: '10px',
                 background: 'rgba(0, 22, 45, 0.98)',
-                backdropFilter: 'blur(20px)', // Уменьшено с 24px
-                border: '1px solid rgba(0, 168, 255, 0.3)', // Уменьшена прозрачность
-                boxShadow: '0 8px 24px rgba(0, 168, 255, 0.2)', // Уменьшена тень
-                minWidth: '180px', // Уменьшено с 200px
-                p: 1, // Уменьшено с 1.5
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(0, 168, 255, 0.3)',
+                boxShadow: '0 8px 24px rgba(0, 168, 255, 0.2)',
+                minWidth: '180px',
+                p: 1,
                 transformOrigin: 'top right',
                 transition: 'opacity 0.15s ease, transform 0.15s ease',
                 opacity: isOpen ? 1 : 0,
@@ -105,17 +105,17 @@ export default function MessagesMenu({
                 flexGrow: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 0.5, // Уменьшено с 1
+                gap: 0.5,
                 '& .MuiListItem-root': {
                     position: 'relative',
                     '&:not(:last-child)::after': {
                         content: '""',
                         position: 'absolute',
                         bottom: 0,
-                        left: 10, // Уменьшено с 12
-                        right: 10, // Уменьшено с 12
+                        left: 10,
+                        right: 10,
                         height: '1px',
-                        background: 'linear-gradient(90deg, transparent 0%, rgba(0,168,255,0.15) 50%, transparent 100%)' // Уменьшена прозрачность
+                        background: 'linear-gradient(90deg, transparent 0%, rgba(0,168,255,0.15) 50%, transparent 100%)'
                     }
                 }
             }}>
@@ -125,8 +125,8 @@ export default function MessagesMenu({
                         <ListItemContent>
                             <Typography level="title-sm" sx={{
                                 color: '#a0d4ff',
-                                fontSize: '13px', // Уменьшено с 14px
-                                letterSpacing: '0.2px' // Уменьшено с 0.3px
+                                fontSize: '13px',
+                                letterSpacing: '0.2px'
                             }}>
                                 {t("Block User")}
                             </Typography>
@@ -150,10 +150,10 @@ export default function MessagesMenu({
                 </ListItem>
 
                 <Divider sx={{
-                    my: 0.5, // Уменьшено с 1
-                    bgcolor: 'rgba(0, 168, 255, 0.15)', // Уменьшена прозрачность
+                    my: 0.5,
+                    bgcolor: 'rgba(0, 168, 255, 0.15)',
                     '&::before, &::after': {
-                        background: 'linear-gradient(90deg, transparent 0%, rgba(0,168,255,0.3) 50%, transparent 100%)' // Уменьшена прозрачность
+                        background: 'linear-gradient(90deg, transparent 0%, rgba(0,168,255,0.3) 50%, transparent 100%)'
                     }
                 }} />
 
@@ -161,10 +161,10 @@ export default function MessagesMenu({
                     <ListItemButton onClick={handleDeleteChat} sx={{
                         ...hoverSx,
                         '&:hover': {
-                            backgroundColor: 'rgba(255, 50, 50, 0.12)', // Уменьшена прозрачность
-                            boxShadow: '0 2px 8px rgba(255, 50, 50, 0.15)', // Уменьшена тень
+                            backgroundColor: 'rgba(255, 50, 50, 0.12)',
+                            boxShadow: '0 2px 8px rgba(255, 50, 50, 0.15)',
                             '& .MuiSvgIcon-root': {
-                                color: '#ff4040', // Изменен оттенок
+                                color: '#ff4040',
                                 filter: 'drop-shadow(0 1px 2px rgba(255,50,50,0.25))'
                             }
                         }

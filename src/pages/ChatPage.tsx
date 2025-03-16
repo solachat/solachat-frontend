@@ -5,7 +5,7 @@ import MessagesPane from '../components/messages/MessagesPane';
 import ChatsPane from '../components/messages/ChatsPane';
 import { ChatProps } from '../components/core/types';
 import { fetchChatsFromServer } from '../api/api';
-import LanguageSwitcher from '../components/core/LanguageSwitcher';
+import {LanguageSwitcher} from '../components/core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
 import Sidebar from '../components/core/Sidebar';
 import { Typography } from "@mui/joy";
@@ -22,55 +22,6 @@ export default function MyProfile() {
     const navigate = useNavigate();
     const { t } = useTranslation();
 
-    React.useEffect(() => {
-        const loadChats = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    throw new Error('Authorization token is missing');
-                }
-
-                const fetchedChats = await fetchChatsFromServer(currentUser.id, token);
-
-                if (Array.isArray(fetchedChats)) {
-                    setChats(fetchedChats);
-                } else {
-                    setError('No chats available.');
-                    setChats([]);
-                }
-            } catch (error) {
-                console.error('Error loading chats:', error);
-                setError('Failed to load chats.');
-                setChats([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadChats();
-    }, [currentUser.id]);
-
-    React.useEffect(() => {
-        if (chats.length > 0) {
-            if (id) {
-                const numericId = Number(id);
-                if (!isNaN(numericId)) {
-                    const chatById = chats.find(chat => chat.id === numericId);
-                    if (chatById) {
-                        setSelectedChat(chatById);
-                    } else {
-                        setSelectedChat(chats[0]);
-                    }
-                } else {
-                    console.error('Параметр id не является числом');
-                    setSelectedChat(chats[0]);
-                }
-            } else {
-                setSelectedChat(chats[0]);
-            }
-        }
-
-    }, [chats, id, selectedChat, navigate]);
 
     return (
         <div>
@@ -115,6 +66,7 @@ export default function MyProfile() {
                     {Array.isArray(chats) && chats.length > 0 ? (
                         <ChatsPane
                             chats={chats}
+                            selectedChat={selectedChat}
                             selectedChatId={selectedChat ? String(selectedChat.id) : ''}
                             setSelectedChat={setSelectedChat}
                             currentUser={currentUser}
@@ -140,7 +92,7 @@ export default function MyProfile() {
                     ) : loading ? (
                         <Typography>Loading chats...</Typography>
                     ) : selectedChat ? (
-                        <MessagesPane chat={selectedChat} chats={chats} setSelectedChat={setSelectedChat}  />
+                        <MessagesPane chat={selectedChat}selectedChat={selectedChat} chats={chats} setSelectedChat={setSelectedChat}  />
                     ) : (
                         <Typography>No messages yet.</Typography>
                     )}
