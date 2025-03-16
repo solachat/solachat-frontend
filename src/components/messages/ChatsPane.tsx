@@ -56,6 +56,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 return [...prevChats, newChat].sort((a, b) => b.id - a.id);
             });
 
+
             if (selectedChat?.id === -1) {
                 console.log(`✅ Принудительно обновляем selectedChat: ${newChat.id}`);
                 setSelectedChat(newChat);

@@ -8,7 +8,7 @@ import ChatBubble from './ChatBubble';
 import MessageInput from './MessageInput';
 import MessagesPaneHeader from './MessagesPaneHeader';
 import { ChatProps, MessageProps, UserProps } from '../core/types';
-import { useState, useEffect, useRef } from 'react';
+import {useState, useEffect, useRef, useLayoutEffect} from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +37,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const chatIdRef = useRef<number | null>(null);
+    const [currentChatId, setCurrentChatId] = useState<number | null>(null);
     const [messages, setMessages] = useState<MessageProps[]>(chat?.messages || []);
     const [userStatuses, setUserStatuses] = React.useState<Record<string, Pick<UserProps, 'online' | 'lastOnline'>>>({});
     const [visibleDate, setVisibleDate] = useState<string | null>(null);
@@ -271,8 +272,10 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
     };
 
     const selectedChatRef = useRef<ChatProps | null>(null);
-    useEffect(() => {
+
+    useLayoutEffect(() => {
         selectedChatRef.current = selectedChat;
+        console.log("🔄 Реф синхронизирован:", selectedChat?.id);
     }, [selectedChat]);
 
     useWebSocket((data) => {
