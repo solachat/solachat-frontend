@@ -10,12 +10,12 @@ import { createPrivateChat } from '../../api/api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/joy/Avatar';
-import {useCallback, useEffect, useState} from 'react';
 import { t } from 'i18next';
-import DoneAllIcon from "@mui/icons-material/DoneAll";
-import CheckIcon from "@mui/icons-material/Check";
 import {useTranslation} from "react-i18next";
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
+import Verified from "../core/Verified";
+import {useEffect, useState} from "react";
+import {fetchChatsFromServer} from "../../api/api";
 
 type NewMessageEvent =
     | {
@@ -37,7 +37,7 @@ type NewMessageEvent =
 };
 
 type ChatListItemProps = {
-    id: string;
+    id: string | null;
     unread?: boolean;
     sender?: UserProps;
     messages: MessageProps[];
@@ -48,6 +48,7 @@ type ChatListItemProps = {
     isGroup?: boolean;
     newMessage?: NewMessageEvent;
     setChats: React.Dispatch<React.SetStateAction<ChatProps[]>>;
+    lastMessage?: MessageProps;
 };
 
 const isImage = (fileName: string) => {
@@ -62,89 +63,26 @@ const isVideo = (fileName: string) => {
     return videoExtensions.includes(fileExtension || '');
 };
 
-const fixFilePath = (filePath: string) => filePath.replace(/\\/g, '/').replace(/\.enc$/, '');
 
 export default function ChatListItem(props: ChatListItemProps) {
     const {
         id, sender, messages, selectedChatId, setSelectedChat,
-        currentUserId, chats, isGroup, newMessage, setChats,
+        currentUserId, chats, isGroup
     } = props;
 
     const selected = selectedChatId === id;
     const navigate = useNavigate();
 
-    const existingChat = chats.find((chat: ChatProps) => chat.id === Number(id));
+    const [existingChat, setExistingChat] = useState<ChatProps | null>(null);
     const isFavorite = existingChat?.isFavorite || false;
+    const { i18n } = useTranslation();
+    const locale = i18n.language || 'en-GB';
 
-    const lastMessage = messages[messages.length - 1] || null;
-
-    useEffect(() => {
-        if (newMessage?.type === "newMessage" && newMessage.message.chatId === Number(id)) {
-            const messageData = newMessage.message;
-
-            setChats((prevChats) =>
-                prevChats.map((chat) =>
-                    chat.id === messageData.chatId
-                        ? {
-                            ...chat,
-                            messages: [...chat.messages, messageData],
-                            lastMessage: messageData,
-                        }
-                        : chat
-                )
-            );
-        }
-
-        if (newMessage?.type === "editMessage" && newMessage.message) {
-            const updatedMessage = newMessage.message;
-
-            setChats((prevChats) =>
-                prevChats.map((chat) =>
-                    chat.id === updatedMessage.chatId
-                        ? {
-                            ...chat,
-                            messages: chat.messages.map((msg) =>
-                                msg.id === updatedMessage.id ? { ...msg, ...updatedMessage } : msg
-                            ),
-                            lastMessage: updatedMessage,
-                        }
-                        : chat
-                )
-            );
-        }
-
-        if (newMessage?.type === "deleteMessage" && "messageId" in newMessage) {
-            const { messageId, chatId } = newMessage;
-
-            setChats((prevChats) =>
-                prevChats.map((chat) =>
-                    chat.id === chatId
-                        ? {
-                            ...chat,
-                            messages: chat.messages.filter((msg) => msg.id !== messageId),
-                        }
-                        : chat
-                )
-            );
-        }
-
-        if (newMessage?.type === "messageRead" && "messageId" in newMessage) {
-            const { messageId } = newMessage;
-
-            setChats((prevChats) =>
-                prevChats.map((chat) => ({
-                    ...chat,
-                    messages: chat.messages.map((msg) =>
-                        msg.id === messageId ? { ...msg, isRead: true } : msg
-                    ),
-
-                    lastMessage: chat.messages[chat.messages.length - 1]?.id === messageId
-                        ? { ...chat.messages[chat.messages.length - 1], isRead: true }
-                        : chat.lastMessage,
-                }))
-            );
-        }
-    }, [newMessage, id, setChats]);
+    const lastMessage = messages.length > 0
+        ? messages[messages.length - 1]
+        : existingChat && Array.isArray(existingChat.messages) && existingChat.messages.length > 0
+            ? existingChat.messages[existingChat.messages.length - 1]
+            : props.lastMessage || null;
 
     const unreadMessages = messages.filter(
         (msg) => msg.userId !== currentUserId && !msg.isRead
@@ -155,6 +93,7 @@ export default function ChatListItem(props: ChatListItemProps) {
         const today = new Date();
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
+
 
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay() + 1);
@@ -185,12 +124,14 @@ export default function ChatListItem(props: ChatListItemProps) {
                 hour: '2-digit',
                 minute: '2-digit',
             });
+        } else if (date.toDateString() === yesterday.toDateString()) {
+            return locale === 'ru' ? 'Вчера' : 'Yesterday';
         } else if (date >= startOfWeek) {
             const weekdayInEnglish = date.toLocaleDateString('en', { weekday: 'long' });
             const abbreviation = weekdayAbbreviations[locale]?.[weekdayInEnglish] || weekdayInEnglish;
             return abbreviation;
         } else {
-            return date.toLocaleDateString('default', {
+            return date.toLocaleDateString(locale, {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric',
@@ -198,23 +139,50 @@ export default function ChatListItem(props: ChatListItemProps) {
         }
     };
 
-    const { i18n } = useTranslation();
-    const locale = i18n.language || 'en-GB';
+
 
     const handleClick = async () => {
-        if (existingChat) {
-            setSelectedChat(existingChat);
-            navigate(isGroup ? `/chat/#-${existingChat.id}` : `/chat/#${existingChat.id}`);
-        } else if (sender) {
-            const token = localStorage.getItem('token');
-            const newChat = await createPrivateChat(currentUserId, sender.id, token || '');
-            if (newChat) {
-                setSelectedChat({ ...newChat, users: [sender, { id: currentUserId }] });
-                navigate(`/chat/#${newChat.id}`);
-            } else {
-                toast.error('Failed to create chat.');
-            }
+        if (!sender) {
+            console.error("❌ Ошибка: Отправитель не указан!");
+            return;
         }
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("❌ Ошибка: JWT-токен отсутствует!");
+            return;
+        }
+
+        console.log("📌 handleClick вызван для sender.id =", sender.id);
+
+        const recipientId = sender.id;
+
+        const chatExists = chats.find(
+            (chat: ChatProps) =>
+                !chat.isGroup && chat.users.some((user: UserProps) => user.id === recipientId)
+        );
+
+        if (chatExists) {
+            console.log("✅ Чат найден:", chatExists);
+            setExistingChat(chatExists);
+            setSelectedChat(chatExists);
+            navigate(`/chat/#${recipientId}`);
+            return;
+        }
+
+        const tempChat: ChatProps = {
+            id: -1,
+            users: [sender],
+            messages: [],
+            isGroup: false,
+            user: sender,
+        };
+
+        console.log(`🆕 Создан временный чат с ID: ${tempChat.id} (для UI)`);
+
+        setExistingChat(tempChat);
+        setSelectedChat(tempChat);
+        navigate(`/chat/#${recipientId}`);
     };
 
     if (!sender && !isGroup) return null;
@@ -225,35 +193,41 @@ export default function ChatListItem(props: ChatListItemProps) {
                 <ListItemButton
                     onClick={handleClick}
                     selected={selected}
-                    color="neutral"
                     sx={{
                         flexDirection: 'column',
                         alignItems: 'initial',
-                        gap: 1,
-                        padding: { xs: '8px' },
+                        gap: { xs: 0.5, sm: 1 },
+                        padding: { xs: '6px', sm: '10px' },
+                        borderRadius: '2px',
+                        mx: '1px',
+                        '&.Mui-selected': {
+                            backgroundColor: 'var(--joy-palette-primary-solidBg)',
+                            color: 'white',
+                            borderRadius: '2px',
+                        },
                     }}
                 >
-                    <Stack direction="row" spacing={1.5}>
+                    <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
                         {isGroup ? (
                             <Avatar
                                 src={existingChat?.avatar || 'path/to/default-group-avatar.jpg'}
                                 alt={existingChat?.name || 'Group Chat'}
-                                sx={{ width: { xs: 48, sm: 48 }, height: { xs: 48, sm: 48 } }}
+                                sx={{ width: { xs: 40, sm: 56 }, height: { xs: 40, sm: 56 } }}
                             />
                         ) : (
-                            <Box sx={{ position: 'relative', width: 48, height: 48 }}>
+                            <Box sx={{ position: 'relative', width: { xs: 40, sm: 56 }, height: { xs: 40, sm: 56 } }}>
                                 <AvatarWithStatus
                                     online={sender?.online}
                                     src={sender?.avatar}
-                                    alt={sender?.username}
+                                    alt={sender?.public_key}
                                     sx={{
-                                        width: { xs: 48, sm: 48 },
-                                        height: { xs: 48, sm: 48 },
-                                        fontSize: { xs: 16, sm: 24 },
+                                        width: { xs: 40, sm: 56 },
+                                        height: { xs: 40, sm: 56 },
+                                        fontSize: { xs: 12, sm: 15 },
                                     }}
                                 >
-                                    {(!sender?.avatar && sender?.username)
-                                        ? sender.username[0].toUpperCase()
+                                    {(!sender?.avatar && sender?.public_key)
+                                        ? sender.public_key[0].toUpperCase()
                                         : null}
                                 </AvatarWithStatus>
                                 {isFavorite && (
@@ -264,47 +238,68 @@ export default function ChatListItem(props: ChatListItemProps) {
                                             right: -2,
                                             backgroundColor: '#007bff',
                                             borderRadius: '50%',
-                                            width: 24,
-                                            height: 24,
+                                            width: { xs: 18, sm: 24 },
+                                            height: { xs: 18, sm: 24 },
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                         }}
                                     >
-                                        <BookmarkBorderIcon sx={{ color: 'white', fontSize: 16 }} />
+                                        <BookmarkBorderIcon sx={{ color: 'white', fontSize: { xs: 14, sm: 18 } }} />
                                     </Box>
                                 )}
                             </Box>
                         )}
 
                         <Box sx={{ flex: 1 }}>
-                            <Typography level="body-md" fontSize={{ xs: 'sm', sm: 'md' }}>
-                                {isGroup ? existingChat?.name || 'Group Chat' : `${sender?.username || 'No Name'}`}
+                            <Typography
+                                level="body-md"
+                                fontSize={{ xs: 'sm', sm: 'md' }}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    flexWrap: 'wrap',
+                                    lineHeight: 1.3,
+                                    wordBreak: 'break-word',
+                                    color: selected
+                                        ? 'var(--joy-palette-common-white)'
+                                        : 'var(--joy-palette-text-primary)',
+                                    fontWeight: 'bold',
+                                }}
+                            >
+                                {isGroup ? existingChat?.name || 'Group Chat' : sender?.public_key || 'No Name'}
                             </Typography>
+
                             {lastMessage ? (
                                 <Typography
                                     level="body-sm"
+                                    fontSize={{ xs: 'xs', sm: '15px' }}
                                     sx={{
                                         display: '-webkit-box',
                                         WebkitLineClamp: '2',
                                         WebkitBoxOrient: 'vertical',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                        color: 'text.secondary',
-                                        marginTop: '3px',
-                                        maxWidth: { xs: '290px', sm: '350px' },
+                                        color: selected
+                                            ? 'var(--joy-palette-common-white)'
+                                            : 'var(--joy-palette-text-primary)',
+                                        maxWidth: { xs: '260px', sm: '380px' },
                                         width: '100%',
                                     }}
                                 >
                                     {lastMessage.attachment && isImage(lastMessage.attachment.fileName) ? (
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <img
-                                                src={`http://localhost:4000/${fixFilePath(lastMessage.attachment.filePath)}`}
+                                                src={lastMessage.attachment.filePath}
                                                 alt="attachment preview"
-                                                style={{ width: '20px', height: '20px', marginRight: '8px' }}
+                                                style={{
+                                                    width: '18px',
+                                                    height: '18px',
+                                                    marginRight: '6px',
+                                                    borderRadius: '2px',
+                                                }}
                                             />
-                                            <span>{t('image')}</span>
+                                            <span>{lastMessage.content ? lastMessage.content : t('image')}</span>
                                         </Box>
                                     ) : lastMessage.attachment && isVideo(lastMessage.attachment.fileName) ? (
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -320,6 +315,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                                 <Typography level="body-sm">{t('No messages')}</Typography>
                             )}
                         </Box>
+
                         {lastMessage && (
                             <Box
                                 sx={{
@@ -333,36 +329,30 @@ export default function ChatListItem(props: ChatListItemProps) {
                             >
                                 <Typography
                                     level="body-xs"
+                                    fontSize={{ xs: 'xs', sm: 'sm' }}
                                     noWrap
                                     sx={{
                                         display: 'flex',
                                         alignItems: 'center',
                                     }}
                                 >
-                                    {lastMessage.userId === currentUserId ? (
-                                        lastMessage.isRead ? (
-                                            <DoneAllIcon sx={{ fontSize: 15, mr: 0.5 }} />
-                                        ) : (
-                                            <CheckIcon sx={{ fontSize: 15, mr: 0.5 }} />
-                                        )
-                                    ) : null}
                                     {getFormattedDate(new Date(lastMessage.createdAt), locale)}
                                 </Typography>
 
                                 {unreadCount > 0 && lastMessage.userId !== currentUserId && (
                                     <Box
                                         sx={{
-                                            width: 20,
-                                            height: 20,
+                                            width: { xs: 18, sm: 22 },
+                                            height: { xs: 18, sm: 22 },
                                             borderRadius: '50%',
-                                            backgroundColor: 'black',
+                                            backgroundColor: '#007bff',
                                             color: 'white',
-                                            fontSize: 12,
+                                            fontSize: { xs: 12, sm: 14 },
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             mt: 1,
-                                            ml: 0.3,
+                                            marginLeft: { xs: '8px', sm: '15px' },
                                         }}
                                     >
                                         {unreadCount}

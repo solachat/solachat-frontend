@@ -10,6 +10,7 @@ import SolanaIcon from "./SolanaIcon";
 import {Switch} from "@mui/joy";
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import {useTranslation} from "react-i18next";
+import BitcoinIcon from "./BitcoinIcon";
 
 export function DarkModeSwitch() {
     const { mode, setMode } = useColorScheme();
@@ -27,20 +28,23 @@ export function DarkModeSwitch() {
             sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1,
+                justifyContent: 'space-between',
+                width: '100%',
             }}
         >
-            <DarkModeOutlinedIcon />
-            <Typography
-                level="title-sm"
-                sx={{
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                }}
-            >
-                {t('Dark Mode')}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <DarkModeOutlinedIcon />
+                <Typography
+                    level="title-sm"
+                    sx={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    }}
+                >
+                    {t('Dark Mode')}
+                </Typography>
+            </Box>
             <Switch
                 checked={mode === 'dark'}
                 disabled={!mounted}
@@ -56,7 +60,6 @@ export function DarkModeSwitch() {
         </Box>
     );
 }
-
 
 export function ColorSchemeToggle(props: IconButtonProps) {
     const { onClick, ...other } = props;
@@ -105,7 +108,7 @@ export function Header({ sx, ...props }: HeaderProps) {
                 <IconButton variant="soft" size="sm">
                     <SolanaIcon />
                 </IconButton>
-                <Typography component="h1">SolaCoin</Typography>
+                <Typography component="h1">DarkChat</Typography>
             </Box>
             <Box sx={{ gap: 2, display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
                 <ColorSchemeToggle />

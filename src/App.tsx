@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import { ThemeProvider } from './theme/ThemeContext';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import ForgotPassword from './pages/ForgotPassword';
 import MyAccount from './pages/AccountPage';
 import { HelmetProvider } from 'react-helmet-async';
 import ContactsPage from './pages/ContactsPage';
@@ -34,14 +33,14 @@ const App: React.FC = () => {
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/register" element={<RegisterPage />} />
-                        <Route path="/forgotpassword" element={<ForgotPassword />} />
-                        <Route path="/account" element={<MyAccount />} />
-                        <Route path="/" element={<Navigate to="/chatOrLogin" />} />
+                        <Route path="/:identifier" element={<MyAccount />} />
+
+                        <Route path="/" element={<HomePage/>} />
                         <Route path="/contacts" element={<ContactsPage />} />
                         <Route path="/chat" element={<PrivateRoute element={<MyMessages />} />} />
-                        <Route path="/chatOrLogin" element={
-                            localStorage.getItem('token') ? <Navigate to="/chat" /> : <Navigate to="/access-denied" />
-                        } />
+                        {/*<Route path="/chatOrLogin" element={*/}
+                        {/*    localStorage.getItem('token') ? <Navigate to="/chat" /> : <Navigate to="/login" />*/}
+                        {/*} />*/}
 
                         {underDevelopmentRoutes.map((route) => (
                             <Route path={route} element={<UnderConstruction />} key={route} />

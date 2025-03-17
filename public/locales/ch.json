@@ -37,6 +37,26 @@
   "plan": "计划",
   "billing": "账单",
   "realname": "真实姓名",
+  "footer": {
+    "about": "关于我们",
+    "privacy": "隐私政策",
+    "terms": "使用条款",
+    "slogan": "安全的加密消息传递。端到端加密。基于区块链。",
+    "product": "产品",
+    "company": "公司",
+    "legal": "法律信息",
+    "community": "加入社区",
+    "features": "功能",
+    "security": "安全审计",
+    "download": "下载应用",
+    "blog": "博客",
+    "careers": "职业",
+    "compliance": "合规性",
+    "learnMore": "了解更多",
+    "madeWith": "制作于",
+    "team": "SolaChat 团队",
+    "rightsReserved": "版权所有"
+  },
   "report": "报告",
   "passwordsDoNotMatch": "密码不匹配",
   "continueWithTelegram": "使用 Telegram 登录",
@@ -184,5 +204,41 @@
   "add": "添加",
   "delete": "删除",
   "copy": "复制",
-  "forward": "转发"
+  "forward": "转发",
+  "Connecting": "連接中",
+  "offline": "离线",
+  "just_now": "刚刚",
+  "last_seen": "最后出现于 {{time}}",
+  "minutes_ago_one": "{{count}} 分钟前",
+  "minutes_ago_few": "{{count}} 分钟前",
+  "minutes_ago_many": "{{count}} 分钟前",
+  "hours_ago_one": "{{count}} 小时前",
+  "hours_ago_few": "{{count}} 小时前",
+  "hours_ago_many": "{{count}} 小时前",
+  "last_seen_yesterday": "昨天 {{time}}",
+  "totp_alert_title": "使用 TOTP 保护您的帐户",
+  "totp_alert_description": "启用双因素身份验证 (TOTP) 以提高安全性并简化登录。",
+  "totp_alert_button": "设置 TOTP",
+  "cta": {
+    "title": "欢迎来到 SolanaChat",
+    "description": "超过 100,000 名用户已经享受安全和匿名通信",
+    "download": "立即下载"
+  },
+  "hero": {
+    "title": "SolaChat",
+    "subtitle": "Web3 时代的下一代即时通讯应用",
+    "features": {
+      "encryption": "端到端加密",
+      "decentralization": "去中心化架构",
+      "walletSupport": "支持加密钱包"
+    },
+    "button": "免费开始"
+  },
+  "navbar": {
+    "feedback": "反馈",
+    "vacancies": "招聘",
+    "documents": "文档",
+    "signIn": "登录",
+    "signUp": "注册"
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CssVarsProvider } from '@mui/joy/styles';
 import GlobalStyles from '@mui/joy/GlobalStyles';
@@ -14,7 +14,6 @@ import Input from '@mui/joy/Input';
 import Typography from '@mui/joy/Typography';
 import Stack from '@mui/joy/Stack';
 import Alert from '@mui/joy/Alert';
-import GoogleIcon from '../components/core/GoogleIcon';
 import { Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Header } from '../components/core/ColorSchemeToggle';
@@ -60,12 +59,14 @@ const RegisterPage: React.FC = () => {
     const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
     const [signedMessage, setSignedMessage] = useState<{ message: string; signature: string } | null>(null);
 
-    const handleSubmit = async (event: React.FormEvent<SignUpFormElement>) => {
-        event.preventDefault();
-        const formElements = event.currentTarget.elements;
+    useEffect(() => {
+        if (walletAddress && signedMessage) {
+            handleSubmit();
+        }
+    }, [walletAddress, signedMessage]);
 
+    const handleSubmit = async () => {
         const userData = {
-            username: formElements.username.value,
             lastlogin: new Date().toISOString(),
             message: signedMessage?.message,
             signature: signedMessage?.signature,
@@ -75,18 +76,22 @@ const RegisterPage: React.FC = () => {
         try {
             const response = await axios.post(`${API_URL}/api/users/register`, userData);
             const token = response.data.token;
-            localStorage.setItem('token', token);
-            if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
-                navigate('/account?username=' + encodeURIComponent(response.data.user.username));
+            if (token) {
+                localStorage.setItem("token", token);
+                navigate(`/${encodeURIComponent(walletAddress || "")}`);
             }
         } catch (error) {
-            console.error('Registration failed', error);
+            console.error("Registration failed", error);
+
             if (axios.isAxiosError(error)) {
-                const errorMessage = error.response?.data?.message || t('registrationFailed');
+                const errorMessage =
+                    error.response?.data && typeof error.response.data === "object" && "message" in error.response.data
+                        ? (error.response.data as { message: string }).message
+                        : t("registrationFailed");
+
                 setErrorMessage(errorMessage);
             } else {
-                setErrorMessage(t('registrationFailed'));
+                setErrorMessage(t("registrationFailed"));
             }
         }
     };
@@ -105,7 +110,6 @@ const RegisterPage: React.FC = () => {
                 const encodedMessage = new TextEncoder().encode(message);
 
                 const { signature } = await window.solana.signMessage(encodedMessage, 'utf8');
-
                 const signatureBase64 = btoa(String.fromCharCode(...Array.from(signature)));
 
                 setWalletAddress(walletAddress);
@@ -146,7 +150,7 @@ const RegisterPage: React.FC = () => {
     };
 
     return (
-        <CssVarsProvider defaultMode="dark" disableTransitionOnChange>
+        <CssVarsProvider disableTransitionOnChange>
             <Helmet>
                 <title>{t('title.register')}</title>
             </Helmet>
@@ -225,47 +229,6 @@ const RegisterPage: React.FC = () => {
                                 {errorMessage}
                             </Alert>
                         )}
-                        <form onSubmit={handleSubmit}>
-                            <FormControl required>
-                                <FormLabel>{t('username')}</FormLabel>
-                                <Input
-                                    type="text"
-                                    name="username"
-                                    startDecorator={<Person />}
-                                    sx={{
-                                        '& .MuiInputBase-input': {
-                                            pl: '32px',
-                                        },
-                                    }}
-                                />
-                            </FormControl>
-                            <Stack gap={4} sx={{ mt: 2 }}>
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                    }}
-                                >
-                                    <Checkbox size="sm" label={t('rememberMe')} name="persistent" />
-                                    <Link component={RouterLink} to="/forgotpassword" level="title-sm">
-                                        {t('forgotPassword')}
-                                    </Link>
-                                </Box>
-                                <Button type="submit" fullWidth>
-                                    {t('signUp')}
-                                </Button>
-                            </Stack>
-                        </form>
-                        <Divider
-                            sx={(theme) => ({
-                                [theme.getColorSchemeSelector('light')]: {
-                                    color: { xs: '#FFF', md: 'text.tertiary' },
-                                },
-                            })}
-                        >
-                            {t('or')}
-                        </Divider>
                         <PhantomConnectButton onConnect={handlePhantomConnect} />
                         <MetamaskConnectButton onConnect={handleMetaMaskConnect} />
                     </Box>

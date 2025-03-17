@@ -7,7 +7,7 @@ import Typography from '@mui/joy/Typography';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
 import DownloadIcon from '@mui/icons-material/Download';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
-import {CircularProgress, IconButton, Slider} from '@mui/joy';
+import {CircularProgress, IconButton} from '@mui/joy';
 import { useTranslation } from 'react-i18next';
 import { deleteMessage } from '../../api/api';
 import ContextMenu from './ContextMenu';
@@ -18,7 +18,6 @@ import CustomAudioPlayer from '../core/CustomAudioPlayer';
 import CheckIcon from "@mui/icons-material/Check";
 
 type DecodedToken = JwtPayload & { id?: number };
-const isDelivered = true;
 
 type ChatBubbleProps = MessageProps & {
     variant: 'sent' | 'received';
@@ -26,30 +25,57 @@ type ChatBubbleProps = MessageProps & {
     messageCreatorId: number;
     user: {
         avatar: string;
-        username: string;
+        public_key: string;
     };
     isGroupChat: boolean;
     isRead: boolean;
     isDelivered: boolean;
+    pending?: boolean;
 };
 
-const isImageFile = (fileName: string) => {
-    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif'];
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    return imageExtensions.includes(fileExtension || '');
+const isImageFile = (file: File | string, fileType?: string) => {
+    if (fileType?.startsWith("image/")) return true;
+    if (typeof file === "string" && file.startsWith("blob:")) return true;
+
+    const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+
+    if (typeof file === "string") {
+        const fileExtension = file.split(".").pop()?.toLowerCase();
+        return fileExtension ? imageExtensions.includes(fileExtension) : false;
+    }
+
+    return false;
 };
 
-const isVideoFile = (fileName: string) => {
-    const videoExtensions = ['mp4', 'webm', 'ogg'];
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    return videoExtensions.includes(fileExtension || '');
+const isVideoFile = (file: File | string, fileType?: string) => {
+    if (fileType?.startsWith("video/")) return true;
+
+    if (typeof file === "string" && file.startsWith("blob:")) return fileType?.startsWith("video/") || false;
+
+    const videoExtensions = ["mp4", "webm", "ogg", "mov", "mkv"];
+    if (typeof file === "string") {
+        const fileExtension = file.split(".").pop()?.toLowerCase();
+        return fileExtension ? videoExtensions.includes(fileExtension) : false;
+    }
+
+    return false;
 };
 
-const isAudioFile = (fileName: string) => {
-    const audioExtensions = ['mp3'];
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    return audioExtensions.includes(fileExtension || '');
+const isAudioFile = (file: File | string, fileType?: string) => {
+    if (fileType?.startsWith("audio/")) return true;
+
+    if (typeof file === "string" && file.startsWith("blob:")) return fileType?.startsWith("audio/") || false;
+
+    const audioExtensions = ["mp3", "wav", "ogg", "aac", "flac"];
+    if (typeof file === "string") {
+        const fileExtension = file.split(".").pop()?.toLowerCase();
+        return fileExtension ? audioExtensions.includes(fileExtension) : false;
+    }
+
+    return false;
 };
+
+
 
 const isLink = (text: string) => {
     const urlRegex = /(?:^|\s)(https?:\/\/[^\s]+|(?:[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:[\/\w.-]*)?)(?=\s|$)/g;
@@ -91,23 +117,19 @@ const renderMessageContent = (text: string) => {
     });
 };
 
-
-
 export default function ChatBubble(props: ChatBubbleProps) {
     const { t } = useTranslation();
-    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat, isRead } = props;
+    const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat, isRead, pending } = props;
     const isSent = variant === 'sent';
     const formattedTime = new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const handleImageLoad = () => {
         setImageLoading(false);
     };
+    const [pendingImage, setPendingImage] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
 
     const [isImageOpen, setIsImageOpen] = useState(false);
     const [isVideoOpen, setIsVideoOpen] = useState(false);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [currentAudioTime, setCurrentAudioTime] = useState(0);
-    const [duration, setDuration] = useState(0);
-    const [volume, setVolume] = useState(1);
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [videoSrc, setVideoSrc] = useState<string | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ mouseX: number; mouseY: number } | null>(null);
@@ -115,20 +137,22 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const [currentVolume, setCurrentVolume] = useState(1);
     const [isMuted, setIsMuted] = useState(false);
     const [imageLoading, setImageLoading] = useState(true);
+    const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const messageVideoRef = useRef<HTMLVideoElement>(null);
     const modalVideoRef = useRef<HTMLVideoElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
+    const [isClosing, setIsClosing] = useState(false);
 
     const getAttachmentUrl = () => {
-        if (!attachment) return '';
-        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
-        return `${baseUrl}/${attachment.filePath.replace(/\\/g, '/')}?cache-control=max-age=3600`;
+        return attachment?.filePath || '';
     };
 
-    const isImage = isImageFile(attachment?.fileName || '');
-    const isVideo = isVideoFile(attachment?.fileName || '');
-    const isAudio = isAudioFile(attachment?.fileName || '');
+
+    const isImage = isImageFile(attachment?.filePath || '', attachment?.fileType);
+    const isVideo = isVideoFile(attachment?.filePath || '', attachment?.fileType);
+    const isAudio = isAudioFile(attachment?.filePath || '', attachment?.fileType);
+
 
     const handleImageClick = () => {
         setImageSrc(getAttachmentUrl());
@@ -136,12 +160,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
     };
 
     const handleClose = () => {
-        setIsImageOpen(false);
-        setIsVideoOpen(false);
+        setIsClosing(true);
         setTimeout(() => {
-            setImageSrc(null);
-            setVideoSrc(null);
-        }, 300);
+            setIsImageOpen(false);
+            setIsClosing(false);
+        }, 100);
     };
 
     const syncVideoWithModal = () => {
@@ -169,6 +192,22 @@ export default function ChatBubble(props: ChatBubbleProps) {
         });
     };
 
+    const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
+        longPressTimeout.current = setTimeout(() => {
+            const touch = event.touches[0];
+            setAnchorPosition({
+                mouseX: touch.clientX,
+                mouseY: touch.clientY,
+            });
+        }, 200);
+    };
+
+    const handleTouchEnd = () => {
+        if (longPressTimeout.current) {
+            clearTimeout(longPressTimeout.current);
+        }
+    };
+
     const handleEdit = () => {
         onEditMessage(Number(id), content);
         setAnchorPosition(null);
@@ -177,7 +216,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const handleDelete = async () => {
         try {
             await deleteMessage(Number(id));
-            console.log('Message deleted');
         } catch (error) {
             console.error('Failed to delete message:', error);
         }
@@ -225,6 +263,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 flexDirection: 'column',
                 alignItems: isSent ? 'flex-end' : 'flex-start',
             }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             onContextMenu={handleContextMenu}
         >
             <Box
@@ -263,12 +303,14 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     sx={{
                         maxWidth: isEdited ? '75%' : '70%',
                         minWidth: 'fit-content',
-                        padding: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 10px' } : 0,
+                        padding: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 8px' } : 0,
                         borderRadius: '12px',
-                        borderBottomLeftRadius: isSent ? '18px' : '0px',
-                        borderBottomRightRadius: isSent ? '0px' : '18px',
-                        background: (isImage || isVideo || isAudio) && !content ? 'transparent' :
-                            (isSent ? '#4F6D7A' : 'var(--joy-palette-background-level2)'),
+                        backgroundColor:
+                            (isImage || isVideo || isAudio) && !content
+                                ? 'transparent'
+                                : isSent
+                                    ? 'var(--joy-palette-primary-solidBg)'
+                                    : 'background.body',
                         wordWrap: 'break-word',
                         overflowWrap: 'break-word',
                         whiteSpace: 'pre-wrap',
@@ -280,10 +322,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             maxWidth: '85%',
                             width: 'auto',
                         },
+
                     }}
                 >
                     {isGroupChat && !isSent && (
-                        <Typography>{user.username}</Typography>
+                        <Typography>{user.public_key}</Typography>
                     )}
 
                     {isVideo && (
@@ -295,7 +338,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 maxWidth: '100%',
                                 cursor: 'pointer',
                                 overflow: 'hidden',
-                                mb: content ? 2 : 0,
+                                mb: content ? 1 : 0,
+                                borderRadius: content ? '0px' : '12px',
                             }}
                         >
                             <video
@@ -307,6 +351,10 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                     maxHeight: '500px',
                                     objectFit: 'contain',
                                     borderRadius: 0,
+                                    borderTopLeftRadius: content ? '12px' : '0px',
+                                    borderTopRightRadius: content ? '12px' : '0px',
+                                    borderBottomLeftRadius: content ? '0px' : '12px',
+                                    borderBottomRightRadius: content ? '0px' : '12px',
                                 }}
                                 controls
                                 onTimeUpdate={updateVideoState}
@@ -326,6 +374,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 overflow: 'hidden',
                                 mb: content ? 1 : 0,
                                 position: 'relative',
+                                borderRadius: content ? '0px' : '12px',
                             }}
                             onClick={handleImageClick}
                         >
@@ -333,35 +382,42 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 <Box
                                     sx={{
                                         position: 'absolute',
-                                        width: '100px',
-                                        height: '100px',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
                                         display: 'flex',
                                         justifyContent: 'center',
                                         alignItems: 'center',
-                                        backgroundColor: '#f0f0f0', // Цвет фона placeholder
-                                        borderRadius: '4px',
-                                        zIndex: 1,
+                                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                                        borderRadius: '50%',
+                                        width: '50px',
+                                        height: '50px',
+                                        zIndex: 2,
                                     }}
                                 >
-                                    <CircularProgress />
+                                    <CircularProgress size='sm' sx={{ color: 'white' }} />
                                 </Box>
                             )}
+
                             <img
                                 src={getAttachmentUrl()}
                                 alt="attachment"
                                 onLoad={handleImageLoad}
                                 style={{
                                     width: '100%',
-                                    maxWidth: '700px',
-                                    maxHeight: '500px',
+                                    maxWidth: '600px',
+                                    maxHeight: '400px',
                                     objectFit: 'contain',
-                                    borderRadius: 0,
-                                    opacity: imageLoading ? 0 : 1,
+                                    borderTopLeftRadius: content ? '12px' : '0px',
+                                    borderTopRightRadius: content ? '12px' : '0px',
+                                    borderBottomLeftRadius: content ? '0px' : '12px',
+                                    borderBottomRightRadius: content ? '0px' : '12px',
+                                    opacity: imageLoading ? 0.5 : 1,
+                                    transition: 'opacity 0.3s ease',
                                 }}
                             />
                         </Box>
                     )}
-
                     {isAudio && !isVideo && (
                         <CustomAudioPlayer audioSrc={getAttachmentUrl()} isSent={isSent} />
                     )}
@@ -370,35 +426,41 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         <Typography
                             sx={{
                                 fontSize: { xs: '14px', sm: '14px' },
-                                lineHeight: 1.6,
-                                color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-primary)',
+                                color: isSent
+                                    ? {
+                                        color: 'var(--joy-palette-common-white)',
+                                    }
+                                    : {
+                                        color: 'var(--joy-palette-text-primary)',
+                                    },
                                 marginLeft: isImage || isVideo || isAudio ? '12px' : '0px',
                                 marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',
                                 textAlign: 'left',
                                 transition: 'color 0.3s ease',
-                                maxWidth: { xs: '300px', md: '480px' },
                                 wordWrap: 'break-word',
                                 overflowWrap: 'break-word',
                                 whiteSpace: 'pre-wrap',
+                                maxWidth: { xs: '280px', md: '600px' },
                                 display: 'inline-block',
-                                paddingRight: isEdited && isSent ? '120px' : isEdited || isSent ? '60px' : '35px',
+                                paddingRight: isEdited
+                                    ? (isSent ? '115px' : '90px')
+                                    : (isSent ? '60px' : '40px'),
                             }}
                         >
                             {renderMessageContent(content)}
                         </Typography>
                     )}
-
                     <Stack
                         direction="row"
                         spacing={0.5}
                         sx={{
                             position: 'absolute',
                             bottom: '4px',
-                            right: '10px',
+                            right:  '10px',
                             alignItems: 'center',
                             backgroundColor: (isImage && !content) || (isVideo && !content) ? 'rgba(0, 0, 0, 0.4)' : 'transparent',
                             padding: (isImage && !content) || (isVideo && !content) ? '2px 6px' : '0px',
-                            borderRadius: (isImage && !content) || (isVideo && !content) ? '10px' : '0px',
+                            borderRadius: (isImage && !content) || (isVideo && !content) ? '12px' : '0px',
                         }}
                     >
                         {isEdited && (
@@ -417,22 +479,47 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 alignItems: 'center',
                                 fontSize: '12px',
                                 color: isSent ? 'var(--joy-palette-common-white)' : 'var(--joy-palette-text-secondary)',
-                                gap: '1px',
                             }}
                         >
-                            <Typography component="span" sx={{ fontSize: '12px' }}>
-                                {formattedTime}
+                            <Typography
+                                component="span"
+                                sx={{
+                                    fontSize: '12px',
+                                    color: isSent ? 'var(--joy-palette-common-white)' : 'inherit',
+                                }}
+                            >
+                                {new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </Typography>
+
                             {isSent && (
-                                isRead ? (
-                                    <DoneAllIcon sx={{ fontSize: '18px', marginLeft: '4px' }} />
+                                pending ? (
+                                    <CircularProgress
+                                        size="sm"
+                                        sx={{
+                                            fontSize: "12px",
+                                            marginLeft: { xs: '1px', sm: '4px' },
+                                        }}
+                                    />
                                 ) : (
-                                    <CheckIcon sx={{ fontSize: '18px', marginLeft: '4px' }} />
+                                    isRead ? (
+                                        <DoneAllIcon
+                                            sx={{
+                                                fontSize: '18px',
+                                                marginLeft: { xs: '1px', sm: '4px' },
+                                            }}
+                                        />
+                                    ) : (
+                                        <CheckIcon
+                                            sx={{
+                                                fontSize: '18px',
+                                                marginLeft: { xs: '1px', sm: '4px' },
+                                            }}
+                                        />
+                                    )
                                 )
                             )}
                         </Box>
                     </Stack>
-
                     {!isImage && !isVideo && !isAudio && attachment && (
                         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                             <InsertDriveFileRoundedIcon sx={{ fontSize: '24px' }} />
@@ -468,44 +555,75 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         justifyContent: 'center',
                         zIndex: 999,
                         cursor: 'pointer',
-                        animation: 'fade-in 0.3s ease-in-out',
+                        animation: `${isClosing ? 'fade-out' : 'fade-in'} 0.2s ease-in-out`,
                     }}
                     onClick={handleClose}
                 >
-                    <Box sx={{ position: 'relative', display: 'inline-flex', maxWidth: '90%', maxHeight: '90%' }}>
+                    {pending && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                            }}
+                        >
+                            <CircularProgress size='md' sx={{ color: 'white' }} />
+                        </Box>
+                    )}
+                    <Box
+                        sx={{
+                            position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
                         <img
                             src={imageSrc}
                             alt="attachment-preview"
                             style={{
-                                width: '100%',
-                                height: 'auto',
                                 objectFit: 'contain',
-                                borderRadius: '12px',
-                                animation: 'fade-in 0.3s ease-in-out',
+                                maxWidth: '70%',
+                                maxHeight: '70%',
                             }}
                         />
-                        {content && (
+                    </Box>
+
+                    {content && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                bottom: '20px',
+                                width: '100%',
+                                display: 'flex',
+                                justifyContent: 'center',
+                            }}
+                        >
                             <Typography
                                 sx={{
-                                    position: 'absolute',
-                                    bottom: '5px',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    color: 'white',
+                                    color: 'rgba(255, 255, 255, 0.7)',
                                     backgroundColor: 'rgba(0, 0, 0, 0.6)',
                                     textAlign: 'center',
-                                    padding: '8px',
+                                    padding: '6px 12px',
                                     wordWrap: 'break-word',
-                                    display: 'inline-block',
-                                    borderRadius: '10px',
+                                    borderRadius: '12px',
+                                    maxWidth: '90%',
+                                    transition: 'color 0.2s ease-in-out, background-color 0.2s ease-in-out',
+                                    '&:hover': {
+                                        color: 'white',
+                                    }
                                 }}
                             >
                                 {content}
                             </Typography>
-                        )}
-                    </Box>
+                        </Box>
+                    )}
                 </Box>
             )}
+
+
 
             {isVideoOpen && videoSrc && (
                 <Box

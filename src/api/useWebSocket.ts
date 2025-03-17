@@ -26,7 +26,6 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
         async (isOnline: boolean) => {
             try {
                 if (currentUserId !== null) {
-                    console.log(`Updating status to ${isOnline ? 'online' : 'offline'}`);
                     await updateUserStatus(currentUserId, isOnline, localStorage.getItem('token') || '');
                 }
             } catch (error) {
@@ -70,7 +69,6 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
 
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
-            console.log('Received WebSocket message:', message);
 
             if (message.targetUserId && message.targetUserId !== currentUserId) {
                 return;
@@ -203,7 +201,6 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
             try {
                 const decodedToken: { id: number } = jwtDecode(token);
                 setCurrentUserId(decodedToken.id);
-                console.log('Current user (ID):', decodedToken.id);
             } catch (error) {
                 console.error('Failed to decode token', error);
             }
@@ -216,5 +213,5 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
         }
     }, [currentUserId, connectWebSocket, isConnected, ...dependencies]);
 
-    return { wsRef: wsRef.current, isConnecting, connectWebSocket };
+    return { wsRef: wsRef.current, isConnecting, isConnected, connectWebSocket };
 };

@@ -12,7 +12,7 @@ const AccessDeniedPage: React.FC = () => {
     };
 
     return (
-        <CssVarsProvider defaultMode="dark">
+        <CssVarsProvider>
             <Helmet>
                 <title>Доступ запрещён</title>
             </Helmet>

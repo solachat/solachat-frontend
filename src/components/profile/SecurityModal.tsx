@@ -79,13 +79,13 @@ const SecurityModal: React.FC<SecurityModalProps> = ({ open, onClose, username }
 
     return (
         <>
-            <Modal open={confirmationOpen && open} onClose={onClose} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Card variant="outlined" sx={{ width: '100%', maxWidth: 400, boxShadow: 3, borderRadius: 2, p: 3 }}>
-                    <Typography component="h2" sx={{ fontSize: '1.25rem', fontWeight: 600, textAlign: 'center'}}>
+            <Modal open={confirmationOpen && open} onClose={onClose} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 1 }}>
+                <Card variant="outlined" sx={{ width: '100%', maxWidth: { xs: 300, sm: 400 }, boxShadow: 3, borderRadius: 2, p: 2 }}>
+                    <Typography component="h2" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, fontWeight: 600, textAlign: 'center'}}>
                         {t('Enable Two-Factor Authentication')}
                     </Typography>
                     <Divider sx={{ my: 2 }} />
-                    <Typography id="confirmation-title" sx={{ fontSize: '1rem', mb: 3, textAlign: 'center', color: 'text.secondary' }}>
+                    <Typography id="confirmation-title" sx={{ fontSize: '0.9rem', mb: 2, textAlign: 'center', color: 'text.secondary' }}>
                         {t('Are you sure you want to start the procedure?')}
                     </Typography>
                     <Stack direction="row" spacing={2} justifyContent="center">
@@ -99,10 +99,9 @@ const SecurityModal: React.FC<SecurityModalProps> = ({ open, onClose, username }
                 </Card>
             </Modal>
 
-
-            <Modal open={totpModalOpen && open} onClose={onClose} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Card variant="outlined" sx={{ width: '100%', maxWidth: 400, boxShadow: 3, borderRadius: 2, p: 3, backgroundColor: 'background.paper' }}>
-                    <Typography component="h2" sx={{ fontSize: '1.25rem', fontWeight: 600, mb: 1, textAlign: 'center' }}>
+            <Modal open={totpModalOpen && open} onClose={onClose} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 1 }}>
+                <Card variant="outlined" sx={{ width: '100%', maxWidth: { xs: 300, sm: 400 }, boxShadow: 3, borderRadius: 2, p: 2, backgroundColor: 'background.paper' }}>
+                    <Typography component="h2" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, fontWeight: 600, mb: 1, textAlign: 'center' }}>
                         {t('Enable Two-Factor Authentication')}
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
@@ -114,12 +113,12 @@ const SecurityModal: React.FC<SecurityModalProps> = ({ open, onClose, username }
                             </Box>
                         )}
 
-                        <Alert sx={{ mb: 2, fontSize: '0.9rem', px: 2 }}>
+                        <Alert sx={{ mb: 2, fontSize: '0.8rem', px: 2 }}>
                             {t('Scan this QR code with Authy or any TOTP app')}
                         </Alert>
 
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                            <Typography sx={{ fontSize: '0.8rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
                                 {t('Secret Key')}:
                             </Typography>
                             <Typography sx={{ fontWeight: 'bold', color: 'primary.500', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '60%' }}>
@@ -138,7 +137,7 @@ const SecurityModal: React.FC<SecurityModalProps> = ({ open, onClose, username }
                         />
 
                         {validationMessage && (
-                            <Typography color={validationMessage.includes('successfully') ? 'success' : 'danger'} sx={{ mb: 1 }}>
+                            <Typography color={validationMessage.includes('successfully') ? 'success' : 'danger'} sx={{ mb: 1, fontSize: '0.8rem' }}>
                                 {validationMessage}
                             </Typography>
                         )}

@@ -12,7 +12,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
-import { updateMessageStatus } from '../../api/api';
+import {sendMessage, updateMessageStatus} from '../../api/api';
+import dayjs from "dayjs";
+import {IconButton} from "@mui/joy";
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
@@ -22,25 +25,44 @@ type MessagesPaneProps = {
 };
 
 export default function MessagesPane({ chat, chats, members = [], setSelectedChat }: MessagesPaneProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [chatIdFromUrl, setChatIdFromUrl] = useState<string | undefined>();
 
     const [chatMessages, setChatMessages] = useState<MessageProps[]>(chat?.messages || []);
     const [textAreaValue, setTextAreaValue] = useState<string>('');
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
-    const [isFarFromBottom, setIsFarFromBottom] = useState<boolean>(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const chatIdRef = useRef<number | null>(null);
-    const { chatId } = useParams<{ chatId: string }>();
+    const [messages, setMessages] = useState<MessageProps[]>(chat?.messages || []);
+    const [userStatuses, setUserStatuses] = React.useState<Record<string, Pick<UserProps, 'online' | 'lastOnline'>>>({});
+    const [visibleDate, setVisibleDate] = useState<string | null>(null);
+    const chatMessagesRef = useRef<MessageProps[]>(chat?.messages || []);
+    const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
+    const groupMessagesByDate = (messages: MessageProps[]) => {
+        return messages.reduce((acc, message) => {
+            const messageDate = dayjs(message.createdAt).format('DD MMMM YYYY');
+            if (!acc[messageDate]) {
+                acc[messageDate] = [];
+            }
+            acc[messageDate].push(message);
+            return acc;
+        }, {} as Record<string, MessageProps[]>);
+    };
+    const groupedMessages = groupMessagesByDate(chatMessages);
 
     const scrollToBottom = (smooth: boolean = true) => {
-        const container = messagesContainerRef.current;
-        if (container) {
-            container.scrollTop = container.scrollHeight;
-        }
+        requestAnimationFrame(() => {
+            const container = messagesContainerRef.current;
+            if (container) {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: smooth ? 'smooth' : 'auto',
+                });
+            }
+        });
     };
 
     const markMessagesAsRead = async () => {
@@ -52,22 +74,24 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
             const currentUserId = decodedToken.id;
 
             const messageIds = chatMessages
-                .filter(msg => !msg.isRead && msg.userId !== currentUserId)
+                .filter(msg => !msg.isRead && msg.userId !== currentUserId && Number.isInteger(msg.id))
                 .map(msg => msg.id);
 
-            if (messageIds.length > 0) {
-                await Promise.all(messageIds.map(id =>
-                    updateMessageStatus(Number(id), { isRead: true }, token)
-                ));
+            if (messageIds.length === 0) return;
 
-                setChatMessages(prevMessages =>
-                    prevMessages.map(msg =>
-                        messageIds.includes(msg.id) ? { ...msg, isRead: true } : msg
-                    )
-                );
-            }
+            console.log("📤 Отправляем запрос на обновление прочитанности сообщений:", messageIds);
+
+            await Promise.all(messageIds.map(id =>
+                updateMessageStatus(Number(id), { isRead: true }, token)
+            ));
+
+            setChatMessages(prevMessages =>
+                prevMessages.map(msg =>
+                    messageIds.includes(msg.id) ? { ...msg, isRead: true } : msg
+                )
+            );
         } catch (error) {
-            console.error('Error marking messages as read:', error);
+            console.error('❌ Ошибка при отметке сообщений как прочитанных:', error);
         }
     };
 
@@ -78,14 +102,48 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
 
     const handleScroll = () => {
         const container = messagesContainerRef.current;
-        if (container) {
-            const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 300;
-            setIsFarFromBottom(!isNearBottom);
+        if (!container) return;
 
-            if (isNearBottom) {
-                markMessagesAsRead();
+        const isAtBottom = container.scrollTop === 0;
+
+        console.log("Scroll position:", container.scrollTop, "Container height:", container.clientHeight, "Content height:", container.scrollHeight);
+
+        if (isAtBottom) {
+            setShowScrollToBottom(false);
+        } else {
+            setShowScrollToBottom(true);
+        }
+        const messages = Array.from(container.querySelectorAll('.message[data-date]'));
+        for (let message of messages) {
+            const rect = (message as HTMLElement).getBoundingClientRect();
+            if (rect.top >= 50) {
+                const date = message.getAttribute('data-date');
+                if (date) {
+                    setVisibleDate(date);
+                }
+                break;
             }
         }
+    };
+
+    useEffect(() => {
+        const container = messagesContainerRef.current;
+        if (!container) return;
+
+        const isAtBottom = container.scrollTop === 0;
+
+        setShowScrollToBottom(!isAtBottom);
+    }, [chatMessages])
+
+    useEffect(() => {
+        const container = messagesContainerRef.current;
+        if (container) {
+            container.addEventListener('scroll', handleScroll);
+            return () => container.removeEventListener('scroll', handleScroll);
+        }
+    }, []);
+    const handleScrollToBottom = () => {
+        scrollToBottom(true);
     };
 
     useEffect(() => {
@@ -99,12 +157,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
     useEffect(() => {
         scrollToBottom();
     }, [chatMessages]);
-
-    const chatMessagesRef = useRef<MessageProps[]>(chat?.messages || []);
-
-    const findChatById = (id: string | undefined) => {
-        return chats.find((chat) => chat.id === Number(id)) || null;
-    };
 
     useEffect(() => {
         const updateChatIdFromHash = () => {
@@ -125,27 +177,70 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
 
 
     useEffect(() => {
-        if (chatIdFromUrl) {
-            const chatFromUrl = findChatById(chatIdFromUrl);
-            if (chatFromUrl) {
-                setSelectedChat(chatFromUrl);
-            }
+        if (!chatIdFromUrl || chatIdRef.current === Number(chatIdFromUrl)) {
+            return;
+        }
+
+        const recipientId = Number(chatIdFromUrl);
+        if (!recipientId || recipientId === currentUserId) {
+            console.warn("⚠️ Некорректный recipientId:", recipientId);
+            return;
+        }
+
+        const chatFromUrl = chats.find(chat =>
+            !chat.isGroup && chat.users.some(user => user.id === recipientId)
+        );
+        if (chatFromUrl) {
+            setSelectedChat(chatFromUrl);
         }
     }, [chatIdFromUrl, chats, setSelectedChat]);
+
 
     useEffect(() => {
         if (chat && chat.id !== chatIdRef.current) {
             chatIdRef.current = chat.id;
-            chatMessagesRef.current = chat.messages || [];
-            setChatMessages(chatMessagesRef.current);
+            const newMessages = chat.messages || [];
+
+            if (JSON.stringify(newMessages) !== JSON.stringify(chatMessagesRef.current)) {
+                chatMessagesRef.current = newMessages;
+                setChatMessages([...newMessages]);
+            }
+
             scrollToBottom(false);
         } else if (!chat) {
-            console.log('No chat selected, clearing messages.');
             chatMessagesRef.current = [];
             setChatMessages([]);
             chatIdRef.current = null;
         }
     }, [chat]);
+
+
+    useEffect(() => {
+        const resendPendingMessages = async () => {
+            console.log("Соединение восстановлено. Проверяем pending сообщения...");
+            const token = localStorage.getItem("token");
+            if (!token) return;
+            const pendingMessages = messages.filter(msg => msg.pending);
+            for (const msg of pendingMessages) {
+                try {
+                    const formData = new FormData();
+                    formData.append("content", msg.content);
+                    await sendMessage(msg.chatId, formData, token);
+                    console.log(`Сообщение ${msg.id} успешно повторно отправлено.`);
+                    setMessages(prev =>
+                        prev.map(m => (m.id === msg.id ? { ...m, pending: false } : m))
+                    );
+                } catch (err) {
+                    console.error(`Ошибка повторной отправки сообщения ${msg.id}:`, err);
+                }
+            }
+        };
+
+        window.addEventListener("online", resendPendingMessages);
+        return () => {
+            window.removeEventListener("online", resendPendingMessages);
+        };
+    }, [messages]);
 
 
     useEffect(() => {
@@ -174,19 +269,47 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         setChatMessages((prevMessages) => prevMessages.filter((msg) => Number(msg.id) !== messageId));
     };
 
-    useWebSocket((data) => {
-        console.log('Received WebSocket message:', data);
 
+    useWebSocket((data) => {
         if (data.type === 'newMessage' && data.message) {
-            const newMessage = data.message;
-            if (newMessage.chatId === chatIdRef.current) {
-                setChatMessages((prevMessages) => {
-                    if (!prevMessages.some((msg) => msg.id === newMessage.id)) {
-                        return [...prevMessages, newMessage];
-                    }
-                    return prevMessages;
-                });
+            const serverMessage = data.message;
+
+            if (chatIdRef.current !== serverMessage.chatId) {
+                console.log(`📩 Сообщение ID ${serverMessage.id} пришло в другой чат (ID: ${serverMessage.chatId}), игнорируем.`);
+                return;
             }
+
+            console.log("📥 Получено новое сообщение:", serverMessage);
+
+            console.log("Дата с сервера:", serverMessage.createdAt);
+
+            let parsedDate = new Date(serverMessage.createdAt);
+            if (isNaN(parsedDate.getTime())) {
+                console.warn("❌ Невалидная дата с сервера, используем fallback.");
+                parsedDate = new Date();
+            }
+
+            console.log("Используем дату:", parsedDate.toISOString());
+
+            setChatMessages((prevMessages) => {
+                const index = prevMessages.findIndex(msg => msg.id === Number(serverMessage.tempId));
+
+                if (index !== -1) {
+                    return prevMessages.map(msg =>
+                        msg.id === Number(serverMessage.tempId)
+                            ? {
+                                ...msg,
+                                id: serverMessage.id,
+                                pending: false,
+                                createdAt: parsedDate.toISOString(),
+                                attachment: serverMessage.attachment || msg.attachment,
+                            }
+                            : msg
+                    );
+                }
+
+                return [...prevMessages, serverMessage];
+            });
         } else if (data.type === 'editMessage' && data.message) {
             const updatedMessage = data.message;
             if (updatedMessage.chatId === chatIdRef.current) {
@@ -205,6 +328,17 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                 )
             );
         }
+        if (data.type === 'USER_CONNECTED' && data.publicKey) {
+            setUserStatuses((prevStatuses) => ({
+                ...prevStatuses,
+                [data.publicKey]: { online: true, lastOnline: null },
+            }));
+        } else if (data.type === 'USER_DISCONNECTED' && data.publicKey) {
+            setUserStatuses((prevStatuses) => ({
+                ...prevStatuses,
+                [data.publicKey]: { online: false, lastOnline: data.lastOnline },
+            }));
+        }
     }, [currentUserId, chatIdRef]);
 
     const handleEditMessage = (messageId: number, content: string) => {
@@ -212,14 +346,40 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         setTextAreaValue(content);
     };
 
-    const interlocutor = chat?.isGroup
-        ? undefined
-        : chat?.users?.find((user) => user.id !== currentUserId);
 
-    useEffect(() => {
-        console.log('Current chat:', chat);
-        console.log('Current chatId from URL:', chatId);
-    }, [chat, chatId]);
+    const interlocutor = React.useMemo(() => {
+        if (!chat?.isGroup) {
+            const userFromDb = chat?.users?.find((user) => user.id !== currentUserId);
+            if (userFromDb) {
+                return {
+                    ...userFromDb,
+                    online: userFromDb.public_key && userStatuses[userFromDb.public_key]
+                        ? userStatuses[userFromDb.public_key].online
+                        : userFromDb.online ?? false,
+                    lastOnline: userFromDb.public_key && userStatuses[userFromDb.public_key]
+                        ? userStatuses[userFromDb.public_key].lastOnline
+                        : userFromDb.lastOnline,
+                };
+            }
+        }
+        return undefined;
+    }, [chat, currentUserId, userStatuses]);
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const day = date.getDate().toString();
+        const monthNumber = date.getMonth() + 1;
+        const year = date.getFullYear();
+
+        const monthKey = monthNumber < 10 ? `0${monthNumber}` : `${monthNumber}`;
+
+        const translatedMonth = t(`months.${monthKey}`);
+
+        const formatKey = year === new Date().getFullYear() ? "date_format" : "date_format_with_year";
+
+        return t(formatKey, { day, month: translatedMonth, year });
+    };
+
 
     return (
         <Sheet
@@ -243,14 +403,34 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                 />
             )}
 
+            {visibleDate && (
+                <Box
+                    sx={{
+                        position: 'fixed',
+                        top: 10,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                        color: 'white',
+                        padding: '5px 10px',
+                        borderRadius: '5px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        zIndex: 1000
+                    }}
+                >
+                    {visibleDate}
+                </Box>
+            )}
+
             <Box
                 ref={messagesContainerRef}
                 sx={{
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column-reverse',
-                    px: 2,
-                    py: { xs: 2, sm: 3 },
+                    px: 1,
+                    py: { xs: 2, sm: 1 },
                     overflowY: 'auto',
                     alignItems: 'center',
                     '&::-webkit-scrollbar': {
@@ -267,72 +447,117 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                 }}
             >
 
-                {chatMessages.length > 0 ? (
-                    <Stack spacing={2} sx={{ width: { xs: '100%', sm: '80%', md: '95%' } }}>
-                        {chatMessages.map((message: MessageProps, index: number) => {
-                            const isCurrentUser = message.userId === currentUserId;
-                            return (
-                                <Stack
-                                    key={index}
-                                    direction="row"
-                                    spacing={2}
-                                    flexDirection={isCurrentUser ? 'row-reverse' : 'row'}
-                                >
-                                    <ChatBubble
-                                        id={message.id}
-                                        chatId={message.chatId}
-                                        userId={message.userId}
-                                        variant={isCurrentUser ? 'sent' : 'received'}
-                                        user={message.user}
-                                        content={message.content}
-                                        createdAt={message.createdAt}
-                                        attachment={message.attachment}
-                                        isRead={message.isRead ?? false}
-                                        isDelivered={message.isDelivered ?? false}
-                                        unread={message.unread}
-                                        isEdited={message.isEdited}
-                                        onEditMessage={handleEditMessage}
-                                        messageCreatorId={message.userId}
-                                        isGroupChat={chat?.isGroup || false}
-                                    />
-                                </Stack>
-                            );
-                        })}
-                        <div ref={messagesEndRef} />
-                    </Stack>
-                ) : (
-                    <Typography
-                        sx={{
-                            textAlign: 'center',
-                            flex: 1,
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            height: '100%',
-                            color: 'text.secondary',
-                        }}
-                    >
-                        {t('')}
-                    </Typography>
-                )}
+                <>
+                    {chatMessages.length > 0 ? (
+                        <Stack spacing={2} sx={{ width: { xs: '100%', sm: '80%', md: '60%' } }}>
+                            {Object.entries(groupedMessages).map(([date, messages]) => (
+                                <div key={date}>
+                                    <Typography
+                                        sx={{
+                                            textAlign: 'center',
+                                            fontSize: '14px',
+                                            color: 'white',
+                                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                            padding: '4px 8px',
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            maxWidth: 'fit-content',
+                                            margin: '7px auto',
+                                        }}
+                                    >
+                                        {formatDate(date)}
+                                    </Typography>
+
+                                    <Stack spacing={1}>
+                                        {messages
+                                            .filter((message) => message.content || (message.attachment && message.attachment.filePath))
+                                            .map((message: MessageProps, index: number) => {
+                                            const isCurrentUser = message.userId === currentUserId;
+                                            return (
+                                                <Stack
+                                                    key={message.id}
+                                                    direction="row"
+                                                    spacing={1}
+                                                    flexDirection={isCurrentUser ? 'row-reverse' : 'row'}
+                                                >
+                                                    <ChatBubble
+                                                        id={message.id}
+                                                        chatId={message.chatId}
+                                                        userId={message.userId}
+                                                        variant={isCurrentUser ? 'sent' : 'received'}
+                                                        user={message.user}
+                                                        content={message.content}
+                                                        createdAt={message.createdAt}
+                                                        attachment={message.attachment}
+                                                        isRead={message.isRead ?? false}
+                                                        isDelivered={message.isDelivered ?? false}
+                                                        unread={message.unread}
+                                                        isEdited={message.isEdited}
+                                                        onEditMessage={handleEditMessage}
+                                                        messageCreatorId={message.userId}
+                                                        isGroupChat={chat?.isGroup || false}
+                                                        pending={message.pending}
+                                                    />
+                                                </Stack>
+                                            );
+                                        })}
+                                    </Stack>
+                                </div>
+                            ))}
+                            <div ref={messagesEndRef} />
+                        </Stack>
+                    ) : (
+                        <Typography
+                            sx={{
+                                textAlign: 'center',
+                                flex: 1,
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                height: '100%',
+                                color: 'text.secondary',
+                            }}
+                        >
+                            {t('')}
+                        </Typography>
+                    )}
+                    {showScrollToBottom && (
+                        <IconButton
+                            onClick={handleScrollToBottom}
+                            size="lg"
+                            sx={{
+                                position: 'absolute',
+                                right: 20,
+                                width: 40,
+                                height: 40,
+                                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                color: 'white',
+                                fontSize: 32,
+                                opacity: showScrollToBottom ? 1 : 0,
+                                transition: 'opacity 0.3s ease-in-out',
+                                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.8)' }
+                            }}
+                        >
+                            <KeyboardArrowDownIcon fontSize="inherit" />
+                        </IconButton>
+
+
+                    )}
+                </>
             </Box>
 
             {chat && (
-                <Box sx={{ width: { xs: '100%', sm: '80%', md: '94%' }, margin: '0 auto' }}>
+                <Box sx={{ width: { xs: '100%', sm: '80%', md: '60%' }, margin: '0px auto' }}>
                     <MessageInput
-                        chatId={Number(chat?.id ?? 0)}
-                        onSubmit={() => {
-                            const newMessage: MessageProps = {
-                                id: chatMessages.length + 1,
-                                user: chat?.users?.find((user) => user.id === currentUserId)!,
-                                userId: currentUserId!,
-                                chatId: chat?.id!,
-                                content: textAreaValue,
-                                createdAt: new Date().toISOString(),
-                            };
-                            setChatMessages([...chatMessages, newMessage]);
-                            setTextAreaValue('');
-                            setEditingMessageId(null);
+                        chatId={chat?.id ?? null}
+                        selectedChat={chat}
+                        setSelectedChat={setSelectedChat}
+                        currentUserId={currentUserId!}
+                        onSubmit={(newMessage: MessageProps) => {
+                            setChatMessages((prevMessages) => [...prevMessages, newMessage]);
+                            setTextAreaValue("");
                             setEditingMessageId(null);
                         }}
                         editingMessage={
@@ -340,21 +565,19 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                                 ? {
                                     id: editingMessageId,
                                     content:
-                                        chatMessages.find(
-                                            (msg) => msg.id.toString() === editingMessageId.toString()
-                                        )?.content ?? null,
+                                        chatMessages.find((msg) => msg.id === editingMessageId)?.content || "",
                                 }
-                                : { id: null, content: null }
+                                : { id: null, content: "" }
                         }
                         setEditingMessage={(msg) => {
-                            if (msg === null) {
+                            if (!msg) {
                                 setEditingMessageId(null);
                             } else {
                                 const messageToEdit = chatMessages.find(
                                     (msgItem) => msgItem.content === msg.content
                                 );
                                 if (messageToEdit) {
-                                    setEditingMessageId(Number(messageToEdit.id));
+                                    setEditingMessageId(messageToEdit.id);
                                 }
                             }
                         }}

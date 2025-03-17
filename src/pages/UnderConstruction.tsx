@@ -9,16 +9,14 @@ const UnderConstruction: React.FC = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
 
-    // Получаем текущее время один раз при загрузке компонента
     const currentDate = new Date().toLocaleString();
 
-    // Функция для кнопки "Домой"
     const handleGoHome = () => {
-        navigate('/main'); // Перенаправление на /main
+        navigate('/main');
     };
 
     return (
-        <CssVarsProvider defaultMode="dark">
+        <CssVarsProvider>
             <Helmet>
                 <title>{t('underConstruction.title')}</title>
             </Helmet>
@@ -32,8 +30,8 @@ const UnderConstruction: React.FC = () => {
                     backgroundColor: 'background.level1',
                     textAlign: 'center',
                     padding: '16px',
-                    animation: 'fadeIn 0.5s ease-in-out',  // Плавное появление
-                    flexDirection: 'column',  // Расположение элементов по вертикали
+                    animation: 'fadeIn 0.5s ease-in-out',
+                    flexDirection: 'column',
                 }}
             >
                 <Stack

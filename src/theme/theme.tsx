@@ -15,7 +15,7 @@ export default extendTheme({
           600: '#2362EA',
           700: '#1D4FD7',
           800: '#1D3FAE',
-          900: '#1E3B8A', 
+          900: '#1E3B8A',
           solidBg: 'var(--joy-palette-primary-600)',
           solidHoverBg: 'var(--joy-palette-primary-500)',
           solidActiveBg: 'var(--joy-palette-primary-400)',
