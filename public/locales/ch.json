@@ -285,6 +285,12 @@
     "windowsDesc": "原生 Windows 客户端……",
     "macosDesc": "macOS 优化版本……",
     "webDesc": "基于浏览器的解决方案……"
-  }
-
+  },
+  "language": "语言",
+  "public_key": "公钥",
+  "general_settings": "通用设置",
+  "data_storage": "数据存储",
+  "ask_question": "提问",
+  "solchat_faq": "SolaChat 常见问题",
+  "privacy_policy": "隐私政策"
 }

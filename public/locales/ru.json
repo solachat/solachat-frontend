@@ -454,5 +454,8 @@
   "enterTOTPCode": "Введите код TOTP",
   "public_key": "Публичный ключ",
   "general_settings": "Общие настройки",
-  "data_storage": "Данные и память"
+  "data_storage": "Данные и память",
+  "ask_question": "Задать вопрос",
+  "solchat_faq": "SolaChat FAQ",
+  "privacy_policy": "Политика конфиденциальности"
 }

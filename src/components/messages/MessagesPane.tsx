@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Box from '@mui/joy/Box';
-import { useParams } from 'react-router-dom';
+import {useLocation, useNavigate, useParams} from 'react-router-dom';
 import Sheet from '@mui/joy/Sheet';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
@@ -12,10 +12,8 @@ import {useState, useEffect, useRef, useLayoutEffect} from 'react';
 import { useWebSocket } from '../../api/useWebSocket';
 import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
-import {sendMessage, updateMessageStatus} from '../../api/api';
+import { updateMessageStatus} from '../../api/api';
 import dayjs from "dayjs";
-import {IconButton} from "@mui/joy";
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {motion} from "framer-motion";
 
 type MessagesPaneProps = {
@@ -137,16 +135,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         setShowScrollToBottom(!isAtBottom);
     }, [chatMessages])
 
-    useEffect(() => {
-        const container = messagesContainerRef.current;
-        if (container) {
-            container.addEventListener('scroll', handleScroll);
-            return () => container.removeEventListener('scroll', handleScroll);
-        }
-    }, []);
-    const handleScrollToBottom = () => {
-        scrollToBottom(true);
-    };
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -216,33 +204,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         }
     }, [chat]);
 
-
-    useEffect(() => {
-        const resendPendingMessages = async () => {
-            console.log("Соединение восстановлено. Проверяем pending сообщения...");
-            const token = localStorage.getItem("token");
-            if (!token) return;
-            const pendingMessages = messages.filter(msg => msg.pending);
-            for (const msg of pendingMessages) {
-                try {
-                    const formData = new FormData();
-                    formData.append("content", msg.content);
-                    await sendMessage(msg.chatId, formData, token);
-                    console.log(`Сообщение ${msg.id} успешно повторно отправлено.`);
-                    setMessages(prev =>
-                        prev.map(m => (m.id === msg.id ? { ...m, pending: false } : m))
-                    );
-                } catch (err) {
-                    console.error(`Ошибка повторной отправки сообщения ${msg.id}:`, err);
-                }
-            }
-        };
-
-        window.addEventListener("online", resendPendingMessages);
-        return () => {
-            window.removeEventListener("online", resendPendingMessages);
-        };
-    }, [messages]);
 
 
     useEffect(() => {
@@ -393,6 +354,18 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         return t(formatKey, { day, month: translatedMonth, year });
     };
 
+    const navigate = useNavigate();
+    const location = useLocation();
+    const previousPath = location.state?.from || '/chat';
+
+    const [isClosing, setIsClosing] = useState(false);
+
+    const handleBack = () => {
+        setIsClosing(true); // Запускаем анимацию
+        setSelectedChat(null); // Закрываем чат после анимации
+        navigate(previousPath);
+    };
+
 
     return (
         <Sheet
@@ -401,7 +374,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                 display: 'flex',
                 flexDirection: 'column',
                 background: 'radial-gradient(circle at center, #0a192f 0%, #081428 100%)',
-
                 overflow: 'hidden',
             }}
         >
@@ -413,7 +385,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                     chatName={chat.isGroup ? chat.name : undefined}
                     groupAvatar={chat.isGroup ? chat.avatar || '/default-group-avatar.png' : undefined}
                     members={chat?.users || []}
-                    onBack={() => setSelectedChat(null)}
+                    onBack={handleBack}
                 />
             )}
 

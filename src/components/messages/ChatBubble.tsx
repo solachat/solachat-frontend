@@ -237,10 +237,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
         currentUserId = decodedToken.id || 0;
     }
 
-    const getFileExtension = (fileName: string) => {
-        return fileName.split('.').pop()?.toUpperCase() || 'FILE';
-    };
-
     const isFileAttachment = isFile(
         attachment?.filePath || '',
         attachment?.fileType

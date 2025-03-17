@@ -387,5 +387,8 @@
   "enterTOTPCode": "Enter TOTP code",
   "public_key": "Public Key",
   "general_settings": "General Settings",
-  "data_storage": "Data Storage"
+  "data_storage": "Data Storage",
+  "ask_question": "Ask a question",
+  "solchat_faq": "SolaChat FAQ",
+  "privacy_policy": "Privacy Policy"
 }

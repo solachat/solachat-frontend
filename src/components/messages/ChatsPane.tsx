@@ -365,7 +365,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                             sx={{
                                 display: "flex",
                                 alignItems: "center",
-                                height: `${headerHeight}px`,
+                                height: { xs: '56px', sm: '64px', md: headerHeight },
                                 width: "100%",
                                 flexShrink: 0,
                                 borderBottom: borderStyle,
@@ -415,10 +415,10 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                     placeholder={isConnecting ? t("Connecting") : t("Search")}
                                     sx={{
                                         flex: 1,
-                                        maxWidth: "600px",
-                                        minWidth: "420px",
-                                        height: "40px",
-                                        fontSize: "16px",
+                                        maxWidth: { xs: '100%', sm: 600 },
+                                        minWidth: { xs: 290, sm: 420 },
+                                        height: { xs: 36, sm: 40 },
+                                        fontSize: { xs: 14, sm: 16 },
                                         bgcolor: 'rgba(0, 168, 255, 0.05)',
                                         borderColor: 'rgba(0, 168, 255, 0.3)',
                                         color: '#a0d4ff',
@@ -468,8 +468,8 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                 justifyContent: "flex-end",
                                 overflowY: "auto",
                                 maxWidth: "100%",
-                                pb: 2,
-                                px: 2,
+                                pb: { xs: 1, sm: 3, md: 4 }, // Увеличил отступы для планшетов
+                                px: { xs: 1, sm: 3, md: 5 }, // Сделал удобнее на планшетах
                             }}
                         >
                             {searchResults.length > 0 ? (

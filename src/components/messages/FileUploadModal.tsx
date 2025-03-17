@@ -40,14 +40,37 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ onFileSelect, open, h
 
     return (
         <Modal open={open} onClose={handleClose}>
-            <ModalDialog>
+            <ModalDialog
+                sx={{
+                    border: '2px solid rgba(0, 168, 255, 0.3)',
+                    backgroundColor: 'rgba(0, 168, 255, 0.05)',
+                    boxShadow: '0 4px 16px rgba(0, 168, 255, 0.1)',
+                    borderRadius: 'lg',
+
+                }}
+            >
                 <IconButton
-                    sx={{ position: 'absolute', right: 8, top: 8 }}
+                    sx={{
+                        position: 'absolute',
+                        right: 8,
+                        top: 8,
+                        color: '#00a8ff',
+                        '&:hover': { bgcolor: 'rgba(0, 168, 255, 0.1)' }
+                    }}
                     onClick={handleClose}
                 >
                     <CloseIcon />
                 </IconButton>
-                <Typography component="h2" sx={{ mb: 2 }}>
+
+                <Typography
+                    component="h2"
+                    sx={{
+                        mb: 2,
+                        color: '#00a8ff',
+                        fontWeight: 'bold',
+                        textAlign: 'center'
+                    }}
+                >
                     {selectedFile ? selectedFile.name : t('fileUpload.uploadFile')}
                 </Typography>
 
@@ -58,12 +81,21 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ onFileSelect, open, h
                             justifyContent: 'center',
                             alignItems: 'center',
                             mb: 2,
+                            border: '1px solid rgba(0, 168, 255, 0.2)',
+                            borderRadius: 'md',
+                            padding: '4px',
+                            backgroundColor: 'rgba(0, 168, 255, 0.03)'
                         }}
                     >
                         <img
                             src={preview}
                             alt={t('fileUpload.preview')}
-                            style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px' }}
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '200px',
+                                borderRadius: '6px',
+                                boxShadow: '0 2px 8px rgba(0, 168, 255, 0.1)'
+                            }}
                         />
                     </Box>
                 )}
@@ -75,22 +107,50 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ onFileSelect, open, h
                     style={{ display: 'none' }}
                     id="file-upload"
                 />
-                <label htmlFor="file-upload">
+
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    alignItems: 'center'
+                }}>
+                    <label htmlFor="file-upload">
+                        <Button
+                            component="span"
+                            variant="outlined"
+                            startDecorator={<UploadIcon sx={{ color: '#00a8ff' }} />}
+                            sx={{
+                                color: '#00a8ff',
+                                borderColor: 'rgba(0, 168, 255, 0.3)',
+                                '&:hover': {
+                                    bgcolor: 'rgba(0, 168, 255, 0.05)',
+                                    borderColor: 'rgba(0, 168, 255, 0.5)'
+                                }
+                            }}
+                        >
+                            {t('fileUpload.selectFile')}
+                        </Button>
+                    </label>
+
                     <Button
-                        component="span"
-                        variant="outlined"
-                        startDecorator={<UploadIcon />}
+                        onClick={handleFileSelectClick}
+                        disabled={!selectedFile}
+                        sx={{
+                            mt: 1,
+                            bgcolor: 'rgba(0, 168, 255, 0.1)',
+                            color: '#00a8ff',
+                            '&:hover': {
+                                bgcolor: 'rgba(0, 168, 255, 0.2)'
+                            },
+                            '&:disabled': {
+                                bgcolor: 'rgba(0, 168, 255, 0.05)',
+                                color: 'rgba(0, 168, 255, 0.3)'
+                            }
+                        }}
                     >
-                        {t('fileUpload.selectFile')}
+                        {t('fileUpload.attachFile')}
                     </Button>
-                </label>
-                <Button
-                    onClick={handleFileSelectClick}
-                    disabled={!selectedFile}
-                    sx={{ mt: 2 }}
-                >
-                    {t('fileUpload.attachFile')}
-                </Button>
+                </Box>
             </ModalDialog>
         </Modal>
     );

@@ -333,11 +333,13 @@ export default function MyProfile() {
                     flex: 1,
                     width: '100%',
                     mx: 'auto',
+                    height: '100dvh',
                     pt: { xs: 'var(--Header-height)', sm: 0 },
                     display: 'grid',
+                    overflow: 'hidden',
                     gridTemplateColumns: {
-                        xs: '1fr',
-                        sm: 'minmax(min-content, 250px) 1fr',
+                        xs: selectedChat ? '0fr 1fr' : '1fr',
+                        sm: selectedChat ? '0.5fr 1fr' : '1fr',
                         md: 'minmax(min-content, 550px) 1fr',
                     },
                     position: 'relative',
@@ -380,7 +382,16 @@ export default function MyProfile() {
                                 flexDirection: 'column',
                                 justifyContent: 'center',
                                 backgroundColor: 'background.level1',
-                                position: 'relative',
+                                position: {
+                                    xs: selectedChat ? 'absolute' : 'relative',
+                                    sm: 'relative'
+                                },
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                zIndex: 999,
+                                transition: 'all 0.3s ease-in-out'
                             }}
                         >
                             {error ? (
@@ -391,7 +402,7 @@ export default function MyProfile() {
                                 </Box>
                             ) : selectedChat ? (
                                 <MessagesPane
-                                    chat={selectedChat} // Передаём `selectedChat`
+                                    chat={selectedChat}
                                     chats={chats}
                                     selectedChat={selectedChat}
                                     members={selectedChat?.users || []}

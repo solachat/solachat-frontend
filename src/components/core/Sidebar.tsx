@@ -49,7 +49,7 @@ export default function Sidebar({ isOpen, setActiveScreen }: SidebarProps) {
         marginRight: 1,
         color: isSelected ? '#00e5ff' : '#00a8ff',
         transition: 'all 0.3s ease',
-        fontSize: '22px',
+        fontSize: { xs: '20px', sm: '22px' },
         filter: isSelected ? 'drop-shadow(0 2px 4px rgba(0,168,255,0.4))' : 'none'
     });
 
@@ -61,7 +61,7 @@ export default function Sidebar({ isOpen, setActiveScreen }: SidebarProps) {
                 transform: isOpen ? 'translateX(0)' : { xs: 'translateX(-100%)', md: 'none' },
                 transition: 'transform 0.4s, width 0.4s',
                 zIndex: 10,
-                height: { xs: '55vh', md: 'auto' },
+                height: { xs: '30vh', md: 'auto' },
                 p: 1.5,
                 flexShrink: 0,
                 display: 'flex',

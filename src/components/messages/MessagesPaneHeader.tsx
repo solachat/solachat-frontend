@@ -115,7 +115,7 @@ export default function MessagesPaneHeader({
         });
     };
 
-    const headerHeight = 68; // Общая высота заголовков
+    const headerHeight = 68;
     const borderStyle = '1px solid rgba(0, 168, 255, 0.3)';
     const gradientBorder = 'linear-gradient(90deg, transparent 0%, rgba(0, 168, 255, 0.4) 50%, transparent 100%)';
     const backdropStyles = {
@@ -149,11 +149,11 @@ export default function MessagesPaneHeader({
                 {/* Левый блок с аватаром и информацией */}
                 <Stack
                     direction="row"
-                    spacing={{ xs: 1, md: 1 }}
+                    spacing={{ xs: 1, md: 1.5 }}
                     sx={{
                         alignItems: 'center',
                         width: { xs: '100%', sm: 'auto' },
-                        maxWidth: { xs: '85%', sm: '100%' },
+                        maxWidth: { xs: '80%', sm: '100%' },
                         overflow: 'hidden',
                     }}
                 >

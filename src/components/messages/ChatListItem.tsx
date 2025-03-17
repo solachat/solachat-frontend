@@ -217,7 +217,7 @@ export default function ChatListItem(props: ChatListItemProps) {
                         },
                     }}
                 >
-                    <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} sx={{ width: '100%' }}>
+                    <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
                         {isGroup ? (
                             <Avatar
                                 src={existingChat?.avatar || '/default-group-avatar.png'}
