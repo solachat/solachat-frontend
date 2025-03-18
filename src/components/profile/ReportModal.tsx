@@ -26,11 +26,9 @@ export default function ReportModal({ open, onClose, onSubmit, loading, username
             open={open}
             onClose={onClose}
             sx={{
-                animation: 'fadeIn 0.5s',
-                '@keyframes fadeIn': {
-                    from: { opacity: 0 },
-                    to: { opacity: 1 },
-                },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
             }}
         >
             <Box
@@ -46,10 +44,6 @@ export default function ReportModal({ open, onClose, onSubmit, loading, username
                     alignItems: 'center',
                     position: 'relative',
                     animation: 'slideIn 0.5s ease-in-out',
-                    '@keyframes slideIn': {
-                        from: { transform: 'translateY(-50%)' },
-                        to: { transform: 'translateY(0)' },
-                    },
                 }}
             >
                 <IconButton

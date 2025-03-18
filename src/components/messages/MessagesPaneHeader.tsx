@@ -1,113 +1,327 @@
 import * as React from 'react';
 import Avatar from '@mui/joy/Avatar';
-import Button from '@mui/joy/Button';
-import Chip from '@mui/joy/Chip';
 import IconButton from '@mui/joy/IconButton';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
-import CircleIcon from '@mui/icons-material/Circle';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
-import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
-import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import { UserProps } from '../core/types';
-import { toggleMessagesPane } from '../../utils/utils';
+import { useTranslation } from 'react-i18next';
+import MessagesMenu from './MessagesMenu';
+import GroupInfoModal from '../group/GroupInfoModal';
+import CallModal from './CallModal';
+import { jwtDecode } from 'jwt-decode';
+import Verified from '../core/Verified';
+import {useEffect} from "react";
+import Box from "@mui/joy/Box";
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+
+type UserStatus = Pick<UserProps, 'online' | 'lastOnline'>;
 
 type MessagesPaneHeaderProps = {
     sender?: UserProps;
+    chatId: number;
+    isGroup?: boolean;
+    chatName?: string;
+    groupAvatar?: string;
+    members?: UserProps[];
+    onBack?: () => void;
+    userStatus?: UserStatus;
 };
 
-export default function MessagesPaneHeader(props: MessagesPaneHeaderProps) {
-    const { sender } = props;
+export default function MessagesPaneHeader({
+                                               sender,
+                                               chatId,
+                                               isGroup,
+                                               chatName,
+                                               groupAvatar,
+                                               members = [],
+                                               onBack,
+                                               userStatus,
+                                           }: MessagesPaneHeaderProps) {
+    const { t, i18n } = useTranslation();
+    const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
+    const [isCallModalOpen, setIsCallModalOpen] = React.useState(false);
+    const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
+    const [currentTime, setCurrentTime] = React.useState(Date.now());
 
-    if (!sender) {
-        return null;
-    }
+    React.useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            const decodedToken: { id: number } = jwtDecode(token);
+            setCurrentUserId(decodedToken.id);
+        }
+    }, []);
 
-    return (
-        <Stack
-            direction="row"
-            sx={{
-                justifyContent: 'space-between',
-                py: { xs: 2, md: 2 },
-                px: { xs: 1, md: 2 },
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.body',
-            }}
-        >
+    const receiverId = !isGroup && sender && currentUserId !== null && sender.id !== currentUserId
+        ? sender.id
+        : null;
+
+    const handleAvatarClick = () => {
+        if (isGroup) {
+            setIsGroupModalOpen(true);
+        } else if (sender?.public_key) {
+            window.location.href = `/${sender.public_key}`;
+        }
+    };
+
+    const getMemberLabel = (count: number, locale: string = 'en') => {
+        if (locale === 'ru') {
+            if (count % 10 === 1 && count % 100 !== 11) {
+                return 'участник';
+            } else if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) {
+                return 'участника';
+            } else {
+                return 'участников';
+            }
+        } else {
+            return count === 1 ? 'member' : 'members';
+        }
+    };
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentTime(Date.now());
+        }, 60000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    const formatTimeAgo = (timestamp: number) => {
+        const now = new Date(currentTime);
+        const date = new Date(timestamp);
+        const diff = currentTime - timestamp;
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+
+        if (diff < 60000) return t("just_now");
+
+        if (date.toDateString() === now.toDateString()) {
+            if (minutes < 60) return t("minutes_ago", { count: minutes });
+            return t("hours_ago", { count: hours });
+        }
+
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        if (date.toDateString() === yesterday.toDateString()) {
+            const timeString = date.toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit" });
+            return t("last_seen_yesterday", { time: timeString });
+        }
+
+        return date.toLocaleDateString(i18n.language, {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        });
+    };
+
+    const headerHeight = 68;
+    const borderStyle = '1px solid rgba(0, 168, 255, 0.3)';
+    const gradientBorder = 'linear-gradient(90deg, transparent 0%, rgba(0, 168, 255, 0.4) 50%, transparent 100%)';
+    const backdropStyles = {
+        backgroundColor: 'rgba(0, 22, 45, 0.85)',
+        backdropFilter: 'blur(20px)',
+    };
+
+
+    return isGroup || sender ? (
+        <>
             <Stack
                 direction="row"
-                spacing={{ xs: 1, md: 2 }}
-                sx={{ alignItems: 'center' }}
+                sx={{
+                    justifyContent: 'space-between',
+                    height: `${headerHeight}px`,
+                    px: { xs: 2, md: 1 },
+                    borderBottom: borderStyle,
+                    position: 'relative',
+                    ...backdropStyles,
+                    '&:after': {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: '1px',
+                        background: gradientBorder,
+                    },
+                }}
             >
-                <IconButton
-                    variant="plain"
-                    color="neutral"
-                    size="sm"
+                {/* Левый блок с аватаром и информацией */}
+                <Stack
+                    direction="row"
+                    spacing={{ xs: 1, md: 1.5 }}
                     sx={{
-                        display: { xs: 'inline-flex', sm: 'none' },
+                        alignItems: 'center',
+                        width: { xs: '100%', sm: 'auto' },
+                        maxWidth: { xs: '80%', sm: '100%' },
+                        overflow: 'hidden',
                     }}
-                    onClick={() => toggleMessagesPane()}
                 >
-                    <ArrowBackIosNewRoundedIcon />
-                </IconButton>
-                <Avatar size="lg" src={sender.avatar} />
-                <div>
-                    <Typography
-                        fontWeight="lg"
-                        fontSize="lg"
-                        component="h2"
-                        noWrap
-                        endDecorator={
-                            sender.online ? (
-                                <Chip
-                                    variant="outlined"
-                                    size="sm"
-                                    color="neutral"
-                                    sx={{
-                                        borderRadius: 'sm',
-                                    }}
-                                    startDecorator={
-                                        <CircleIcon sx={{ fontSize: 8 }} color="success" />
-                                    }
-                                    slotProps={{ root: { component: 'span' } }}
-                                >
-                                    Online
-                                </Chip>
-                            ) : undefined
-                        }
-                        sx={{ fontWeight: 'lg', fontSize: 'lg' }}
+                    <IconButton
+                        variant="plain"
+                        color="neutral"
+                        size="sm"
+                        sx={{
+                            display: { xs: 'inline-flex', sm: 'none' },
+                            color: '#00a8ff',
+                            '&:hover': {
+                                backgroundColor: 'rgba(0, 168, 255, 0.1)',
+                            },
+                        }}
+                        onClick={onBack}
                     >
-                        {sender.realname}
-                    </Typography>
-                    <Typography level="body-sm">{sender.username}</Typography>
-                </div>
+                        <ArrowBackIosNewRoundedIcon />
+                    </IconButton>
+
+                    <Avatar
+                        size="lg"
+                        src={isGroup ? groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
+                        alt={isGroup ? chatName : sender?.public_key}
+                        onClick={handleAvatarClick}
+                        sx={{
+                            cursor: 'pointer',
+                            border: '2px solid transparent',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                                borderColor: '#00a8ff',
+                                boxShadow: '0 0 12px rgba(0, 168, 255, 0.3)',
+                            },
+                        }}
+                    />
+
+                    <div style={{ width: '100%' }}>
+                        <Typography
+                            fontWeight="lg"
+                            fontSize={{ xs: 'md', md: 'lg' }}
+                            component="h2"
+                            noWrap
+                            sx={{
+                                color: '#a0d4ff',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    color: '#00a8ff',
+                                    textShadow: '0 0 8px rgba(0, 168, 255, 0.4)',
+                                },
+                            }}
+                            onClick={handleAvatarClick}
+                        >
+                            {isGroup ? chatName : sender?.public_key}
+                            {sender?.verified && <Verified sx={{ ml: 1, color: '#00a8ff' }} />}
+                        </Typography>
+
+                        <Typography
+                            level="body-sm"
+                            sx={{
+                                color: sender?.online ? '#00a8ff' : 'rgba(160, 212, 255, 0.6)',
+                                fontSize: '0.8rem',
+                                letterSpacing: '0.5px',
+                            }}
+                        >
+                            {sender?.online
+                                ? t("online")
+                                : sender?.lastOnline
+                                    ? t("last_seen", { time: formatTimeAgo(new Date(sender.lastOnline).getTime()) })
+                                    : t("offline")}
+                        </Typography>
+
+                        {isGroup && (
+                            <Typography
+                                level="body-sm"
+                                sx={{
+                                    color: 'rgba(160, 212, 255, 0.6)',
+                                    fontSize: '0.8rem',
+                                    letterSpacing: '0.5px',
+                                }}
+                            >
+                                {members.length} {getMemberLabel(members.length, i18n.language)}
+                            </Typography>
+                        )}
+                    </div>
+                </Stack>
+
+                {/* Правая часть с меню */}
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ position: 'relative' }}>
+                    <IconButton
+                        onClick={() => setIsOpen(prev => !prev)}
+                        aria-label="Toggle menu"
+                        sx={{
+                            color: '#00a8ff',
+                            transition: 'all 0.3s ease',
+                            borderRadius: "8px",
+                            backgroundColor: isOpen ? 'rgba(0, 168, 255, 0.15)' : 'transparent',
+                            '&:hover': {
+                                backgroundColor: "rgba(0, 168, 255, 0.15)",
+                                boxShadow: '0 0 8px rgba(0, 168, 255, 0.3)',
+                            },
+                        }}
+                    >
+                        <MoreVertRoundedIcon />
+                    </IconButton>
+
+                    {/* Выпадающее меню */}
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            top: "48px",
+                            right: 0,
+                            mt: 1,
+                            zIndex: 9,
+                            background: 'rgba(0, 22, 45, 0.98)',
+                            backdropFilter: 'blur(24px)',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(0, 168, 255, 0.4)',
+                            boxShadow: '0 12px 40px rgba(0, 168, 255, 0.25)',
+                            transformOrigin: 'top right',
+                            transition: 'opacity 0.2s ease, transform 0.2s ease',
+                            opacity: isOpen ? 1 : 0,
+                            transform: isOpen ? 'scale(1)' : 'scale(0.95)',
+                            visibility: isOpen ? 'visible' : 'hidden',
+                        }}
+                    >
+                        <MessagesMenu
+                            isOpen={isOpen}
+                            onClose={() => setIsOpen(false)}
+                            chatId={chatId}
+                            token={localStorage.getItem('token') || ''}
+                            onDeleteChat={() => console.log('Chat deleted')}
+                        />
+                    </Box>
+                </Stack>
             </Stack>
-            <Stack spacing={1} direction="row" alignItems="center">
-                <Button
-                    startDecorator={<PhoneInTalkRoundedIcon />}
-                    color="neutral"
-                    variant="outlined"
-                    size="sm"
-                    sx={{
-                        display: { xs: 'none', md: 'inline-flex' },
+
+            {/* Модальные окна */}
+            {isGroup && currentUserId !== null && (
+                <GroupInfoModal
+                    open={isGroupModalOpen}
+                    onClose={() => setIsGroupModalOpen(false)}
+                    groupName={chatName || 'Group'}
+                    groupAvatar={groupAvatar || ''}
+                    users={members}
+                    currentUserId={currentUserId}
+                    chatId={chatId}
+                    token={localStorage.getItem('token') || ''}
+                />
+            )}
+
+            {sender && receiverId !== null && (
+                <CallModal
+                    open={isCallModalOpen}
+                    onClose={() => setIsCallModalOpen(false)}
+                    sender={{
+                        ...sender,
+                        username: sender.username || 'User',
                     }}
-                >
-                    Call
-                </Button>
-                <Button
-                    color="neutral"
-                    variant="outlined"
-                    size="sm"
-                    sx={{ display: { xs: 'none', md: 'inline-flex' } }}
-                    onClick={() => window.location.href = `/account?username=${sender.username}`}
-                >
-                    View profile
-                </Button>
-                <IconButton size="sm" variant="plain" color="neutral">
-                    <MoreVertRoundedIcon />
-                </IconButton>
-            </Stack>
-        </Stack>
-    );
+                    receiver={{
+                        id: receiverId,
+                        username: sender.username || 'User',
+                        avatar: sender.avatar || 'avatar.png',
+                    }}
+                    ws={null}
+                    currentUserId={currentUserId}
+                    callId={null}
+                    status={"incoming"}
+                />
+            )}
+        </>
+    ) : null;
 }

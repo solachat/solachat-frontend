@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { BrowserRouter as Router, Route, Routes, Link as RouterLink } from 'react-router-dom';
 import { CssVarsProvider } from '@mui/joy/styles';
 import Box from '@mui/joy/Box';
 import CssBaseline from '@mui/joy/CssBaseline';
@@ -10,7 +9,9 @@ import HeroLeft01 from '../components/home/HeroLeft01';
 import HeroLeft02 from '../components/home/HeroLeft02';
 import HeroLeft03 from '../components/home/HeroLeft03';
 import Navbar from "../components/home/Navbar";
-import {Header} from '../components/core/ColorSchemeToggle';
+import Footer from "../components/home/Footer";
+import TeamSection from "../components/home/TeamSeaction";
+import PartnersSection from "../components/home/PartnersSection";
 
 
 export default function HomePage() {
@@ -18,14 +19,13 @@ export default function HomePage() {
     return (
         <CssVarsProvider disableTransitionOnChange theme={framesxTheme}>
             <Helmet>
-                <title>{t('title.homepage')}</title>
+                <title>SolaChat</title>
             </Helmet>
             <CssBaseline />
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Header />
-                <Navbar />
+                <Navbar/>
             </Box>
-            <Box sx={{ pt: 8, overflow: 'hidden' }}>
+            <Box sx={{ overflow: 'hidden' }}>
                 <Box
                     sx={{
                         height: '100%',
@@ -39,8 +39,11 @@ export default function HomePage() {
                     <HeroLeft01 />
                     <HeroLeft02 />
                     <HeroLeft03 />
+                    <PartnersSection/>
+                    <TeamSection/>
                 </Box>
             </Box>
+            <Footer/>
         </CssVarsProvider>
     );
 }

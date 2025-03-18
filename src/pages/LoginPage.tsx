@@ -14,92 +14,134 @@ import Link from '@mui/joy/Link';
 import Input from '@mui/joy/Input';
 import Typography from '@mui/joy/Typography';
 import Stack from '@mui/joy/Stack';
-import {Link as RouterLink, useNavigate} from 'react-router-dom'; // Импортируем useNavigate
+import {Link as RouterLink, useNavigate} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import GoogleIcon from '../components/core/GoogleIcon';
 import {Header} from "../components/core/ColorSchemeToggle";
-import TelegramIcon from "../components/core/TelegramIcon";
-import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
-import PhantomIconPurple from "../components/core/PhantomIconPurple";
+import Alert from "@mui/joy/Alert";
+import PhantomConnectButton from "../components/core/PhantomConnectButton";
+import {useState} from "react";
+import MetamaskConnectButton from "../components/core/MetamaskConnectButton";
+import {motion} from "framer-motion";
 
-interface FormElements extends HTMLFormControlsCollection {
-    email: HTMLInputElement;
-    password: HTMLInputElement;
-    persistent: HTMLInputElement;
+interface PhantomProvider extends Window {
+    solana?: {
+        isPhantom?: boolean;
+        publicKey?: {
+            toString(): string;
+        };
+        connect: () => Promise<{ publicKey: { toString: () => string } }>;
+        disconnect: () => Promise<void>;
+        signMessage?: (message: Uint8Array, encoding: string) => Promise<{ signature: Uint8Array }>;
+    };
 }
 
-interface SignInFormElement extends HTMLFormElement {
-    readonly elements: FormElements;
-}
+declare let window: PhantomProvider & {
+    ethereum?: {
+        isMetaMask?: boolean;
+        request: (options: { method: string; params?: any[] }) => Promise<any>;
+    };
+};
+
+const fadeIn = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.8 } }
+};
+
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
 const Login = () => {
     const {t} = useTranslation();
     const navigate = useNavigate();
-    const [isConnected, setIsConnected] = React.useState(false);
+    const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+    const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
+    const [totpCode, setTotpCode] = useState<string>('');
 
-    const handleLogin = async (event: React.FormEvent<SignInFormElement>) => {
-        event.preventDefault();
-        const formElements = event.currentTarget.elements;
-        const data = {
-            email: formElements.email.value,
-            password: formElements.password.value,
-            persistent: formElements.persistent.checked,
-            lastlogin: new Date().toISOString(),
-        };
-
-
+    const handleLogin = async (walletAddress: string, message: string, signature: string) => {
         try {
             const response = await axios.post(`${API_URL}/api/users/login`, {
-                email: data.email,
-                password: data.password,
-                lastlogin: data.lastlogin,
+                walletAddress,
+                message,
+                signature,
             });
 
-
-            if (response.data.token && response.data.user) {
-                const userData = response.data.user;
+            if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
-
-                alert('Login successful');
-
-                navigate('/account?username=' + encodeURIComponent(userData.username));
+                navigate('/' + encodeURIComponent(response.data.user.publicKey));
             } else {
-                alert('Invalid email or password');
+                setErrorMessage('Ошибка аутентификации');
             }
         } catch (err) {
             console.error('Login failed', err);
-            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-            alert('Login failed: ' + errorMessage);
+            setErrorMessage('Ошибка при входе');
         }
     };
 
-    const connectPhantom = async () => {
+    const handleLoginWithTotp = async () => {
         try {
-            const {solana} = window;
-            if (solana && solana.isPhantom) {
-                const response = await solana.connect();
-                const walletAddress = response.publicKey.toString();
+            const response = await axios.post(`${API_URL}/api/users/login`, { totpCode });
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
+                navigate('/' + encodeURIComponent(response.data.user.public_key));
+            } else {
+                setErrorMessage('Ошибка аутентификации');
+            }
+        } catch (err) {
+            console.error('Login failed', err);
+            setErrorMessage('Ошибка при входе с использованием TOTP кода');
+        }
+    };
 
-                const loginResponse = await axios.post(`${API_URL}/api/users/phantom-login`, {
-                    wallet: walletAddress,
+    const handlePhantomConnect = async () => {
+        try {
+            if (!window.solana?.isPhantom) {
+                setErrorMessage(t('error.phantomNotFound'));
+                return;
+            }
+
+            const { publicKey } = await window.solana.connect();
+            const walletAddress = publicKey.toString();
+            setWalletAddress(walletAddress);
+
+            const message = t('message.confirmLogin', { nonce: Math.random() });
+            const encodedMessage = new TextEncoder().encode(message);
+
+            if (!window.solana.signMessage) {
+                throw new Error(t("error.phantomNotSupportSignMessage"));
+            }
+
+            const { signature } = await window.solana.signMessage(encodedMessage, 'utf8');
+
+            const signatureBase64 = btoa(String.fromCharCode(...Array.from(signature)));
+
+            await handleLogin(walletAddress, message, signatureBase64);
+        } catch (error) {
+            console.error(t("error.connectingPhantom"), error);
+            setErrorMessage(t("error.connectingWallet"));
+        }
+    };
+
+    const handleMetaMaskConnect = async () => {
+        if (window.ethereum && window.ethereum.isMetaMask) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const walletAddress = accounts[0];
+                const message = "Sign this message to confirm login. Nonce: " + Math.random();
+
+                const signature = await window.ethereum.request({
+                    method: 'personal_sign',
+                    params: [message, walletAddress],
                 });
 
-                if (loginResponse.data.token) {
-                    localStorage.setItem('token', loginResponse.data.token);
-                    setIsConnected(true);
-                    navigate(`/account?username=${loginResponse.data.user.username}`);
-                } else {
-                    alert('Failed to login with Phantom');
-                }
-            } else {
-                alert(t('phantomNotFound'));
+                await handleLogin(walletAddress, message, signature);
+            } catch (error) {
+                console.error("Error connecting to MetaMask", error);
+                setErrorMessage("Ошибка при подключении MetaMask");
             }
-        } catch (error) {
-            console.error('Connection to Phantom failed:', error);
-            alert(t('phantomConnectFailed'));
+        } else {
+            setErrorMessage("MetaMask не найден");
         }
     };
 
@@ -109,28 +151,64 @@ const Login = () => {
             <Helmet>
                 <title>{t('title.login')}</title>
             </Helmet>
-            <CssBaseline/>
+            <CssBaseline />
             <GlobalStyles
                 styles={{
                     ':root': {
                         '--Form-maxWidth': '800px',
                         '--Transition-duration': '0.4s',
+                        '--main-gradient': 'linear-gradient(45deg, #0a192f 0%, #081428 100%)',
+                        '--accent-blue': '#00a8ff',
+                        '--accent-dark-blue': '#007bff',
+                        '--glass-bg': 'rgba(10, 25, 47, 0.8)',
+                        '--dark-glass-bg': 'rgba(8, 20, 40, 0.8)',
                     },
                 }}
             />
+
+            {/* Светящиеся эффекты фона */}
+            <Box sx={{
+                position: 'fixed',
+                width: '100%',
+                height: '100%',
+                background: 'var(--main-gradient)',
+                '&::before, &::after': {
+                    content: '""',
+                    position: 'absolute',
+                    borderRadius: '50%',
+                    filter: 'blur(120px)',
+                },
+                '&::before': {
+                    width: 300,
+                    height: 300,
+                    background: 'rgba(0, 168, 255, 0.15)',
+                    top: '10%',
+                    left: '10%',
+                },
+                '&::after': {
+                    width: 250,
+                    height: 250,
+                    background: 'rgba(0, 110, 255, 0.1)',
+                    bottom: '15%',
+                    right: '15%',
+                }
+            }} />
+
             <Box
+                component={motion.div}
+                initial="hidden"
+                animate="visible"
+                variants={fadeIn}
                 sx={(theme) => ({
-                    width: {xs: '100%', md: '50vw'},
-                    transition: 'width var(--Transition-duration)',
-                    transitionDelay: 'calc(var(--Transition-duration) + 0.1s)',
+                    width: { xs: '100%', md: '50vw' },
                     position: 'relative',
-                    zIndex: 1,
+                    zIndex: 2,
                     display: 'flex',
                     justifyContent: 'flex-end',
                     backdropFilter: 'blur(12px)',
-                    backgroundColor: 'rgba(255 255 255 / 0.2)',
+                    backgroundColor: 'var(--glass-bg)',
                     [theme.getColorSchemeSelector('dark')]: {
-                        backgroundColor: 'rgba(19 19 24 / 0.4)',
+                        backgroundColor: 'var(--dark-glass-bg)',
                     },
                 })}
             >
@@ -143,7 +221,7 @@ const Login = () => {
                         px: 2,
                     }}
                 >
-                    <Header/>
+                    <Header />
                     <Box
                         component="main"
                         sx={{
@@ -152,119 +230,173 @@ const Login = () => {
                             pb: 5,
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 2,
+                            gap: 3,
                             width: 400,
                             maxWidth: '100%',
                             mx: 'auto',
-                            borderRadius: 'sm',
-                            '& form': {
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 2,
-                            },
-                            [`& .MuiFormLabel-asterisk`]: {
-                                visibility: 'hidden',
-                            },
                         }}
                     >
-                        <Stack gap={4} sx={{mt: 2}}>
-                            <Stack gap={1}>
-                                <Typography component="h1" level="h3">
-                                    {t('signIn')}
-                                </Typography>
-                                <Typography level="body-sm">
-                                    {t('newToCompany')}{' '}
-                                    <Link component={RouterLink} to="/register" level="title-sm">
-                                        {t('signUp')}
-                                    </Link>
-                                </Typography>
-                            </Stack>
-                            <form onSubmit={handleLogin}>
-                                <FormControl required>
-                                    <FormLabel>{t('email')}</FormLabel>
-                                    <Input
-                                        type="email"
-                                        name="email"
-                                        startDecorator={<EmailIcon/>}
-                                        sx={{
-                                            '& .MuiInputBase-input': {
-                                                pl: '32px',
-                                            },
-                                        }}
-                                    />
-                                </FormControl>
-                                <FormControl required>
-                                    <FormLabel>{t('password')}</FormLabel>
-                                    <Input
-                                        type="password"
-                                        name="password"
-                                        startDecorator={<LockIcon/>}
-                                        sx={{
-                                            '& .MuiInputBase-input': {
-                                                pl: '32px',
-                                            },
-                                        }}
-                                    />
-                                </FormControl>
-                                <Stack gap={4} sx={{mt: 2}}>
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                        }}
-                                    >
-                                        <Checkbox size="sm" label={t('rememberMe')} name="persistent"/>
-                                        <Link component={RouterLink} to="/forgotpassword" level="title-sm">
-                                            {t('forgotPassword')}
-                                        </Link>
-                                    </Box>
-                                    <Button type="submit" fullWidth>
-                                        {t('signInButton')}
-                                    </Button>
-                                </Stack>
-                            </form>
+                        <Stack gap={2}>
+                            <Typography
+                                component="h1"
+                                level="h2"
+                                sx={{
+                                    background: 'linear-gradient(45deg, var(--accent-blue), var(--accent-dark-blue))',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700
+                                }}
+                            >
+                                {t('signIn')}
+                            </Typography>
+                            <Typography
+                                level="body-sm"
+                                sx={{
+                                    color: 'rgba(255,255,255,0.7)',
+                                    '& a': {
+                                        color: 'var(--accent-blue)',
+                                        textDecoration: 'none',
+                                        '&:hover': { textDecoration: 'underline' }
+                                    }
+                                }}
+                            >
+                                {t('newToCompany')}{' '}
+                                <Link component={RouterLink} to="/register">
+                                    {t('signUp')}
+                                </Link>
+                            </Typography>
                         </Stack>
+
+                        {errorMessage && (
+                            <Alert
+                                color="danger"
+                                sx={{
+                                    background: 'rgba(255, 76, 81, 0.15)',
+                                    border: '1px solid rgba(255, 76, 81, 0.3)'
+                                }}
+                            >
+                                {errorMessage}
+                            </Alert>
+                        )}
+
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            handleLoginWithTotp();
+                        }}>
+                            <FormControl required>
+                                <FormLabel>{t('TOTP Code')}</FormLabel>
+                                <Input
+                                    type="text"
+                                    name="totpCode"
+                                    value={totpCode}
+                                    onChange={(e) => setTotpCode(e.target.value)}
+                                    placeholder={t('enterTOTPCode')}
+                                    startDecorator={<LockIcon />}
+                                    sx={{
+                                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                                        borderRadius: '8px',
+
+                                        transition: 'all 0.3s ease-in-out',
+                                        color: 'rgba(255,255,255,0.9)',
+                                        '&::placeholder': {
+                                            color: 'rgba(255,255,255,0.6)',
+                                        },
+                                        '&:hover': {
+                                            borderColor: 'var(--accent-blue)',
+                                        },
+                                        '&:focus-within': {
+                                            borderColor: 'var(--accent-dark-blue)',
+                                            boxShadow: '0 0 10px rgba(0, 168, 255, 0.3)',
+                                        },
+                                        '& input': {
+                                            fontSize: '1rem',
+                                            padding: '8px',
+                                            color: 'inherit',
+                                            '&::placeholder': {
+                                                color: 'inherit',
+                                            },
+                                        },
+                                    }}
+                                />
+
+                            </FormControl>
+                            <Button
+                                type="submit"
+                                fullWidth
+                                sx={{
+                                    background: 'linear-gradient(45deg, var(--accent-dark-blue), var(--accent-blue))',
+                                    border: '1px solid rgba(0, 168, 255, 0.3)',
+                                    color: '#fff',
+                                    py: 1,
+                                    fontSize: '1rem',
+                                    mt: 2,
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 4px 15px rgba(0, 168, 255, 0.3)'
+                                    }
+                                }}
+                            >
+                                {t('signInButton')}
+                            </Button>
+                        </form>
+
                         <Divider
-                            sx={(theme) => ({
-                                [theme.getColorSchemeSelector('light')]: {
-                                    color: {xs: '#FFF', md: 'text.tertiary'},
-                                },
-                            })}
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                width: '100%',
+                                color: 'rgba(255, 255, 255, 0.6)', // Чуть ярче для читаемости
+                                fontSize: '0.9rem',
+                                fontWeight: 500,
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                position: 'relative',
+                                '&::before, &::after': {
+                                    content: '""',
+                                    flex: 1,
+                                    height: '1px',
+                                    background: 'linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.5), rgba(255,255,255,0.1))',
+                                    margin: '0 12px',
+                                }
+                            }}
                         >
                             {t('or')}
                         </Divider>
-                        <Stack gap={4} sx={{mb: 2}}>
-                            <Button
-                                variant="soft"
-                                color="neutral"
-                                fullWidth
-                                startDecorator={<PhantomIconPurple/>}
-                                onClick={connectPhantom}
-                            >
-                                {isConnected ? t('phantomConnected') : t('connectPhantom')}
-                            </Button>
-                            <Button
-                                variant="soft"
-                                color="neutral"
-                                fullWidth
-                                startDecorator={<TelegramIcon/>}
-                            >
-                                {t('continueWithTelegram')}
-                            </Button>
-                            <Button
-                                variant="soft"
-                                color="neutral"
-                                fullWidth
-                                startDecorator={<GoogleIcon/>}
-                            >
-                                {t('continueWithGoogle')}
-                            </Button>
-                        </Stack>
+
+
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2,
+                            '& button': {
+                                background: 'linear-gradient(45deg, var(--accent-dark-blue), var(--accent-blue))',
+                                border: '1px solid rgba(0, 168, 255, 0.3)',
+                                color: '#fff',
+                                py: 1,
+                                fontSize: '1rem',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 4px 15px rgba(0, 168, 255, 0.3)'
+                                }
+                            }
+                        }}>
+                            <PhantomConnectButton onConnect={handlePhantomConnect} />
+                            <MetamaskConnectButton onConnect={handleMetaMaskConnect} />
+                        </Box>
                     </Box>
-                    <Box component="footer" sx={{py: 3}}>
-                        <Typography level="body-xs" textAlign="center">
-                            {t('footerText', {year: new Date().getFullYear()})}
+
+                    <Box component="footer" sx={{ py: 3 }}>
+                        <Typography
+                            level="body-xs"
+                            sx={{
+                                textAlign: 'center',
+                                color: 'rgba(255,255,255,0.5)'
+                            }}
+                        >
+                            {t('footerText', { year: new Date().getFullYear() })}
                         </Typography>
                     </Box>
                 </Box>
@@ -276,7 +408,7 @@ const Login = () => {
                     right: 0,
                     top: 0,
                     bottom: 0,
-                    left: {xs: 0, md: '50vw'},
+                    left: { xs: 0, md: '50vw' },
                     transition: 'background-image var(--Transition-duration), left var(--Transition-duration) !important',
                     transitionDelay: 'calc(var(--Transition-duration) + 0.1s)',
                     backgroundColor: 'background.level1',

@@ -37,7 +37,7 @@ const MainPage = () => {
                 overflow: 'hidden',
                 background: 'linear-gradient(120deg, #1f2c38, #212c46, #151826)',
                 position: 'relative',
-                padding: '2rem',
+                padding: '4rem 2rem', // Увеличенный padding
             }}
         >
             {/* Анимированные боковые элементы */}
@@ -108,14 +108,14 @@ const MainPage = () => {
             <Typography
                 level="h1"
                 component={motion.h1}
-                initial={{ opacity: 0 }} // Убираем y: -100 для устранения отступа
+                initial={{ opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 1 }}
                 sx={{
-                    fontSize: '5rem', // Увеличенный размер заголовка
+                    fontSize: '5rem',
                     color: 'white',
                     textAlign: 'center',
-                    mb: 2,
+                    mb: 6, // Увеличенный отступ
                 }}
             >
                 SuperFast Token on Solana
@@ -127,7 +127,7 @@ const MainPage = () => {
                 initial={{ y: 100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 1 }}
-                sx={{ fontSize: '1.5rem', color: 'white', textAlign: 'center', mb: 4 }}
+                sx={{ fontSize: '1.5rem', color: 'white', textAlign: 'center', mb: 6 }} // Увеличенный отступ
             >
                 Low fees. Instant transfers. Integrated with Phantom Wallet.
             </Typography>
@@ -147,7 +147,7 @@ const MainPage = () => {
             <Stack
                 direction="row"
                 spacing={2}
-                mt={6}
+                mt={8} // Увеличенный отступ
                 sx={{ justifyContent: 'center', alignItems: 'center' }}
             >
                 <Typography sx={{ color: 'white' }}>Transaction Speed:</Typography>
@@ -163,7 +163,7 @@ const MainPage = () => {
 
             {/* Текст внизу */}
             <Typography
-                sx={{ color: 'white', mt: 4, textAlign: 'center', fontSize: '1.25rem' }}
+                sx={{ color: 'white', mt: 8, textAlign: 'center', fontSize: '1.25rem' }} // Увеличенный отступ
                 component={motion.p}
                 initial={{ y: 100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -173,17 +173,17 @@ const MainPage = () => {
             </Typography>
 
             {/* Дополнительные секции для удлинения страницы */}
-            <Box sx={{ mt: 8, textAlign: 'center', width: '100%' }}>
+            <Box sx={{ mt: 16, textAlign: 'center', width: '100%' }}> {/* Увеличенный отступ */}
                 <Typography
                     component={motion.h2}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
-                    sx={{ color: 'white', mb: 4, fontSize: '2.5rem' }}
+                    sx={{ color: 'white', mb: 8, fontSize: '2.5rem' }} // Увеличенный отступ
                 >
                     Why Choose Solana?
                 </Typography>
-                <Typography sx={{ color: 'white', maxWidth: '600px', margin: '0 auto', mb: 8 }}>
+                <Typography sx={{ color: 'white', maxWidth: '600px', margin: '0 auto', mb: 16 }}> {/* Увеличенный отступ */}
                     Solana is designed to be the fastest blockchain in the world. It enables high-speed transactions
                     with incredibly low fees, making it the best choice for modern decentralized applications and tokens.
                 </Typography>
@@ -192,8 +192,8 @@ const MainPage = () => {
                 <Stack
                     direction={{ xs: 'column', md: 'row' }}
                     justifyContent="center"
-                    spacing={6}
-                    sx={{ marginBottom: '4rem' }}
+                    spacing={12} // Увеличенный отступ между элементами
+                    sx={{ marginBottom: '8rem' }} // Увеличенный нижний отступ
                 >
                     <motion.div
                         initial={{ opacity: 0, y: 50 }}
@@ -201,10 +201,10 @@ const MainPage = () => {
                         transition={{ delay: 0.3 }}
                         style={{
                             background: '#3498db',
-                            padding: '2rem',
+                            padding: '3rem', // Увеличенные отступы внутри блока
                             borderRadius: '10px',
                             color: 'white',
-                            width: '300px',
+                            width: '350px', // Увеличенная ширина
                             textAlign: 'center',
                         }}
                     >
@@ -222,10 +222,10 @@ const MainPage = () => {
                         transition={{ delay: 0.6 }}
                         style={{
                             background: '#f39c12',
-                            padding: '2rem',
+                            padding: '3rem',
                             borderRadius: '10px',
                             color: 'white',
-                            width: '300px',
+                            width: '350px',
                             textAlign: 'center',
                         }}
                     >
@@ -243,10 +243,10 @@ const MainPage = () => {
                         transition={{ delay: 0.9 }}
                         style={{
                             background: '#e74c3c',
-                            padding: '2rem',
+                            padding: '3rem',
                             borderRadius: '10px',
                             color: 'white',
-                            width: '300px',
+                            width: '350px',
                             textAlign: 'center',
                         }}
                     >
