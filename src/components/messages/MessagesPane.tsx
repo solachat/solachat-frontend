@@ -236,7 +236,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
 
     useLayoutEffect(() => {
         selectedChatRef.current = selectedChat;
-        console.log("🔄 Реф синхронизирован:", selectedChat?.id);
     }, [selectedChat]);
 
     useWebSocket((data) => {
