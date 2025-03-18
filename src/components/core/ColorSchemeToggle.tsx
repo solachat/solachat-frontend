@@ -7,10 +7,9 @@ import Typography from "@mui/joy/Typography";
 import Box, { BoxProps } from "@mui/joy/Box";
 import {LanguageSwitcher} from "./LanguageSwitcher";
 import SolanaIcon from "./SolanaIcon";
-import {Divider, Switch} from "@mui/joy";
+import {Switch} from "@mui/joy";
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import {useTranslation} from "react-i18next";
-import BitcoinIcon from "./BitcoinIcon";
 
 export function DarkModeSwitch() {
     const { mode, setMode } = useColorScheme();

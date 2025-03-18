@@ -4,10 +4,8 @@ import Sheet from '@mui/joy/Sheet';
 import MessagesPane from '../components/messages/MessagesPane';
 import ChatsPane from '../components/messages/ChatsPane';
 import { ChatProps } from '../components/core/types';
-import { fetchChatsFromServer } from '../api/api';
 import {LanguageSwitcher} from '../components/core/LanguageSwitcher';
 import { ColorSchemeToggle } from '../components/core/ColorSchemeToggle';
-import Sidebar from '../components/core/Sidebar';
 import { Typography } from "@mui/joy";
 import { useTranslation } from "react-i18next";
 

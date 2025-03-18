@@ -10,7 +10,7 @@ const NotFoundPage: React.FC = () => {
     const { t } = useTranslation();
 
     const handleGoHome = () => {
-        navigate('/main');  // Перенаправление на главную
+        navigate('/main');
     };
 
     return (

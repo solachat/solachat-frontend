@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import SettingsScreen from '../screen/SettingsScreen';
 import {useState} from "react";
 import {cacheChats, getCachedChats} from "../../utils/cacheChats";
-import {cacheMedia, getCachedMedia} from "../../utils/cacheMedia";
+import {getCachedMedia} from "../../utils/cacheMedia";
 import { motion } from 'framer-motion';
 import LanguageScreen from "../screen/LanguageScreen";
 
@@ -360,7 +360,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                     <LanguageScreen onBack={() => setActiveScreen('settings')} />
                 ) : (
                     <>
-                        {/* Header Section */}
                         <Box
                             sx={{
                                 display: "flex",
@@ -430,7 +429,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                             </Box>
                         </Box>
 
-                        {/* Sidebar */}
                         <Box
                             component={motion.div}
                             initial={false}
@@ -460,7 +458,6 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                             />
                         </Box>
 
-                        {/* Chat List */}
                         <Box
                             sx={{
                                 display: "flex",
@@ -468,8 +465,8 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                                 justifyContent: "flex-end",
                                 overflowY: "auto",
                                 maxWidth: "100%",
-                                pb: { xs: 1, sm: 3, md: 4 }, // Увеличил отступы для планшетов
-                                px: { xs: 1, sm: 3, md: 5 }, // Сделал удобнее на планшетах
+                                pb: { xs: 1, sm: 3, md: 4 },
+                                px: { xs: 1, sm: 3, md: 5 },
                             }}
                         >
                             {searchResults.length > 0 ? (

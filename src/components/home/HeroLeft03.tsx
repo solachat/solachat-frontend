@@ -3,13 +3,11 @@ import { motion } from 'framer-motion';
 import { Box, Typography, Button, AvatarGroup, Avatar } from '@mui/joy';
 import {useTranslation} from "react-i18next";
 
-// Анимация появления
 const fadeIn = {
     hidden: { opacity: 0, scale: 0.8 },
     visible: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: "easeOut" } }
 };
 
-// Анимация плавающих аватаров
 const floatingAvatar = {
     y: [0, -8, 0],
     transition: { duration: 2, repeat: Infinity, ease: "easeInOut" }

@@ -15,7 +15,6 @@ import PartnersSection from "../components/home/PartnersSection";
 
 
 export default function HomePage() {
-    const { t } = useTranslation();
     return (
         <CssVarsProvider disableTransitionOnChange theme={framesxTheme}>
             <Helmet>

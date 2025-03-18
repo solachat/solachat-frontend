@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Box, Typography, Avatar } from '@mui/joy';
+import { Box, Typography } from '@mui/joy';
 import { useTranslation } from 'react-i18next';
 
 const partners = [

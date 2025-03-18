@@ -63,7 +63,6 @@ export default function FeaturesPage() {
                         </Typography>
                     </motion.div>
 
-                    {/* Таймлайн */}
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 8 }}>
                         {timelineYears.map(year => (
                             <motion.div key={year} whileHover={{ scale: 1.05 }}>
@@ -90,7 +89,6 @@ export default function FeaturesPage() {
                         ))}
                     </Box>
 
-                    {/* Карточки фич */}
                     <Box sx={{
                         display: 'grid',
                         gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },

@@ -7,7 +7,8 @@ import {
     ButtonProps,
     Menu,
     MenuItem,
-    ListItemDecorator, Drawer, IconButton
+    Drawer,
+    IconButton
 } from '@mui/joy';
 import { useTranslation } from 'react-i18next';
 import {Link as RouterLink, LinkProps, useLocation} from 'react-router-dom';
@@ -17,7 +18,6 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import LanguageIcon from '@mui/icons-material/Language';
-import CheckIcon from '@mui/icons-material/Check';
 import Link from "@mui/joy/Link";
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import {Apps} from "@mui/icons-material";

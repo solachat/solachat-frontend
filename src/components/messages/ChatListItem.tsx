@@ -6,16 +6,12 @@ import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
 import AvatarWithStatus from './AvatarWithStatus';
 import { ChatProps, MessageProps, UserProps } from '../core/types';
-import { createPrivateChat } from '../../api/api';
-import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/joy/Avatar';
 import { t } from 'i18next';
 import {useTranslation} from "react-i18next";
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
-import Verified from "../core/Verified";
-import {useEffect, useState} from "react";
-import {fetchChatsFromServer} from "../../api/api";
+import { useState} from "react";
 import {motion} from "framer-motion";
 
 type NewMessageEvent =

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Box from '@mui/joy/Box';
-import {useLocation, useNavigate, useParams} from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import Sheet from '@mui/joy/Sheet';
 import Stack from '@mui/joy/Stack';
 import Typography from '@mui/joy/Typography';
@@ -361,11 +361,10 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
     const [isClosing, setIsClosing] = useState(false);
 
     const handleBack = () => {
-        setIsClosing(true); // Запускаем анимацию
-        setSelectedChat(null); // Закрываем чат после анимации
+        setIsClosing(true);
+        setSelectedChat(null);
         navigate(previousPath);
     };
-
 
     return (
         <Sheet

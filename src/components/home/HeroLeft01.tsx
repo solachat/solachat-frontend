@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Box, Typography, Button } from '@mui/joy';
 import { useMediaQuery } from "react-responsive";
 
-// Анимации
 const fadeIn = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.8 } } };
 const floatingAnimation = { rotate: [0, 2, -2, 0], transition: { duration: 4, repeat: Infinity, ease: "easeInOut" } };
 const textVariants = { hidden: { opacity: 0, x: -50 }, visible: { opacity: 1, x: 0 } };
@@ -13,9 +12,6 @@ const imageVariants = { hidden: { opacity: 0, x: 50, scale: 0.8 }, visible: { op
 export default function HeroMain() {
     const { t } = useTranslation();
     const isMobile = useMediaQuery({ maxWidth: 768 });
-    const isXS = useMediaQuery({ maxWidth: 600 });
-    const isSM = useMediaQuery({ minWidth: 601, maxWidth: 900 });
-    const isMD = useMediaQuery({ minWidth: 901 });
 
     return (
         <Box sx={{
@@ -26,7 +22,6 @@ export default function HeroMain() {
             justifyContent: 'center',
             background: 'radial-gradient(circle at center, #0a192f 0%, #081428 100%)'
         }}>
-            {/* Светящиеся круги на фоне */}
             <Box sx={{
                 position: 'absolute',
                 width: 300,
@@ -60,7 +55,6 @@ export default function HeroMain() {
                 zIndex: 1,
                 textAlign: {xs: 'center', md: 'left'}
             }}>
-                {/* Текстовый блок слева */}
 
                 <motion.div
                     initial="hidden"
@@ -108,7 +102,6 @@ export default function HeroMain() {
                         </Typography>
                     </motion.div>
 
-                    {/* Кнопка */}
                     <motion.div variants={textVariants} transition={{delay: 0.6}}>
                         <Button
                             size="lg"
