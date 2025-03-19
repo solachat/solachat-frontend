@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { updateMessageStatus} from '../../api/api';
 import dayjs from "dayjs";
 import {motion} from "framer-motion";
+import ChatInfoPanel from "./ChatInfoPane";
 
 type MessagesPaneProps = {
     chat: ChatProps | null;
@@ -101,39 +102,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
     }, [chatMessages]);
 
 
-    const handleScroll = () => {
-        const container = messagesContainerRef.current;
-        if (!container) return;
-
-        const isAtBottom = container.scrollTop === 0;
-
-
-        if (isAtBottom) {
-            setShowScrollToBottom(false);
-        } else {
-            setShowScrollToBottom(true);
-        }
-        const messages = Array.from(container.querySelectorAll('.message[data-date]'));
-        for (let message of messages) {
-            const rect = (message as HTMLElement).getBoundingClientRect();
-            if (rect.top >= 50) {
-                const date = message.getAttribute('data-date');
-                if (date) {
-                    setVisibleDate(date);
-                }
-                break;
-            }
-        }
-    };
-
-    useEffect(() => {
-        const container = messagesContainerRef.current;
-        if (!container) return;
-
-        const isAtBottom = container.scrollTop === 0;
-
-        setShowScrollToBottom(!isAtBottom);
-    }, [chatMessages])
 
 
     useEffect(() => {
@@ -206,13 +174,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
 
 
 
-    useEffect(() => {
-        const container = messagesContainerRef.current;
-        if (container) {
-            container.addEventListener('scroll', handleScroll);
-            return () => container.removeEventListener('scroll', handleScroll);
-        }
-    }, []);
 
     const handleEditMessageInList = (updatedMessage: MessageProps) => {
         setChatMessages((prevMessages) =>
@@ -364,213 +325,231 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         setSelectedChat(null);
         navigate(previousPath);
     };
+    const [showInfoPanel, setShowInfoPanel] = React.useState(false);
+
+    const handlePublicKeyClick = () => {
+        setShowInfoPanel((prev) => !prev);
+    };
 
     return (
         <Sheet
             sx={{
+                width: '100%',
                 height: '100vh',
                 display: 'flex',
-                flexDirection: 'column',
-                background: 'radial-gradient(circle at center, #0a192f 0%, #081428 100%)',
                 overflow: 'hidden',
+                background: 'radial-gradient(circle at center, #0a192f 0%, #081428 100%)',
             }}
         >
-            {chat?.id && (
-                <MessagesPaneHeader
-                    sender={interlocutor}
-                    chatId={chat.id}
-                    isGroup={chat.isGroup}
-                    chatName={chat.isGroup ? chat.name : undefined}
-                    groupAvatar={chat.isGroup ? chat.avatar || '/default-group-avatar.png' : undefined}
-                    members={chat?.users || []}
-                    onBack={handleBack}
-                />
-            )}
-
-            {visibleDate && (
-                <Box
-                    component={motion.div}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    sx={{
-                        position: 'fixed',
-                        top: 10,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        bgcolor: 'rgba(0, 168, 255, 0.2)',
-                        color: '#00a8ff',
-                        padding: '6px 12px',
-                        borderRadius: 'lg',
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        zIndex: 1000,
-                        border: '1px solid rgba(0, 168, 255, 0.3)',
-                        boxShadow: '0 4px 16px rgba(0, 168, 255, 0.2)',
-                    }}
-                >
-                    {visibleDate}
-                </Box>
-            )}
-
             <Box
-                ref={messagesContainerRef}
                 sx={{
-                    flex: 1,
+                    flex: showInfoPanel ? '0 0 calc(100% - 400px)' : '1 1 100%',
                     display: 'flex',
-                    flexDirection: 'column-reverse',
-                    px: 1,
-                    py: { xs: 2, sm: 1 },
-                    overflowY: 'auto',
-                    alignItems: 'center',
-                    '&::-webkit-scrollbar': {
-                        width: '8px',
-                    },
-                    '&::-webkit-scrollbar-track': {
-                        bgcolor: 'rgba(0, 168, 255, 0.1)',
-                        borderRadius: '4px',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                        bgcolor: 'rgba(0, 168, 255, 0.3)',
-                        borderRadius: '4px',
-                    },
-
+                    flexDirection: 'column',
+                    overflow: 'hidden',
                 }}
             >
-                <>
-                    {chatMessages.length > 0 ? (
-                        <Stack spacing={2} sx={{ width: { xs: '100%', sm: '80%', md: '60%' } }}>
-                            {Object.entries(groupedMessages).map(([date, messages]) => (
-                                <div key={date}>
-                                    <Typography
-                                        sx={{
-                                            textAlign: 'center',
-                                            fontSize: '14px',
-                                            color: '#a0d4ff',
-                                            bgcolor: 'rgba(0, 168, 255, 0.1)',
-                                            padding: '4px 8px',
-                                            borderRadius: '8px',
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            maxWidth: 'fit-content',
-                                            margin: '7px auto',
-                                            border: '1px solid rgba(0, 168, 255, 0.3)',
-                                            boxShadow: '0 2px 8px rgba(0, 168, 255, 0.2)',
-                                        }}
-                                    >
-                                        {formatDate(date)}
-                                    </Typography>
+                {chat?.id && (
+                    <MessagesPaneHeader
+                        sender={interlocutor}
+                        chatId={chat.id}
+                        isGroup={chat.isGroup}
+                        chatName={chat.isGroup ? chat.name : undefined}
+                        groupAvatar={chat.isGroup ? chat.avatar || '/default-group-avatar.png' : undefined}
+                        members={chat?.users || []}
+                        onBack={handleBack}
+                        onPublicKeyClick={handlePublicKeyClick}
+                    />
+                )}
 
-                                    <Stack spacing={1}>
-                                        {messages
-                                            .filter((message) => message.content || (message.attachment && message.attachment.filePath))
-                                            .map((message: MessageProps, index: number) => {
-                                                const isCurrentUser = message.userId === currentUserId;
-                                                return (
-                                                    <Stack
-                                                        key={message.id}
-                                                        direction="row"
-                                                        spacing={1}
-                                                        flexDirection={isCurrentUser ? 'row-reverse' : 'row'}
-                                                    >
-                                                        <ChatBubble
-                                                            id={message.id}
-                                                            chatId={message.chatId}
-                                                            userId={message.userId}
-                                                            variant={isCurrentUser ? 'sent' : 'received'}
-                                                            user={message.user}
-                                                            content={message.content}
-                                                            createdAt={message.createdAt}
-                                                            attachment={message.attachment}
-                                                            isRead={message.isRead ?? false}
-                                                            isDelivered={message.isDelivered ?? false}
-                                                            unread={message.unread}
-                                                            isEdited={message.isEdited}
-                                                            onEditMessage={handleEditMessage}
-                                                            messageCreatorId={message.userId}
-                                                            isGroupChat={chat?.isGroup || false}
-                                                            pending={message.pending}
-                                                        />
-                                                    </Stack>
-                                                );
-                                            })}
-                                    </Stack>
-                                </div>
-                            ))}
-                            <div ref={messagesEndRef} />
-                        </Stack>
-                    ) : (
-                        <Typography
-                            sx={{
-                                textAlign: 'center',
-                                flex: 1,
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                height: '100%',
-                                color: 'text.secondary',
+                {visibleDate && (
+                    <Box
+                        component={motion.div}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        sx={{
+                            position: 'fixed',
+                            top: 10,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            bgcolor: 'rgba(0, 168, 255, 0.2)',
+                            color: '#00a8ff',
+                            padding: '6px 12px',
+                            borderRadius: 'lg',
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            zIndex: 1000,
+                            border: '1px solid rgba(0, 168, 255, 0.3)',
+                            boxShadow: '0 4px 16px rgba(0, 168, 255, 0.2)',
+                        }}
+                    >
+                        {visibleDate}
+                    </Box>
+                )}
+
+                <Box
+                    ref={messagesContainerRef}
+                    sx={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column-reverse',
+                        px: 1,
+                        py: { xs: 2, sm: 1 },
+                        overflowY: 'auto',
+                        alignItems: 'center',
+                        '&::-webkit-scrollbar': {
+                            width: '8px',
+                        },
+                        '&::-webkit-scrollbar-track': {
+                            bgcolor: 'rgba(0, 168, 255, 0.1)',
+                            borderRadius: '4px',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            bgcolor: 'rgba(0, 168, 255, 0.3)',
+                            borderRadius: '4px',
+                        },
+                    }}
+                >
+                    <>
+                        {chatMessages.length > 0 ? (
+                            <Stack spacing={2} sx={{ width: { xs: '100%', sm: '80%', md: '60%' } }}>
+                                {Object.entries(groupedMessages).map(([date, messages]) => (
+                                    <div key={date}>
+                                        <Typography
+                                            sx={{
+                                                textAlign: 'center',
+                                                fontSize: '14px',
+                                                color: '#a0d4ff',
+                                                bgcolor: 'rgba(0, 168, 255, 0.1)',
+                                                padding: '4px 8px',
+                                                borderRadius: '8px',
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                maxWidth: 'fit-content',
+                                                margin: '7px auto',
+                                                border: '1px solid rgba(0, 168, 255, 0.3)',
+                                                boxShadow: '0 2px 8px rgba(0, 168, 255, 0.2)',
+                                            }}
+                                        >
+                                            {formatDate(date)}
+                                        </Typography>
+
+                                        <Stack spacing={1}>
+                                            {messages
+                                                .filter(
+                                                    (message) =>
+                                                        message.content ||
+                                                        (message.attachment && message.attachment.filePath)
+                                                )
+                                                .map((message: MessageProps) => {
+                                                    const isCurrentUser = message.userId === currentUserId;
+                                                    return (
+                                                        <Stack
+                                                            key={message.id}
+                                                            direction="row"
+                                                            spacing={1}
+                                                            flexDirection={isCurrentUser ? 'row-reverse' : 'row'}
+                                                        >
+                                                            <ChatBubble
+                                                                id={message.id}
+                                                                chatId={message.chatId}
+                                                                userId={message.userId}
+                                                                variant={isCurrentUser ? 'sent' : 'received'}
+                                                                user={message.user}
+                                                                content={message.content}
+                                                                createdAt={message.createdAt}
+                                                                attachment={message.attachment}
+                                                                isRead={message.isRead ?? false}
+                                                                isDelivered={message.isDelivered ?? false}
+                                                                unread={message.unread}
+                                                                isEdited={message.isEdited}
+                                                                onEditMessage={handleEditMessage}
+                                                                messageCreatorId={message.userId}
+                                                                isGroupChat={chat?.isGroup || false}
+                                                                pending={message.pending}
+                                                            />
+                                                        </Stack>
+                                                    );
+                                                })}
+                                        </Stack>
+                                    </div>
+                                ))}
+                                <div ref={messagesEndRef} />
+                            </Stack>
+                        ) : (
+                            <Typography
+                                sx={{
+                                    textAlign: 'center',
+                                    flex: 1,
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    height: '100%',
+                                    color: 'text.secondary',
+                                }}
+                            >
+                                {t('')}
+                            </Typography>
+                        )}
+                    </>
+                </Box>
+
+                {chat && (
+                    <Box sx={{ width: { xs: '100%', sm: '80%', md: '60%' }, margin: '0px auto' }}>
+                        <MessageInput
+                            chatId={chat?.id ?? null}
+                            selectedChat={chat}
+                            setSelectedChat={setSelectedChat}
+                            currentUserId={currentUserId!}
+                            onSubmit={(newMessage: MessageProps) => {
+                                setChatMessages((prevMessages) => [...prevMessages, newMessage]);
+                                setTextAreaValue('');
+                                setEditingMessageId(null);
                             }}
-                        >
-                            {t('')}
-                        </Typography>
-                    )}
-                    {/*{showScrollToBottom && (*/}
-                    {/*    <IconButton*/}
-                    {/*        onClick={handleScrollToBottom}*/}
-                    {/*        size="lg"*/}
-                    {/*        sx={{*/}
-                    {/*            position: 'absolute',*/}
-                    {/*            right: 20,*/}
-                    {/*            width: 40,*/}
-                    {/*            height: 40,*/}
-                    {/*            backgroundColor: 'rgba(0, 0, 0, 0.6)',*/}
-                    {/*            color: 'white',*/}
-                    {/*            fontSize: 32,*/}
-                    {/*            opacity: showScrollToBottom ? 1 : 0,*/}
-                    {/*            transition: 'opacity 0.3s ease-in-out',*/}
-                    {/*            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.8)' }*/}
-                    {/*        }}*/}
-                    {/*    >*/}
-                    {/*        <KeyboardArrowDownIcon fontSize="inherit" />*/}
-                    {/*    </IconButton>*/}
-                    {/*)}*/}
-                </>
+                            editingMessage={
+                                editingMessageId !== null
+                                    ? {
+                                        id: editingMessageId,
+                                        content:
+                                            chatMessages.find((msg) => msg.id === editingMessageId)?.content || '',
+                                    }
+                                    : { id: null, content: '' }
+                            }
+                            setEditingMessage={(msg) => {
+                                if (!msg) {
+                                    setEditingMessageId(null);
+                                } else {
+                                    const messageToEdit = chatMessages.find(
+                                        (msgItem) => msgItem.content === msg.content
+                                    );
+                                    if (messageToEdit) {
+                                        setEditingMessageId(messageToEdit.id);
+                                    }
+                                }
+                            }}
+                        />
+                    </Box>
+                )}
             </Box>
 
-
-            {chat && (
-                <Box sx={{ width: { xs: '100%', sm: '80%', md: '60%' }, margin: '0px auto' }}>
-                    <MessageInput
-                        chatId={chat?.id ?? null}
-                        selectedChat={chat}
-                        setSelectedChat={setSelectedChat}
-                        currentUserId={currentUserId!}
-                        onSubmit={(newMessage: MessageProps) => {
-                            setChatMessages((prevMessages) => [...prevMessages, newMessage]);
-                            setTextAreaValue("");
-                            setEditingMessageId(null);
+            {showInfoPanel && (
+                <Box
+                    sx={{
+                        width: 450,
+                        borderLeft: '1px solid rgba(0, 168, 255, 0.3)',
+                        overflowY: 'auto',
+                        background: 'rgba(10, 25, 47, 0.95)',
+                    }}
+                >
+                    <ChatInfoPanel
+                        profile={{
+                            avatar: interlocutor?.avatar || '/default-avatar.png',
+                            username: interlocutor?.username,
+                            publicKey: interlocutor?.public_key ?? '',
                         }}
-                        editingMessage={
-                            editingMessageId !== null
-                                ? {
-                                    id: editingMessageId,
-                                    content:
-                                        chatMessages.find((msg) => msg.id === editingMessageId)?.content || "",
-                                }
-                                : { id: null, content: "" }
-                        }
-                        setEditingMessage={(msg) => {
-                            if (!msg) {
-                                setEditingMessageId(null);
-                            } else {
-                                const messageToEdit = chatMessages.find(
-                                    (msgItem) => msgItem.content === msg.content
-                                );
-                                if (messageToEdit) {
-                                    setEditingMessageId(messageToEdit.id);
-                                }
-                            }
-                        }}
+                        messages={chatMessages}
+                        onClose={() => setShowInfoPanel(false)}
                     />
                 </Box>
             )}

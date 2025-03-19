@@ -16,6 +16,7 @@ import PhantomConnectButton from '../components/core/PhantomConnectButton';
 import { Helmet } from "react-helmet-async";
 import MetamaskConnectButton from "../components/core/MetamaskConnectButton";
 import {motion} from "framer-motion";
+import WalletConnectButton from "../components/core/WalletConnectButton";
 
 interface PhantomProvider extends Window {
     solana?: {
@@ -147,6 +148,11 @@ const RegisterPage: React.FC = () => {
         } else {
             setErrorMessage(t("error.metaMaskNotFound"));
         }
+    };
+
+    const handleWalletConnect = (wallet: string) => {
+        setWalletAddress(wallet);
+        setSignedMessage({ message: "Authenticated", signature: "walletConnectSignature" });
     };
 
     return (
@@ -303,6 +309,7 @@ const RegisterPage: React.FC = () => {
                         }}>
                             <PhantomConnectButton onConnect={handlePhantomConnect} />
                             <MetamaskConnectButton onConnect={handleMetaMaskConnect} />
+                            {/*<WalletConnectButton onConnect={handleWalletConnect}/>*/}
                         </Box>
                     </Box>
 
@@ -311,7 +318,7 @@ const RegisterPage: React.FC = () => {
                             level="body-xs"
                             sx={{
                                 textAlign: 'center',
-                                color: 'rgba(255,255,255,0.5)'
+                                color: 'white'
                             }}
                         >
                             {t('footerText', { year: new Date().getFullYear() })}

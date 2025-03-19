@@ -391,7 +391,7 @@ const Login = () => {
                             level="body-xs"
                             sx={{
                                 textAlign: 'center',
-                                color: 'rgba(255,255,255,0.5)'
+                                color: 'white'
                             }}
                         >
                             {t('footerText', { year: new Date().getFullYear() })}

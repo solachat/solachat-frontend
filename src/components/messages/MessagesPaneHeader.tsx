@@ -14,6 +14,7 @@ import Verified from '../core/Verified';
 import {useEffect} from "react";
 import Box from "@mui/joy/Box";
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import { AnimatePresence, motion } from 'framer-motion';
 
 type UserStatus = Pick<UserProps, 'online' | 'lastOnline'>;
 
@@ -26,6 +27,8 @@ type MessagesPaneHeaderProps = {
     members?: UserProps[];
     onBack?: () => void;
     userStatus?: UserStatus;
+    onPublicKeyClick?: () => void;
+
 };
 
 export default function MessagesPaneHeader({
@@ -37,6 +40,7 @@ export default function MessagesPaneHeader({
                                                members = [],
                                                onBack,
                                                userStatus,
+    onPublicKeyClick
                                            }: MessagesPaneHeaderProps) {
     const { t, i18n } = useTranslation();
     const [isGroupModalOpen, setIsGroupModalOpen] = React.useState(false);
@@ -114,6 +118,7 @@ export default function MessagesPaneHeader({
             year: "numeric"
         });
     };
+    const [isAvatarOverlayOpen, setIsAvatarOverlayOpen] = React.useState(false);
 
     const headerHeight = 68;
     const borderStyle = '1px solid rgba(0, 168, 255, 0.3)';
@@ -146,7 +151,6 @@ export default function MessagesPaneHeader({
                     },
                 }}
             >
-                {/* Левый блок с аватаром и информацией */}
                 <Stack
                     direction="row"
                     spacing={{ xs: 1, md: 1.5 }}
@@ -177,7 +181,7 @@ export default function MessagesPaneHeader({
                         size="lg"
                         src={isGroup ? groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
                         alt={isGroup ? chatName : sender?.public_key}
-                        onClick={handleAvatarClick}
+                        onClick={() => setIsAvatarOverlayOpen(true)}
                         sx={{
                             cursor: 'pointer',
                             border: '2px solid transparent',
@@ -189,6 +193,7 @@ export default function MessagesPaneHeader({
                         }}
                     />
 
+
                     <div style={{ width: '100%' }}>
                         <Typography
                             fontWeight="lg"
@@ -196,6 +201,7 @@ export default function MessagesPaneHeader({
                             component="h2"
                             noWrap
                             sx={{
+                                cursor: 'pointer',
                                 color: '#a0d4ff',
                                 transition: 'all 0.3s ease',
                                 '&:hover': {
@@ -203,7 +209,7 @@ export default function MessagesPaneHeader({
                                     textShadow: '0 0 8px rgba(0, 168, 255, 0.4)',
                                 },
                             }}
-                            onClick={handleAvatarClick}
+                            onClick={onPublicKeyClick}
                         >
                             {isGroup ? chatName : sender?.public_key}
                             {sender?.verified && <Verified sx={{ ml: 1, color: '#00a8ff' }} />}
@@ -238,8 +244,6 @@ export default function MessagesPaneHeader({
                         )}
                     </div>
                 </Stack>
-
-                {/* Правая часть с меню */}
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ position: 'relative' }}>
                     <IconButton
                         onClick={() => setIsOpen(prev => !prev)}
@@ -258,7 +262,6 @@ export default function MessagesPaneHeader({
                         <MoreVertRoundedIcon />
                     </IconButton>
 
-                    {/* Выпадающее меню */}
                     <Box
                         sx={{
                             position: "absolute",
@@ -289,7 +292,6 @@ export default function MessagesPaneHeader({
                 </Stack>
             </Stack>
 
-            {/* Модальные окна */}
             {isGroup && currentUserId !== null && (
                 <GroupInfoModal
                     open={isGroupModalOpen}
@@ -322,6 +324,41 @@ export default function MessagesPaneHeader({
                     status={"incoming"}
                 />
             )}
+            <AnimatePresence>
+                {isAvatarOverlayOpen && (
+                    <motion.div
+                        key="avatarOverlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 9999,
+                            cursor: 'pointer',
+                        }}
+                        onClick={() => setIsAvatarOverlayOpen(false)}
+                    >
+                        <img
+                            src={isGroup ? groupAvatar || 'path/to/default-group-avatar.jpg' : sender?.avatar}
+                            alt={isGroup ? chatName : sender?.public_key}
+                            style={{
+                                maxWidth: '80%',
+                                maxHeight: '80%',
+                                objectFit: 'contain',
+                                borderRadius: '8px',
+                            }}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </>
     ) : null;
 }
