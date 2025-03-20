@@ -1,6 +1,6 @@
 {
   "name": "solachat-frontend",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "dependencies": {
     "@craco/craco": "^7.1.0",
@@ -100,6 +100,9 @@
     "@types/qrcode": "^1.5.5",
     "@types/react-virtualized": "^9.21.30",
     "@types/react-window": "^1.8.8",
+    "@walletconnect/modal": "^2.7.0",
+    "@walletconnect/web3-provider": "^1.8.0",
+    "@web3modal/react": "^2.7.1",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.4.10",

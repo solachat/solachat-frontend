@@ -14,7 +14,7 @@ import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from 'react-i18next';
 import { updateMessageStatus} from '../../api/api';
 import dayjs from "dayjs";
-import {motion} from "framer-motion";
+import {AnimatePresence, motion} from "framer-motion";
 import ChatInfoPanel from "./ChatInfoPane";
 
 type MessagesPaneProps = {
@@ -331,6 +331,17 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         setShowInfoPanel((prev) => !prev);
     };
 
+    useEffect(() => {
+        const savedState = sessionStorage.getItem('showInfoPanel');
+        if (savedState === 'true') {
+            setShowInfoPanel(true);
+        }
+    }, []);
+
+    useEffect(() => {
+        sessionStorage.setItem('showInfoPanel', showInfoPanel.toString());
+    }, [showInfoPanel]);
+
     return (
         <Sheet
             sx={{
@@ -343,7 +354,8 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         >
             <Box
                 sx={{
-                    flex: showInfoPanel ? '0 0 calc(100% - 400px)' : '1 1 100%',
+                    flex: '1 1 auto', // Занимает всю доступную ширину
+                    maxWidth: showInfoPanel ? 'calc(100% - 450px)' : '100%',
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden',
@@ -533,26 +545,41 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                 )}
             </Box>
 
-            {showInfoPanel && (
-                <Box
-                    sx={{
-                        width: 450,
-                        borderLeft: '1px solid rgba(0, 168, 255, 0.3)',
-                        overflowY: 'auto',
-                        background: 'rgba(10, 25, 47, 0.95)',
-                    }}
-                >
-                    <ChatInfoPanel
-                        profile={{
-                            avatar: interlocutor?.avatar || '/default-avatar.png',
-                            username: interlocutor?.username,
-                            publicKey: interlocutor?.public_key ?? '',
+
+            <AnimatePresence>
+                {showInfoPanel && (
+                    <motion.div
+                        initial={{ x: 450, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: 450, opacity: 0 }}
+                        transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+                        style={{
+                            width: 450,
+                            height: '100vh',
+                            position: 'absolute',
+                            right: 0,
+                            top: 0,
+                            borderLeft: '1px solid rgba(0, 168, 255, 0.3)',
+                            overflowY: 'auto',
+                            background: 'rgba(10, 25, 47, 0.95)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            zIndex: 1000,
                         }}
-                        messages={chatMessages}
-                        onClose={() => setShowInfoPanel(false)}
-                    />
-                </Box>
-            )}
+                    >
+                        <ChatInfoPanel
+                            profile={{
+                                avatar: interlocutor?.avatar || '/default-avatar.png',
+                                username: interlocutor?.username,
+                                publicKey: interlocutor?.public_key ?? '',
+                            }}
+                            messages={chatMessages}
+                            onClose={() => setShowInfoPanel(false)}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
         </Sheet>
     );
 }

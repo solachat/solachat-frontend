@@ -136,8 +136,6 @@ export default function ChatListItem(props: ChatListItemProps) {
         }
     };
 
-
-
     const handleClick = async () => {
         if (!sender) {
             console.error("❌ Ошибка: Отправитель не указан!");

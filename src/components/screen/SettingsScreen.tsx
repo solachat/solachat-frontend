@@ -23,12 +23,16 @@ import { jwtDecode } from 'jwt-decode';
 import { useTranslation } from "react-i18next";
 import { getCachedAvatar, cacheAvatar } from '../../utils/cacheStorage';
 import LanguageScreen from "./LanguageScreen";
+import { useNavigate } from 'react-router-dom';
+import GeneralSettingsScreen from "./GeneralSettingsScreen";
+import EditIcon from "@mui/icons-material/Edit";
+import EditProfileScreen from "./EditProfileScreen";
 
 interface DecodedToken {
     avatar: string;
     publicKey: string;
     username?: string;
-    bio?: string;
+    aboutMe?: string;
     id: string;
 }
 
@@ -64,7 +68,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
     const [profile, setProfile] = useState<Partial<DecodedToken>>({});
     const [menuOpen, setMenuOpen] = useState(false);
     const anchorRef = useRef<HTMLButtonElement>(null);
-    const [currentScreen, setCurrentScreen] = useState<'settings' | 'language'>('settings');
+    const [currentScreen, setCurrentScreen] = useState<'settings' | 'language' | 'general_settings' | 'edit_profile'>('settings');
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -87,7 +91,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
                 setProfile({
                     publicKey: decoded.publicKey,
                     username: decoded.username,
-                    bio: decoded.bio,
+                    aboutMe: decoded.aboutMe,
                     id: decoded.id
                 });
 
@@ -108,16 +112,18 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
         i18n.changeLanguage(lng);
     };
 
+    const navigate = useNavigate();
+
     const menuItems = [
         {
             icon: <SettingsIcon sx={{fontSize: 20}}/>,
             text: t('general_settings'),
-            onClick: () => console.log('Settings clicked')
+            onClick: () => setCurrentScreen('general_settings')
         },
         {
             icon: <StorageIcon sx={{fontSize: 20}}/>,
             text: t('data_storage'),
-            onClick: () => console.log('Storage clicked')
+            onClick: () => setCurrentScreen('general_settings')
         },
         {
             icon: <LanguageIcon sx={{ fontSize: 20 }} />,
@@ -129,20 +135,20 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
 
     const supportItems = [
         {
-            icon: <HelpOutlineIcon sx={{fontSize: 20}}/>,
+            icon: <HelpOutlineIcon sx={{ fontSize: 20 }} />,
             text: t('ask_question'),
-            onClick: () => console.log('Ask question clicked')
+            onClick: () => console.log('Ask question clicked'),
         },
         {
-            icon: <InfoIcon sx={{fontSize: 20}}/>,
+            icon: <InfoIcon sx={{ fontSize: 20 }} />,
             text: t('solchat_faq'),
-            onClick: () => console.log('FAQ clicked')
+            onClick: () => navigate('/faq'),
         },
         {
-            icon: <PolicyIcon sx={{fontSize: 20}}/>,
+            icon: <PolicyIcon sx={{ fontSize: 20 }} />,
             text: t('privacy_policy'),
-            onClick: () => console.log('Privacy Policy clicked')
-        }
+            onClick: () => console.log('Privacy Policy clicked'),
+        },
     ];
 
     const renderMenuButton = () => (
@@ -169,8 +175,12 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
     return (
         <>
             {currentScreen === 'language' ? (
-                <LanguageScreen onBack={() => setCurrentScreen('settings')}/>
-                ) : (
+                <LanguageScreen onBack={() => setCurrentScreen('settings')} />
+            ) : currentScreen === 'general_settings' ? (
+                <GeneralSettingsScreen onBack={() => setCurrentScreen('settings')} />
+            ) : currentScreen === 'edit_profile' ? (
+                <EditProfileScreen onBack={() => setCurrentScreen('settings')} />
+            ) : (
                 <Sheet
                     sx={{
                         height: '100dvh',
@@ -184,27 +194,40 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
                         }
                     }}
                 >
-                    {/* Header Section */}
                     <Box
                         sx={{
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 10,
                             display: 'flex',
                             alignItems: 'center',
                             p: 2,
                             borderBottom: '1px solid rgba(0,168,255,0.3)',
                             background: 'rgba(0,22,45,0.9)',
-                            backdropFilter: 'blur(12px)',
                         }}
                     >
-                        <IconButton onClick={onBack} sx={{color: '#00a8ff', mr: 2}}>
-                            <ArrowBackIcon sx={{fontSize: 24, color: '#a0d4ff'}}/>
+                        <IconButton onClick={onBack} sx={{ color: '#00a8ff', mr: 2 }}>
+                            <ArrowBackIcon sx={{ fontSize: 24, color: '#a0d4ff' }} />
                         </IconButton>
-                        <Typography level="h4" sx={{
-                            color: '#a0d4ff',
-                            flexGrow: 1,
-                            textShadow: '0 2px 4px rgba(0,168,255,0.3)'
-                        }}>
+
+                        <Typography
+                            level="h4"
+                            sx={{
+                                color: '#a0d4ff',
+                                flexGrow: 1,
+                                textShadow: '0 2px 4px rgba(0,168,255,0.3)',
+                            }}
+                        >
                             {t('settings')}
                         </Typography>
+
+                        {/* Карандаш перед троеточием с отступом */}
+                        <IconButton
+                            sx={{ mr: 1.5 }}
+                            onClick={() => setCurrentScreen('edit_profile')}
+                        >
+                            <EditIcon sx={{ fontSize: 24, color: '#a0d4ff' }} />
+                        </IconButton>
 
                         {renderMenuButton()}
 
@@ -218,8 +241,8 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
                                     border: '1px solid rgba(0,168,255,0.4)',
                                     boxShadow: '0 8px 32px rgba(0,168,255,0.3)',
                                     minWidth: 180,
-                                    p: 1
-                                }
+                                    p: 1,
+                                },
                             }}
                         >
                             <MenuItem
@@ -231,16 +254,17 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
                                     '&:hover': {
                                         background: 'rgba(255,80,80,0.1)',
                                     },
-                                    transition: 'all 0.2s ease'
+                                    transition: 'all 0.2s ease',
                                 }}
                             >
-                                <ExitToAppIcon sx={{mr: 1.5, fontSize: 24}}/>
-                                <Typography sx={{fontSize: '1rem'}}>
+                                <ExitToAppIcon sx={{ mr: 1.5, fontSize: 24 }} />
+                                <Typography sx={{ fontSize: '1rem' }}>
                                     {t('logout')}
                                 </Typography>
                             </MenuItem>
                         </Menu>
                     </Box>
+
 
                     {/* Avatar Section */}
                     <Box sx={{
@@ -274,7 +298,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
                             }}>
                                 {profile.username || profile.publicKey}
                             </Typography>
-                            {profile.bio && (
+                            {profile.aboutMe && (
                                 <Typography sx={{
                                     color: '#a0d4ff',
                                     fontSize: '0.9rem',
@@ -283,7 +307,7 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
                                     WebkitBoxOrient: 'vertical',
                                     overflow: 'hidden'
                                 }}>
-                                    {profile.bio}
+                                    {profile.aboutMe}
                                 </Typography>
                             )}
                         </Box>

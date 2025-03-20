@@ -128,13 +128,12 @@ export default function AccountPage() {
 
                 console.log(`🌍 Запрос профиля: ${API_URL}/api/users/profile?${queryParam}`);
 
-                // Загружаем профиль из кэша
                 const cachedProfile = await getCachedProfile(identifier);
                 if (cachedProfile) {
                     console.log("✅ Профиль загружен из кэша:", cachedProfile);
                     setProfileData(cachedProfile);
                     setError(null);
-                    profileFetched.current = true; // Предотвращаем повторные запросы
+                    profileFetched.current = true;
 
                     if (cachedProfile.avatar) {
                         const cachedAvatarUrl = await getCachedMedia(cachedProfile.avatar);
@@ -144,7 +143,6 @@ export default function AccountPage() {
                     }
                 }
 
-                // Загружаем профиль с сервера
                 const response = await axios.get(`${API_URL}/api/users/profile?${queryParam}`, {
                     headers: {Authorization: `Bearer ${token}`},
                 });
@@ -152,9 +150,8 @@ export default function AccountPage() {
                 const data = response.data;
                 console.log("📌 Профиль загружен с сервера:", data);
                 setProfileData(data);
-                profileFetched.current = true; // Фиксируем, что запрос уже был
+                profileFetched.current = true;
 
-                // Загружаем аватарку и кэшируем
                 if (data.avatar) {
                     const cachedAvatarUrl = await getCachedMedia(data.avatar);
                     if (cachedAvatarUrl) {
@@ -175,7 +172,6 @@ export default function AccountPage() {
 
                 await cacheProfile(identifier, data);
 
-                // Определяем владельца профиля
                 const decodedToken = token ? jwtDecode<{ publicKey: string }>(token) : null;
                 const currentPublicKey = decodedToken?.publicKey || null;
                 setIsOwner(currentPublicKey === data.public_key);

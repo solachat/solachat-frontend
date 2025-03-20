@@ -78,7 +78,7 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
         return response.data;
     } catch (error: any) {
         console.warn("⚠️ Ошибка сервера, используем кэш:", error.response?.data || error.message);
-        return null; // Возвращаем `null`, чтобы явно обработать случай ошибки
+        return null;
     }
 };
 
@@ -90,7 +90,6 @@ export const saveSessionKey = async (chatId: number, sessionKey: string) => {
     });
 };
 
-// ✅ Запрос на получение ключа
 export const getSessionKey = async (chatId: number) => {
     const response = await fetch(`${API_URL}/api/session/session/${chatId}`);
     if (!response.ok) return null;
@@ -107,12 +106,12 @@ export const sendMessage = async (chatId: number, formData: FormData, token: str
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data',
                 },
-                validateStatus: (status) => status < 500, // ✅ Разрешаем 202
+                validateStatus: (status) => status < 500,
             }
         );
         console.log("📥 typeof response.status:", typeof response.status, response.status);
 
-        console.log("📥 Ответ от сервера (sendMessage):", response); // ✅ Логируем ответ
+        console.log("📥 Ответ от сервера (sendMessage):", response);
 
         return response;
 
@@ -533,5 +532,33 @@ export const applyForVacancy = async (formData: any) => {
     } catch (error) {
         console.error("Ошибка при отправке заявки:", error);
         throw error;
+    }
+};
+
+export const updateUserProfile = async (publicKey: string, newUsername: string, aboutMe: string, token: string) => {
+    try {
+        const response = await axios.put(
+            `${API_URL}/api/users/profile/${publicKey}`,
+            { newUsername, aboutMe },
+            {
+                headers: { Authorization: `Bearer ${token}` }
+            }
+        );
+
+        localStorage.setItem('token', response.data.token);
+        return response.data.user;
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+    }
+};
+
+export const checkUsernameAvailability = async (username: string) => {
+    try {
+        const response = await axios.get(`${API_URL}/api/users/check-username/${username}`);
+        return response.data.available;
+    } catch (error) {
+        console.error('Error checking username:', error);
+        return false;
     }
 };

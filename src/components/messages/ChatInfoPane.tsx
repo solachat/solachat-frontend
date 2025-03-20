@@ -44,10 +44,10 @@ const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ profile, messages, onClos
                     background: "linear-gradient(180deg, #00162d 0%, #000d1a 100%)",
                     borderLeft: "1px solid rgba(0, 168, 255, 0.3)",
                     position: "relative",
-                    overflow: "auto",
-                    "&::-webkit-scrollbar": {
-                        display: "none",
-                    },
+                    overflow: 'auto',
+                    '&::-webkit-scrollbar': {
+                        display: 'none'
+                    }
                 }}
             >
                 <Box

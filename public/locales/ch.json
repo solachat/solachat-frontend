@@ -241,7 +241,7 @@
     "signIn": "登录",
     "signUp": "注册",
     "apps": "应用程序",
-    "faq": "常见问题",
+    "faq": "常见问题"
   },
   "reasons": {
     "title": "选择 SolaChat 的 7 大理由",
@@ -293,5 +293,21 @@
   "data_storage": "数据存储",
   "ask_question": "提问",
   "solchat_faq": "SolaChat 常见问题",
-  "privacy_policy": "隐私政策"
+  "privacy_policy": "隐私政策",
+  "edit_profile": "编辑个人资料",
+  "about_me": "关于我",
+  "about_me_placeholder": "在Web3的背景下介绍自己。示例：Solidity开发者，DeFi爱好者，NFT艺术家",
+  "username_description_part1": "您可以在以下位置选择一个公开的用户名",
+  "username_description_part2": ". 其他人可以通过这个名字找到您，无需知道您的公钥。",
+  "username_rules": "允许的字符：",
+  "and_underscores": "和下划线",
+  "min_length_5": "最短长度 - 5个字符",
+  "about_me_description": "任何细节，例如年龄、职业或城市。",
+  "example_about_me": "示例：Solidity开发者，DeFi爱好者，NFT艺术家",
+  "username_min_length": "用户名必须至少包含5个字符",
+  "username_max_length": "用户名不能超过30个字符",
+  "username_invalid_format": "无效的用户名格式",
+  "invalid_username": "无效的用户名",
+  "username_taken": "用户名已被占用",
+  "username_available": "用户名可用"
 }

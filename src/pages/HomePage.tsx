@@ -3,7 +3,6 @@ import { CssVarsProvider } from '@mui/joy/styles';
 import Box from '@mui/joy/Box';
 import CssBaseline from '@mui/joy/CssBaseline';
 import framesxTheme from '../theme/theme';
-import { useTranslation } from 'react-i18next';
 import { Helmet } from "react-helmet-async";
 import HeroLeft01 from '../components/home/HeroLeft01';
 import HeroLeft02 from '../components/home/HeroLeft02';
@@ -13,7 +12,6 @@ import Footer from "../components/home/Footer";
 import TeamSection from "../components/home/TeamSeaction";
 import PartnersSection from "../components/home/PartnersSection";
 
-
 export default function HomePage() {
     return (
         <CssVarsProvider disableTransitionOnChange theme={framesxTheme}>
@@ -21,10 +19,10 @@ export default function HomePage() {
                 <title>SolaChat</title>
             </Helmet>
             <CssBaseline />
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Navbar/>
+            <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000 }}>
+                <Navbar />
             </Box>
-            <Box sx={{ overflow: 'hidden' }}>
+            <Box sx={{ mt: '64px', overflow: 'hidden' }}>
                 <Box
                     sx={{
                         height: '100%',
@@ -38,11 +36,11 @@ export default function HomePage() {
                     <HeroLeft01 />
                     <HeroLeft02 />
                     <HeroLeft03 />
-                    <PartnersSection/>
-                    <TeamSection/>
+                    <PartnersSection />
+                    <TeamSection />
                 </Box>
             </Box>
-            <Footer/>
+            <Footer />
         </CssVarsProvider>
     );
 }

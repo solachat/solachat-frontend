@@ -18,6 +18,8 @@ import {cacheChats, getCachedChats} from "../../utils/cacheChats";
 import {getCachedMedia} from "../../utils/cacheMedia";
 import { motion } from 'framer-motion';
 import LanguageScreen from "../screen/LanguageScreen";
+import GeneralSettingsScreen from '../screen/GeneralSettingsScreen';
+import EditProfileScreen from "../screen/EditProfileScreen";
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -26,6 +28,14 @@ type ChatsPaneProps = {
     selectedChat: ChatProps | null;
     currentUser: { id: number };
 };
+
+interface DecodedToken {
+    avatar: string;
+    publicKey: string;
+    username?: string;
+    bio?: string;
+    id: string;
+}
 
 export default function ChatsPane({ chats: initialChats, setSelectedChat, selectedChatId, currentUser, selectedChat }: ChatsPaneProps) {
     const {t} = useTranslation();
@@ -36,7 +46,8 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     const [error, setError] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();
-    const [activeScreen, setActiveScreen] = useState<'chats' | 'settings' | 'language'>('chats');
+    const [activeScreen, setActiveScreen] = useState<'chats' | 'settings' | 'language' | 'general_settings' | 'edit_profile'>('chats');
+    const [profile, setProfile] = useState<Partial<DecodedToken>>({});
 
     React.useEffect(() => {
         if (selectedChat) {
@@ -358,6 +369,10 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                     <SettingsScreen onBack={handleCloseSettings} />
                 ) : activeScreen === 'language' ? (
                     <LanguageScreen onBack={() => setActiveScreen('settings')} />
+                ) : activeScreen === 'general_settings' ? (
+                    <GeneralSettingsScreen onBack={() => setActiveScreen('settings')} />
+                ) : activeScreen === 'edit_profile' ? (
+                    <EditProfileScreen onBack={() => setActiveScreen('settings')} />
                 ) : (
                     <>
                         <Box

@@ -232,19 +232,20 @@ export default function Navbar() {
                     </IconButton>
                 </Box>
 
-                <Box sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1,
-                    mt: 2,
-                    px: 1,
-                }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 1,
+                        mt: 2,
+                        px: 1,
+                    }}
+                >
                     {[
                         { to: '/feedback', icon: <EmailIcon />, text: t('navbar.feedback') },
                         { to: '/jobs', icon: <WorkOutlineIcon />, text: t('navbar.vacancies') },
-                        { to: '/docs', icon: <DescriptionIcon />, text: t('navbar.documents') },
-                        { to: '/apps', icon: <Apps />, text: t('navbar.apps') },
                         { to: '/faq', icon: <HelpOutlineIcon />, text: t('navbar.faq') },
+                        { to: '/apps', icon: <Apps />, text: t('navbar.apps') },
                     ].map((item) => (
                         <NavButton
                             key={item.to}
@@ -255,14 +256,20 @@ export default function Navbar() {
                             sx={{
                                 justifyContent: 'flex-start',
                                 background: isActive(item.to)
-                                    ? 'rgba(0, 168, 255, 0.5)'
-                                    : 'linear-gradient(45deg, #00a8ff30 30%, #007bff30 90%)',
-                                color: isActive(item.to) ? 'white' : '#00a8ff',
+                                    ? 'rgba(0,168,255,0.5)'
+                                    : 'linear-gradient(45deg, rgba(0,168,255,0.2) 30%, rgba(0,123,255,0.2) 90%)',
+                                color: isActive(item.to)
+                                    ? 'white'
+                                    : 'rgba(160,212,255,0.9)',
                                 mb: 1,
+                                border: '1px solid rgba(0,168,255,0.3)',
+                                borderRadius: '8px',
+                                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
                                 '&:hover': {
                                     transform: 'scale(1.02)',
-                                    boxShadow: '0 0 10px rgba(0,168,255,0.3)'
-                                }
+                                    boxShadow: '0 0 10px rgba(0,168,255,0.4)',
+                                },
+                                p: 1.5,
                             }}
                         >
                             {item.icon}
@@ -272,7 +279,7 @@ export default function Navbar() {
                         </NavButton>
                     ))}
 
-                    {!isAuthenticated && (
+                {!isAuthenticated && (
                         <>
                             <NavButton
                                 component={RouterLink}

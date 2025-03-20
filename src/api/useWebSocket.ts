@@ -4,7 +4,7 @@ import { updateUserStatus } from './api';
 import { jwtDecode } from 'jwt-decode';
 
 const WS_URL = process.env.WS_URL || 'ws://localhost:4005';
-const RECONNECT_INTERVAL = 5000;
+const RECONNECT_INTERVAL = 3000;
 const HEARTBEAT_INTERVAL = 120000;
 
 export const useWebSocket = (onMessage: (message: any) => void, dependencies: any[] = []) => {
@@ -94,11 +94,11 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                     });
                     break;
                 case 'messageRead':
-                        onMessage({
-                            type: 'messageRead',
-                            messageId: message.messageId,
-                            chatId: message.chatId,
-                        });
+                    onMessage({
+                        type: 'messageRead',
+                        messageId: message.messageId,
+                        chatId: message.chatId,
+                    });
                     break;
                 case 'userKickedFromChat':
                     onMessage(message);
@@ -171,28 +171,19 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
             console.error('WebSocket error:', error);
         };
 
-
         ws.onclose = (event) => {
-            console.error('❌ WebSocket closed:', event.code, event.reason);
+            console.error('WebSocket connection closed with code', event.code, 'reason:', event.reason);
             setIsConnected(false);
             setIsConnecting(false);
-
             if (heartbeatInterval.current) {
                 clearInterval(heartbeatInterval.current);
                 heartbeatInterval.current = null;
             }
 
             updateStatusIfChanged(false);
-
-            if (!reconnectTimeout.current) {
-                reconnectTimeout.current = setTimeout(() => {
-                    reconnectTimeout.current = null;
-                    connectWebSocket();
-                }, RECONNECT_INTERVAL);
-            }
+            wsRef.current = null;
+            handleReconnection();
         };
-
-
     }, [onMessage, sendHeartbeat, updateStatusIfChanged, isConnected, currentUserId]);
 
     const handleReconnection = useCallback(() => {
@@ -217,14 +208,10 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
     }, []);
 
     useEffect(() => {
-        if (currentUserId !== null && !wsRef.current) {
-            console.log("🔄 useEffect is triggering connectWebSocket()");
+        if (currentUserId !== null && !isConnected) {
             connectWebSocket();
         }
-    }, [currentUserId]); // Убрал `isConnected`, `connectWebSocket` и `dependencies`
-
-
-
+    }, [currentUserId, connectWebSocket, isConnected, ...dependencies]);
 
     return { wsRef: wsRef.current, isConnecting, isConnected, connectWebSocket };
 };

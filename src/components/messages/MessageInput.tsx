@@ -217,7 +217,6 @@ export default function MessageInput(props: MessageInputProps) {
         }
     };
 
-
     const handleEmojiSelect = (emoji: string) => {
         setMessage((prev) => prev + emoji);
         setAnchorEl(null);
@@ -235,10 +234,17 @@ export default function MessageInput(props: MessageInputProps) {
         setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     }, []);
 
+    const keyboardOption = sessionStorage.getItem("keyboardOption") || "enter";
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleClick();
+        if (e.key === 'Enter') {
+            if (keyboardOption === 'ctrlEnter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                handleClick();
+            } else if (keyboardOption === 'enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleClick();
+            }
         }
     };
 

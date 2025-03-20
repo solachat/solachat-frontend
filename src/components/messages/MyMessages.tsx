@@ -220,6 +220,7 @@ export default function MyProfile() {
                         await cacheChats(fetchedChats);
                         chatsToProcess = fetchedChats;
                     }
+                    console.log("📌 Загруженные чаты:", fetchedChats);
                 } catch (error) {
                     console.warn("⚠️ Сервер не отвечает, используем кэшированные данные.");
                 }

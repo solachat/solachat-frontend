@@ -241,6 +241,27 @@ export default function ChatBubble(props: ChatBubbleProps) {
         attachment?.filePath || '',
         attachment?.fileType
     );
+
+    const [textSize, setTextSize] = useState(() => {
+        const textSizeFromSession = sessionStorage.getItem("textSize");
+        return textSizeFromSession ? textSizeFromSession : 14;
+    });
+
+    useEffect(() => {
+        const handleStorageChange = (event: any) => {
+            if (event.key === "textSize") {
+                const newTextSize = event.newValue ? event.newValue : 14;
+                setTextSize(newTextSize);
+            }
+        };
+
+        window.addEventListener("storage", handleStorageChange);
+
+        return () => {
+            window.removeEventListener("storage", handleStorageChange);
+        };
+    }, []);
+
     return (
         <Box
             component={motion.div}
@@ -442,7 +463,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     {content && (
                         <Typography
                             sx={{
-                                fontSize: { xs: '14px', sm: '14px' },
+                                fontSize: { xs: `${textSize}px`, sm: `${textSize}px` },
                                 color: isSent ? '#a0d4ff' : '#8ab4f8',
                                 marginLeft: isImage || isVideo || isAudio ? '12px' : '0px',
                                 marginBottom: isImage || isVideo || isAudio ? '8px' : '4px',

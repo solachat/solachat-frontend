@@ -473,5 +473,30 @@
     "dao": "DAO Управление",
     "daoDesc": "Переход на децентрализованную модель управления сообществом",
     "funding": "Наши инвесторы и партнеры"
-  }
+  },
+  "connectWalletConnect": "Подключить Wallet Connect",
+  "settings": "Настройки",
+  "textSize": "Размер текста",
+  "keyboardSettings": "Клавиатура",
+  "sendOnEnter": "Отправка по Enter",
+  "sendOnCtrlEnter": "Отправка по Ctrl + Enter",
+  "newLineShiftEnter": "Разрыв строки: Shift + Enter",
+  "newLineEnter": "Разрыв строки: Enter",
+  "edit_profile": "Редактировать профиль",
+  "about_me": "О себе",
+  "about_me_placeholder": "Расскажите о себе в контексте Web3. Пример: разработчик Solidity, энтузиаст DeFi, художник NFT",
+  "username_description_part1": "Вы можете выбрать публичное имя пользователя в",
+  "username_description_part2": ". Другие могут найти вас по этому имени, не зная вашего публичного ключа.",
+  "username_rules": "Разрешенные символы:",
+  "and_underscores": "и подчеркивания",
+  "min_length_5": "Минимальная длина - 5 символов",
+  "about_me_description": "Любые подробности, такие как возраст, профессия или город.",
+  "example_about_me": "Пример: разработчик Solidity, энтузиаст DeFi, художник NFT",
+  "username_min_length": "Имя пользователя должно содержать хотя бы 5 символов",
+  "username_max_length": "Имя пользователя не должно превышать 30 символов",
+  "username_invalid_format": "Неверный формат имени пользователя",
+  "invalid_username": "Неверное имя пользователя",
+  "username_taken": "Имя пользователя уже занято",
+  "username_available": "Имя пользователя свободно"
+
 }

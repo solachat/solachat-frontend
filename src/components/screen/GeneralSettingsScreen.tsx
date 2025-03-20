@@ -1,47 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, IconButton, Sheet, ListItemButton } from '@mui/joy';
+import {
+    Box,
+    Typography,
+    IconButton,
+    Sheet,
+    Slider,
+    ListItemButton,
+    Divider
+} from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useTranslation } from "react-i18next";
 
-type LanguageCode = 'en' | 'ru' | 'ch';
+export default function GeneralSettingsScreen({ onBack }: { onBack: () => void }) {
+    const { t } = useTranslation();
 
-interface LanguageNames {
-    native: Record<LanguageCode, string>;
-    english: Record<LanguageCode, string>;
-}
+    const savedTextSize = sessionStorage.getItem('textSize');
+    const savedKeyboardOption = sessionStorage.getItem('keyboardOption');
 
-export default function LanguageScreen({ onBack }: { onBack: () => void }) {
-    const { t, i18n } = useTranslation();
-    const [currentLang, setCurrentLang] = useState<LanguageCode>(i18n.language as LanguageCode);
-    const languages: LanguageCode[] = ['en', 'ru', 'ch'];
-
-    const languageNames: LanguageNames = {
-        native: {
-            en: 'English',
-            ru: 'Русский',
-            ch: '中文'
-        },
-        english: {
-            en: 'English',
-            ru: 'Russian',
-            ch: 'Chinese'
-        },
-    };
+    const [textSize, setTextSize] = useState<number>(savedTextSize ? parseInt(savedTextSize, 10) : 14);
+    const [keyboardOption, setKeyboardOption] = useState<'enter' | 'ctrlEnter'>(savedKeyboardOption as 'enter' | 'ctrlEnter' || 'enter');
 
     useEffect(() => {
-        const handleLanguageChanged = (lng: LanguageCode) => {
-            setCurrentLang(lng);
-        };
+        sessionStorage.setItem('textSize', textSize.toString());
+    }, [textSize]);
 
-        i18n.on('languageChanged', handleLanguageChanged);
-        return () => {
-            i18n.off('languageChanged', handleLanguageChanged);
-        };
-    }, [i18n]);
+    useEffect(() => {
+        sessionStorage.setItem('keyboardOption', keyboardOption);
+    }, [keyboardOption]);
 
-    const changeLanguage = (lng: LanguageCode) => {
-        i18n.changeLanguage(lng);
-    };
+    const keyboardOptions = [
+        { key: 'enter', label: t('sendOnEnter'), description: t('newLineShiftEnter') },
+        { key: 'ctrlEnter', label: t('sendOnCtrlEnter'), description: t('newLineEnter') }
+    ];
 
     return (
         <Sheet sx={{
@@ -53,7 +43,6 @@ export default function LanguageScreen({ onBack }: { onBack: () => void }) {
             overflow: 'auto',
             '&::-webkit-scrollbar': { display: 'none' }
         }}>
-            {/* Header */}
             <Box sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -70,24 +59,72 @@ export default function LanguageScreen({ onBack }: { onBack: () => void }) {
                     flexGrow: 1,
                     textShadow: '0 2px 4px rgba(0,168,255,0.3)'
                 }}>
-                    {t('language')}
+                    {t('settings')}
                 </Typography>
             </Box>
 
-            <Box sx={{ p: 3, flex: 1 }}>
+            {/* Content */}
+            <Box sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* Text Size Card */}
                 <Sheet
                     sx={{
                         borderRadius: '16px',
                         background: 'rgba(0,22,45,0.6)',
                         border: '1px solid rgba(0,168,255,0.3)',
                         boxShadow: '0 4px 24px rgba(0,168,255,0.1)',
-                        p: 2
+                        p: 3
                     }}
                 >
-                    {languages.map((lng) => (
+                    <Typography level="body-lg" sx={{ color: '#a0d4ff', mb: 2 }}>
+                        {t('textSize')}
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        <Slider
+                            value={textSize}
+                            onChange={(e, val) => setTextSize(val as number)}
+                            min={12}
+                            max={24}
+                            step={1}
+                            sx={{
+                                flexGrow: 1,
+                                color: '#00a8ff',
+                                '& .MuiSlider-thumb': {
+                                    transition: 'transform 0.2s ease',
+                                }
+                            }}
+                        />
+                        <Typography sx={{
+                            color: '#00a8ff',
+                            minWidth: 40,
+                            textAlign: 'center',
+                            fontWeight: 'bold'
+                        }}>
+                            {textSize}px
+                        </Typography>
+                    </Box>
+                </Sheet>
+
+                <Divider sx={{ my: 1 }} />
+
+                {/* Keyboard Settings Card */}
+                <Sheet
+                    sx={{
+                        borderRadius: '16px',
+                        background: 'rgba(0,22,45,0.6)',
+                        border: '1px solid rgba(0,168,255,0.3)',
+                        boxShadow: '0 4px 24px rgba(0,168,255,0.1)',
+                        p: 3
+                    }}
+                >
+                    <Typography level="body-lg" sx={{ color: '#a0d4ff', mb: 2 }}>
+                        {t('keyboardSettings')}
+                    </Typography>
+
+                    {keyboardOptions.map((option) => (
                         <ListItemButton
-                            key={lng}
-                            onClick={() => changeLanguage(lng)}
+                            key={option.key}
+                            onClick={() => setKeyboardOption(option.key as 'enter' | 'ctrlEnter')}
                             sx={{
                                 p: 2,
                                 borderRadius: '8px',
@@ -110,7 +147,6 @@ export default function LanguageScreen({ onBack }: { onBack: () => void }) {
                                     left: 0,
                                     width: '100%',
                                     height: '100%',
-
                                     opacity: 0,
                                     transition: 'opacity 0.3s ease'
                                 },
@@ -126,16 +162,16 @@ export default function LanguageScreen({ onBack }: { onBack: () => void }) {
                                     height: 20,
                                     borderRadius: '50%',
                                     border: '2px solid #00a8ff',
-                                    bgcolor: currentLang === lng ? '#00a8ff' : 'transparent',
+                                    bgcolor: keyboardOption === option.key ? '#00a8ff' : 'transparent',
                                     transition: 'all 0.3s ease',
-                                    transform: currentLang === lng ? 'scale(1)' : 'scale(0.8)',
+                                    transform: keyboardOption === option.key ? 'scale(1)' : 'scale(0.8)',
                                     '&:hover': {
                                         transform: 'scale(1.1)'
                                     }
                                 }}
                             />
 
-                            {/* Language Names */}
+                            {/* Option Names */}
                             <Box sx={{
                                 flexGrow: 1,
                                 transition: 'transform 0.3s ease',
@@ -151,7 +187,7 @@ export default function LanguageScreen({ onBack }: { onBack: () => void }) {
                                         transition: 'color 0.2s ease'
                                     }}
                                 >
-                                    {languageNames.native[lng]}
+                                    {option.label}
                                 </Typography>
                                 <Typography
                                     level="body-sm"
@@ -161,7 +197,7 @@ export default function LanguageScreen({ onBack }: { onBack: () => void }) {
                                         transition: 'color 0.2s ease'
                                     }}
                                 >
-                                    {languageNames.english[lng]}
+                                    {option.description}
                                 </Typography>
                             </Box>
                         </ListItemButton>
