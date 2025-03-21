@@ -1,5 +1,9 @@
-import axios from 'axios';
 import {jwtDecode} from "jwt-decode";
+import {Session} from "../components/core/types";
+import { getCachedSessionsIndexedDB } from '../utils/sessionIndexedDB';
+import api from '../api/axiosConfig';
+import axios from 'axios';
+
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 const VACANCIES_API_URL = process.env.VACANCIES_API_URL || 'http://localhost:5000';
@@ -560,5 +564,54 @@ export const checkUsernameAvailability = async (username: string) => {
     } catch (error) {
         console.error('Error checking username:', error);
         return false;
+    }
+};
+
+export const getSessions = async (userId: number, token: string): Promise<Session[]> => {
+    try {
+        const cachedSessions = await getCachedSessionsIndexedDB();
+        const sessionId = cachedSessions && cachedSessions.length > 0 ? cachedSessions[0].sessionId : '';
+
+        const response = await axios.get(`${API_URL}/api/sessions/${userId}/${sessionId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        console.log("📥 Ответ от сервера (getSessions):", response.data);
+        return response.data as Session[];
+    } catch (error) {
+        console.error("Error fetching sessions:", error);
+        throw error;
+    }
+};
+
+export const deleteSessionById = async (sessionId: string, token: string) => {
+    try {
+        const response = await axios.delete(`${API_URL}/api/sessions/${sessionId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        return response.data.message;
+    } catch (error) {
+        console.error("Error deleting session:", error);
+        throw error;
+    }
+};
+
+export const deleteAllOtherSessions = async (token: string, sessionId: string) => {
+    try {
+        const response = await axios.delete(`${API_URL}/api/sessions?sessionId=${sessionId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        return response.data.message;
+    } catch (error) {
+        console.error("Error deleting other sessions:", error);
+        throw error;
     }
 };

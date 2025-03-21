@@ -177,7 +177,7 @@ export default function MessageInput(props: MessageInputProps) {
                 createdAt: new Date().toISOString(),
                 pending: true,
                 isRead: false,
-                attachment: optimisticFiles.length > 0 ? optimisticFiles[0] : null,
+                attachments: optimisticFiles.length > 0 ? optimisticFiles : [],
             };
 
             console.log("📩 Добавляем оптимистичное сообщение в UI:", optimisticMessage);

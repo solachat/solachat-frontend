@@ -48,18 +48,24 @@ type ChatListItemProps = {
     lastMessage?: MessageProps;
 };
 
-const isImage = (fileName: string) => {
-    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif'];
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    return imageExtensions.includes(fileExtension || '');
+const isImage = (fileName: string): boolean => {
+    if (!fileName || typeof fileName !== "string") return false;
+
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+    const parts = fileName.toLowerCase().split('.');
+    const fileExtension = parts.length > 1 ? parts.pop() : '';
+
+    return fileExtension ? imageExtensions.includes(fileExtension) : false;
 };
 
-const isVideo = (fileName: string) => {
-    const videoExtensions = ['mp4', 'mov', 'avi', 'mkv'];
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    return videoExtensions.includes(fileExtension || '');
-};
 
+const isVideo = (fileName?: string): boolean => {
+    if (!fileName || typeof fileName !== 'string') return false;
+
+    const videoExtensions = ['mp4', 'mov', 'avi', 'webm', 'mkv'];
+    const fileExtension = fileName.split('.').pop()?.toLowerCase();
+    return !!fileExtension && videoExtensions.includes(fileExtension);
+};
 
 export default function ChatListItem(props: ChatListItemProps) {
     const {
@@ -299,27 +305,36 @@ export default function ChatListItem(props: ChatListItemProps) {
                                         mt: 0.5,
                                     }}
                                 >
-                                    {lastMessage.attachment && isImage(lastMessage.attachment.fileName) ? (
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <img
-                                                src={lastMessage.attachment.filePath}
-                                                alt="attachment preview"
-                                                style={{
-                                                    width: '20px',
-                                                    height: '20px',
-                                                    marginRight: '8px',
-                                                    borderRadius: '4px',
-                                                    border: '1px solid rgba(0, 168, 255, 0.3)'
-                                                }}
-                                            />
-                                            <span>{lastMessage.content ? lastMessage.content : t('image')}</span>
-                                        </Box>
-                                    ) : lastMessage.attachment && isVideo(lastMessage.attachment.fileName) ? (
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <span>{lastMessage.attachment.fileName}</span>
-                                        </Box>
-                                    ) : lastMessage.attachment ? (
-                                        <i>{lastMessage.attachment.fileName}</i>
+                                    {lastMessage.attachment && lastMessage.attachment.length > 0 ? (
+                                        (() => {
+                                            const firstAttachment = lastMessage.attachment[0];
+                                            if (isImage(firstAttachment.fileName)) {
+                                                return (
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <img
+                                                            src={firstAttachment.filePath}
+                                                            alt="attachment preview"
+                                                            style={{
+                                                                width: '20px',
+                                                                height: '20px',
+                                                                marginRight: '8px',
+                                                                borderRadius: '4px',
+                                                                border: '1px solid rgba(0, 168, 255, 0.3)',
+                                                            }}
+                                                        />
+                                                        <span>{lastMessage.content ? lastMessage.content : t('image')}</span>
+                                                    </Box>
+                                                );
+                                            } else if (isVideo(firstAttachment.fileName)) {
+                                                return (
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <span>{firstAttachment.fileName}</span>
+                                                    </Box>
+                                                );
+                                            } else {
+                                                return <i>{firstAttachment.fileName}</i>;
+                                            }
+                                        })()
                                     ) : (
                                         lastMessage.content
                                     )}

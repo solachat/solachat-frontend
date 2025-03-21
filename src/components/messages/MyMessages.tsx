@@ -4,7 +4,7 @@ import Sheet from '@mui/joy/Sheet';
 import MessagesPane from './MessagesPane';
 import ChatsPane from './ChatsPane';
 import {ChatProps, MessageProps, UserProps} from '../core/types';
-import { fetchChatsFromServer } from '../../api/api';
+import {fetchChatsFromServer, getSessions} from '../../api/api';
 import { Typography } from '@mui/joy';
 import { useTranslation } from 'react-i18next';
 import { JwtPayload } from 'jsonwebtoken';
@@ -19,6 +19,7 @@ import {cacheChats, getCachedChats} from "../../utils/cacheChats";
 import {cacheMessages, getCachedMessages} from "../../utils/cacheMessages";
 import {cacheMedia, getCachedMedia} from "../../utils/cacheMedia";
 import GlobalStyles from "@mui/joy/GlobalStyles";
+import {loadAndCacheSessions} from "../../utils/sessionCache";
 
 
 export default function MyProfile() {
@@ -29,6 +30,8 @@ export default function MyProfile() {
     const [currentUser, setCurrentUser] = React.useState<UserProps | null>(null);
     const [searchParams] = useSearchParams();
     const { t } = useTranslation();
+    const [sessions, setSessions] = useState<any[]>([]);
+
     const navigate = useNavigate();
 
     const [callModalState, setCallModalState] = useState({
@@ -133,18 +136,38 @@ export default function MyProfile() {
         const foundChat = chats.find(chat => chat.id === selectedChat.id);
         if (!foundChat) {
             if (chatDeletedRef.current) {
-                console.log(`⚠️ Чат ${selectedChat.id} удален, сбрасываем выбор.`);
                 setSelectedChat(null);
                 navigate('/chat');
             }
         } else {
-            console.log(`✅ Чат ${selectedChat.id} найден, обновляем данные.`);
             setSelectedChat(foundChat);
         }
     }, [chats, selectedChat, navigate]);
 
+    const handleSessionDeletion = (sessionId: string) => {
+        const token = localStorage.getItem('token');
+
+        if (token) {
+            try {
+                const decodedToken = jwtDecode<{ sessionId?: string }>(token);
+                if (decodedToken.sessionId === sessionId) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                    return true;
+                }
+            } catch (error) {
+                console.error('Token error:', error);
+                localStorage.removeItem('token');
+            }
+        }
+        return false;
+    };
+
     const handleWebSocketMessage = (message: any) => {
         switch (message.type) {
+            case 'session_deleted':
+                handleSessionDeletion(message.sessionId);
+                break;
             case 'newMessage':
                 updateLastMessageInChatList(message.message.chatId, message.message);
                 break;
@@ -209,6 +232,14 @@ export default function MyProfile() {
                 if (!token) {
                     setError("Authorization token is missing");
                     return;
+                }
+
+                try {
+                    const sessionList = await loadAndCacheSessions(currentUser.id, token);
+                    console.log("📱 Активные сессии:", sessionList);
+                    setSessions(sessionList);
+                } catch (err) {
+                    console.warn("⚠️ Не удалось загрузить сессии");
                 }
 
                 let chatsToProcess = await getCachedChats() || [];

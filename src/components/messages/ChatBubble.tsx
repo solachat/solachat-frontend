@@ -132,18 +132,19 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const [isClosing, setIsClosing] = useState(false);
 
     const getAttachmentUrl = () => {
-        return attachment?.filePath || '';
+        return attachment?.[0]?.filePath || '';
     };
 
-    const isImage = isImageFile(attachment?.filePath || '', attachment?.fileType);
-    const isVideo = isVideoFile(attachment?.filePath || '', attachment?.fileType);
-    const isAudio = isAudioFile(attachment?.filePath || '', attachment?.fileType);
+    const isImage = isImageFile(attachment?.[0]?.filePath || '', attachment?.[0]?.fileType);
+    const isVideo = isVideoFile(attachment?.[0]?.filePath || '', attachment?.[0]?.fileType);
+    const isAudio = isAudioFile(attachment?.[0]?.filePath || '', attachment?.[0]?.fileType);
 
 
-    const handleImageClick = () => {
-        setImageSrc(getAttachmentUrl());
+    const handleImageClick = (imageUrl: string) => {
+        setImageSrc(imageUrl);
         setIsImageOpen(true);
     };
+
 
     const handleClose = () => {
         setIsClosing(true);
@@ -237,10 +238,10 @@ export default function ChatBubble(props: ChatBubbleProps) {
         currentUserId = decodedToken.id || 0;
     }
 
-    const isFileAttachment = isFile(
-        attachment?.filePath || '',
-        attachment?.fileType
-    );
+    const isFileAttachment = Array.isArray(attachment) &&
+        attachment.length > 0 &&
+        isFile(attachment[0].filePath || '', attachment[0].fileType);
+
 
     const [textSize, setTextSize] = useState(() => {
         const textSizeFromSession = sessionStorage.getItem("textSize");
@@ -312,16 +313,10 @@ export default function ChatBubble(props: ChatBubbleProps) {
 
                 <Sheet
                     component={motion.div}
-                    whileHover={{
-                        scale: 1.02,
-                        transition: {
-                            duration: 0.2,
-                            ease: "easeOut"
-                        }
-                    }}
                     sx={(theme) => ({
-                        maxWidth: isEdited ? '75%' : '70%',
-                        minWidth: 'fit-content',
+                        maxWidth: '100%',
+                        width: 'fit-content',
+                        minWidth: 'unset',
                         p: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 8px' } : 0,
                         borderRadius: 'lg',
                         bgcolor: isSent
@@ -393,62 +388,83 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             />
                         </Box>
                     )}
-
-                    {isImage && !isVideo && (
+                    {Array.isArray(attachment) && attachment.length > 0 && (
                         <Box
                             sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                maxWidth: '100%',
-                                cursor: 'pointer',
-                                overflow: 'hidden',
+                                display: 'grid',
+                                gap: '4px',
+                                maxWidth: '800px',
+                                gridTemplateColumns:
+                                    attachment.length === 1 ? '1fr' :
+                                        attachment.length === 2 ? 'repeat(2, 1fr)' :
+                                            attachment.length === 3 ? '2fr 1fr' :
+                                                'repeat(2, 1fr)',
+                                gridTemplateRows: 'auto',
+                                alignItems: 'stretch',
+                                justifyItems: 'stretch',
                                 mb: content ? 1 : 0,
-                                position: 'relative',
-                                borderRadius: content ? '0px' : '12px',
                             }}
-                            onClick={handleImageClick}
                         >
-                            {imageLoading && (
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                                        borderRadius: '50%',
-                                        width: '50px',
-                                        height: '50px',
-                                        zIndex: 2,
-                                    }}
-                                >
-                                    <CircularProgress size='sm' sx={{ color: 'white' }} />
-                                </Box>
-                            )}
+                            {attachment
+                                .filter(file => isImageFile(file.filePath, file.fileType) || isVideoFile(file.filePath, file.fileType))
+                                .map((file, index) => {
+                                    const isImage = isImageFile(file.filePath, file.fileType);
+                                    const isVideo = isVideoFile(file.filePath, file.fileType);
 
-                            <img
-                                src={getAttachmentUrl()}
-                                alt="attachment"
-                                onLoad={handleImageLoad}
-                                style={{
-                                    width: '100%',
-                                    maxWidth: '600px',
-                                    maxHeight: '400px',
-                                    objectFit: 'contain',
-                                    borderTopLeftRadius: content ? '12px' : '0px',
-                                    borderTopRightRadius: content ? '12px' : '0px',
-                                    borderBottomLeftRadius: content ? '0px' : '12px',
-                                    borderBottomRightRadius: content ? '0px' : '12px',
-                                    opacity: imageLoading ? 0.5 : 1,
-                                    transition: 'opacity 0.3s ease',
-                                }}
-                            />
+
+                                return (
+                                    <Box
+                                        key={index}
+                                        sx={{
+                                            position: 'relative',
+                                            overflow: 'hidden',
+                                            cursor: isImage ? 'pointer' : 'default',
+                                            width: '100%',
+                                            height:
+                                                attachment.length === 1 ? '400px' :
+                                                    attachment.length === 2 ? 'auto' :
+                                                        attachment.length === 3 && index === 0 ? '100%' :
+                                                            attachment.length === 3 ? 'calc(100% - 2px)' :
+                                                                'auto',
+                                            gridColumn: attachment.length === 3 && index === 0 ? '1 / 2' : 'auto',
+                                            gridRow: attachment.length === 3 && index === 0 ? '1 / 3' : 'auto',
+                                        }}
+                                        onClick={() => isImage ? handleImageClick(file.filePath) : null}
+                                    >
+                                        {isImage && (
+                                            <img
+                                                src={file.filePath}
+                                                alt={`attachment-${index}`}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover',
+                                                    opacity: imageLoading ? 0.5 : 1,
+                                                    transition: 'opacity 0.3s ease',
+                                                }}
+                                                onLoad={handleImageLoad}
+                                            />
+                                        )}
+
+                                        {isVideo && (
+                                            <video
+                                                src={file.filePath}
+                                                controls
+                                                style={{
+                                                    width: '100%',
+                                                    objectFit: 'cover',
+                                                    height: '100%',
+
+                                                }}
+                                            />
+                                        )}
+                                    </Box>
+                                );
+                            })}
                         </Box>
                     )}
+
+
                     {isAudio && !isVideo && (
                         <Box sx={{
                             width: '100%',
@@ -472,7 +488,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 wordWrap: 'break-word',
                                 overflowWrap: 'break-word',
                                 whiteSpace: 'pre-wrap',
-                                maxWidth: { xs: '280px', md: '600px' },
+                                maxWidth: '800px',
+                                wordBreak: 'break-word',
+                                hyphens: 'auto',
                                 display: 'inline-block',
                                 paddingRight: isEdited
                                     ? (isSent ? '115px' : '90px')
@@ -542,7 +560,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             )}
                         </Box>
                     </Stack>
-                    {isFileAttachment && attachment && (
+                    {isFileAttachment && Array.isArray(attachment) && attachment.length > 0 && (
                         <Box
                             sx={{
                                 width: '100%',
@@ -559,8 +577,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                     position: 'relative',
                                 }}
                                 component="a"
-                                href={getAttachmentUrl()}
-                                download={attachment.fileName}
+                                href={attachment[0].filePath}
+                                download={attachment[0].fileName}
                             >
                                 <Box
                                     sx={{
@@ -584,7 +602,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                             fontSize: '48px',
                                             color: isSent ? '#a0d4ff' : '#8ab4f8',
                                             width: '100%',
-                                            height: '100%'
+                                            height: '100%',
                                         }}
                                     />
 
@@ -607,7 +625,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                         }}
                                     >
                                         {(() => {
-                                            const ext = attachment.fileName.split('.').pop()?.toUpperCase();
+                                            const ext = attachment[0].fileName.split('.').pop()?.toUpperCase();
                                             return ext && ext.length > 5 ? ext.slice(0, 4) + '…' : ext;
                                         })()}
                                     </Typography>
@@ -646,7 +664,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                         pr: 1,
                                     }}
                                 >
-                                    {attachment.fileName}
+                                    {attachment[0].fileName}
                                 </Typography>
                             </Stack>
                         </Box>

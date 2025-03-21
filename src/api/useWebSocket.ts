@@ -162,6 +162,9 @@ export const useWebSocket = (onMessage: (message: any) => void, dependencies: an
                         toUserId: message.toUserId,
                     });
                     break;
+                case 'session_deleted':
+                    onMessage(message);
+                    break;
                 default:
                     console.warn('Unknown message type:', message.type);
             }

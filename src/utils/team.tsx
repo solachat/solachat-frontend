@@ -11,7 +11,7 @@ export interface TeamMember {
 export const teamMembers: TeamMember[] = [
     {
         id: 1,
-        name: 'yataknemogy',
+        name: 'Maxim Nikola',
         position: 'Chief Architect',
         description: 'SolaChat Platform',
         avatar: '/img/avatars/yataknemogy.jpg'

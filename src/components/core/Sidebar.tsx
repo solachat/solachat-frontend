@@ -197,7 +197,7 @@ export default function Sidebar({ isOpen, setActiveScreen }: SidebarProps) {
                     letterSpacing: '0.5px',
                     textTransform: 'uppercase'
                 }}>
-                    SolaChat Web A 0.1.0
+                    SolaChat Web A 0.1.1
                 </Typography>
             </Box>
         </Sheet>

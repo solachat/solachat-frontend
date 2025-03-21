@@ -199,33 +199,41 @@ const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ profile, messages, onClos
                 <Box sx={{ px: 3, pb: 3, flex: 1, overflowY: "auto" }}>
                     {/* Media (только картинки) */}
                     {selectedTab === "media" && (
-                        <Box sx={{ display: "flex", flexWrap: "wrap"}}>
+                        <Box sx={{ display: "flex", flexWrap: "wrap" }}>
                             {messages
-                                .filter((msg) => msg.attachment && msg.attachment.fileType.startsWith("image"))
-                                .map((msg) => (
-                                    <Box
-                                        key={msg.id}
-                                        sx={{
-                                            width: 100,
-                                            height: 100,
-                                            overflow: "hidden",
-                                            cursor: "pointer",
-                                        }}
-                                        onClick={() => handleThumbnailClick(msg.attachment!.filePath)}
-                                    >
-                                        <img
-                                            src={msg.attachment!.filePath}
-                                            alt="Media"
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                objectFit: "cover",
-                                            }}
-                                        />
-                                    </Box>
-                                ))}
+                                .filter((msg) =>
+                                    Array.isArray(msg.attachment) &&
+                                    msg.attachment.some((file) => file.fileType.startsWith("image"))
+                                )
+                                .flatMap((msg) =>
+                                    msg.attachment!
+                                        .filter((file) => file.fileType.startsWith("image"))
+                                        .map((file, index) => (
+                                            <Box
+                                                key={`${msg.id}-${index}`}
+                                                sx={{
+                                                    width: 100,
+                                                    height: 100,
+                                                    overflow: "hidden",
+                                                    cursor: "pointer",
+                                                }}
+                                                onClick={() => handleThumbnailClick(file.filePath)}
+                                            >
+                                                <img
+                                                    src={file.filePath}
+                                                    alt="Media"
+                                                    style={{
+                                                        width: "100%",
+                                                        height: "100%",
+                                                        objectFit: "cover",
+                                                    }}
+                                                />
+                                            </Box>
+                                        ))
+                                )}
                         </Box>
                     )}
+
 
                     {/*/!* Files (файлы, кроме картинок) *!/*/}
                     {/*{selectedTab === "files" &&*/}

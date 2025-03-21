@@ -67,7 +67,7 @@ const Login = () => {
 
             if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
-                navigate('/' + encodeURIComponent(response.data.user.publicKey));
+                navigate('/chat');
             } else {
                 setErrorMessage('Ошибка аутентификации');
             }
@@ -82,7 +82,7 @@ const Login = () => {
             const response = await axios.post(`${API_URL}/api/users/login`, { totpCode });
             if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
-                navigate('/' + encodeURIComponent(response.data.user.public_key));
+                navigate('/chat');
             } else {
                 setErrorMessage('Ошибка аутентификации');
             }

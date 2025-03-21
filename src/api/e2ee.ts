@@ -1,6 +1,5 @@
 import { encryptMessage, decryptMessage, generateSessionKey } from "../encryption/e2ee";
 
-// Кэш сессионных ключей в памяти
 const sessionKeyCache = new Map<string, string>();
 
 export const encryptChatMessage = async (message: string, token1: string, token2: string) => {

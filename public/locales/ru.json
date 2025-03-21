@@ -497,6 +497,15 @@
   "username_invalid_format": "Неверный формат имени пользователя",
   "invalid_username": "Неверное имя пользователя",
   "username_taken": "Имя пользователя уже занято",
-  "username_available": "Имя пользователя свободно"
-
+  "username_available": "Имя пользователя свободно",
+  "session": "Сеанс",
+  "terminate_session": "ЗАВЕРШИТЬ СЕАНС",
+  "browser": "Браузер",
+  "ip_address": "IP-адрес",
+  "geolocation": "Геопозиция",
+  "geolocation_info": "Данные о геопозиции основаны на IP-адресе и могут быть неточными.",
+  "terminate_other_sessions": "Завершить все другие сеансы",
+  "this_device": "Это устройство",
+  "active_sessions": "Активные сеансы",
+  "devices": "Устройства"
 }

@@ -32,7 +32,7 @@ const Footer: React.FC = () => {
 
     const socialLinks = [
         { icon: '/img/social/github.svg', url: 'https://github.com/solachat' },
-        { icon: '/img/social/twitter.svg', url: 'https://twitter.com/solachat' }
+        { icon: '/img/social/twitter.svg', url: 'https://twitter.com/eth_herohodl' }
     ];
 
     const SocialLinkCard = ({ icon, url }: { icon: string; url: string }) => (

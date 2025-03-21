@@ -20,6 +20,7 @@ import { motion } from 'framer-motion';
 import LanguageScreen from "../screen/LanguageScreen";
 import GeneralSettingsScreen from '../screen/GeneralSettingsScreen';
 import EditProfileScreen from "../screen/EditProfileScreen";
+import SessionScreen from "../screen/SessionScreen";
 
 type ChatsPaneProps = {
     chats: ChatProps[];
@@ -46,7 +47,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
     const [error, setError] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();
-    const [activeScreen, setActiveScreen] = useState<'chats' | 'settings' | 'language' | 'general_settings' | 'edit_profile'>('chats');
+    const [activeScreen, setActiveScreen] = useState<'chats' | 'settings' | 'language' | 'general_settings' | 'edit_profile' | 'sessions'>('chats');
     const [profile, setProfile] = useState<Partial<DecodedToken>>({});
 
     React.useEffect(() => {
@@ -373,6 +374,9 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                     <GeneralSettingsScreen onBack={() => setActiveScreen('settings')} />
                 ) : activeScreen === 'edit_profile' ? (
                     <EditProfileScreen onBack={() => setActiveScreen('settings')} />
+                ) : activeScreen === 'sessions' ? (
+                    <SessionScreen sessions={[]} onBack={() => setActiveScreen('settings')} />
+
                 ) : (
                     <>
                         <Box

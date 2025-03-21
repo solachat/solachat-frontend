@@ -415,5 +415,15 @@
     "username_invalid_format": "Invalid username format",
   "invalid_username": "Invalid username",
   "username_taken": "Username is already taken",
-  "username_available": "Username is available"
+  "username_available": "Username is available",
+  "session": "Session",
+  "terminate_session": "TERMINATE SESSION",
+  "browser": "Browser",
+  "ip_address": "IP Address",
+  "geolocation": "Geolocation",
+  "geolocation_info": "Geolocation data is based on IP address and may be inaccurate.",
+  "terminate_other_sessions": "Terminate other sessions",
+  "this_device": "This device",
+  "active_sessions": "Active sessions",
+  "devices": "Devices"
 }

@@ -33,7 +33,8 @@ export type MessageProps = {
         fileName: string;
         filePath: string;
         fileType: string;
-    };
+    }[];
+
     isEdited?: boolean;
     isRead?: boolean;
     isDelivered?: boolean;
@@ -60,3 +61,13 @@ export type JwtPayload = {
     id: number;
     username: string;
 };
+
+export interface Session {
+    sessionId: string;
+    ip: string | null;
+    userAgent: string | null;
+    lastActiveAt: string | null;
+    isCurrent: boolean;
+    device: string;
+    country: string;
+}

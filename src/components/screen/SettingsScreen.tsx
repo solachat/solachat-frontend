@@ -27,6 +27,9 @@ import { useNavigate } from 'react-router-dom';
 import GeneralSettingsScreen from "./GeneralSettingsScreen";
 import EditIcon from "@mui/icons-material/Edit";
 import EditProfileScreen from "./EditProfileScreen";
+import DevicesIcon from '@mui/icons-material/Devices';
+import SessionScreen from './SessionScreen';
+import {getCachedSessionsIndexedDB} from "../../utils/sessionIndexedDB";
 
 interface DecodedToken {
     avatar: string;
@@ -68,7 +71,11 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
     const [profile, setProfile] = useState<Partial<DecodedToken>>({});
     const [menuOpen, setMenuOpen] = useState(false);
     const anchorRef = useRef<HTMLButtonElement>(null);
-    const [currentScreen, setCurrentScreen] = useState<'settings' | 'language' | 'general_settings' | 'edit_profile'>('settings');
+    const [currentScreen, setCurrentScreen] = useState<
+        'settings' | 'language' | 'general_settings' | 'edit_profile' | 'sessions'
+    >('settings');
+    const [sessionCount, setSessionCount] = useState<number>(0);
+    const [sessionList, setSessionList] = useState<any[]>([]);
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -103,6 +110,22 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
         loadProfile();
     }, []);
 
+    useEffect(() => {
+        async function fetchSessions() {
+            try {
+                const cachedSessions = await getCachedSessionsIndexedDB();
+                setSessionList(cachedSessions || []);
+                setSessionCount(cachedSessions ? cachedSessions.length : 0);
+            } catch (error) {
+                console.warn('Ошибка получения сеансов из IndexedDB', error);
+                setSessionList([]);
+                setSessionCount(0);
+            }
+        }
+        fetchSessions();
+    }, []);
+
+
     const handleLogout = () => {
         localStorage.removeItem('token');
         window.location.reload();
@@ -130,7 +153,13 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
             text: t('language'),
             rightText: i18n.language === 'en' ? t('english') : t('russian'),
             onClick: () => setCurrentScreen('language')
-        }
+        },
+        {
+            icon: <DevicesIcon sx={{ fontSize: 20 }} />,
+            text: t('active_sessions'),
+            rightText: `${sessionCount}`,
+            onClick: () => setCurrentScreen('sessions'),
+        },
     ];
 
     const supportItems = [
@@ -180,7 +209,9 @@ export default function SettingsScreen({ onBack }: { onBack: () => void }) {
                 <GeneralSettingsScreen onBack={() => setCurrentScreen('settings')} />
             ) : currentScreen === 'edit_profile' ? (
                 <EditProfileScreen onBack={() => setCurrentScreen('settings')} />
-            ) : (
+            ) : currentScreen === 'sessions' ? (
+                <SessionScreen sessions={sessionList} onBack={() => setCurrentScreen('settings')} />
+                ) : (
                 <Sheet
                     sx={{
                         height: '100dvh',

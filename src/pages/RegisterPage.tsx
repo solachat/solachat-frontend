@@ -79,7 +79,7 @@ const RegisterPage: React.FC = () => {
             const token = response.data.token;
             if (token) {
                 localStorage.setItem("token", token);
-                navigate(`/${encodeURIComponent(walletAddress || "")}`);
+                navigate('/chat');
             }
         } catch (error) {
             console.error("Registration failed", error);

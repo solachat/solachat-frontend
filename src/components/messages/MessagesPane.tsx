@@ -452,7 +452,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
                                                 .filter(
                                                     (message) =>
                                                         message.content ||
-                                                        (message.attachment && message.attachment.filePath)
+                                                        (message.attachment && message.attachment.length > 0)
                                                 )
                                                 .map((message: MessageProps) => {
                                                     const isCurrentUser = message.userId === currentUserId;
