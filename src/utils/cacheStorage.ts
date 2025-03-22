@@ -2,7 +2,7 @@ const AVATAR_CACHE = "media-avatars";
 const PROFILE_CACHE = "profile-cache";
 
 export const getCachedAvatar = async (avatarUrl: string): Promise<Blob | null> => {
-    const cache = await caches.open("avatar-cache");
+    const cache = await caches.open(AVATAR_CACHE);
     const cachedResponse = await cache.match(avatarUrl);
     if (cachedResponse) {
         return await cachedResponse.blob(); // ✅ Возвращаем `Blob`, а не строку

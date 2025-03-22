@@ -227,121 +227,119 @@ export default function MyProfile() {
         if (!currentUser) return;
 
         const loadChatsAndMessages = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                if (!token) {
-                    setError("Authorization token is missing");
-                    return;
-                }
-
-                try {
-                    const sessionList = await loadAndCacheSessions(currentUser.id, token);
-                    console.log("📱 Активные сессии:", sessionList);
-                    setSessions(sessionList);
-                } catch (err) {
-                    console.warn("⚠️ Не удалось загрузить сессии");
-                }
-
-                let chatsToProcess = await getCachedChats() || [];
-                let fetchedChats = [];
-
-                try {
-                    fetchedChats = await fetchChatsFromServer(currentUser.id, token);
-                    if (fetchedChats.length > 0) {
-                        await cacheChats(fetchedChats);
-                        chatsToProcess = fetchedChats;
-                    }
-                    console.log("📌 Загруженные чаты:", fetchedChats);
-                } catch (error) {
-                    console.warn("⚠️ Сервер не отвечает, используем кэшированные данные.");
-                }
-
-                const updatedChats = await Promise.all(
-                    chatsToProcess.map(async (chat) => {
-                        const updatedMessages = await Promise.all(
-                            chat.messages.map(async (msg: any) => {
-                                if (Array.isArray(msg.attachment)) {
-                                    const updatedAttachments = await Promise.all(
-                                        msg.attachment.map(async (file: any) => {
-                                            let cachedFile = await getCachedMedia(file.filePath);
-                                            if (!cachedFile) {
-                                                try {
-                                                    console.log(`📌 Кэшируем файл: ${file.filePath}`);
-                                                    const res = await fetch(file.filePath);
-                                                    const blob = await res.blob();
-                                                    await cacheMedia(file.filePath, blob);
-                                                    cachedFile = URL.createObjectURL(blob);
-                                                } catch (err) {
-                                                    console.warn(`❌ Ошибка загрузки файла: ${file.filePath}`, err);
-                                                }
-                                            }
-                                            return {
-                                                ...file,
-                                                filePath: cachedFile || file.filePath,
-                                            };
-                                        })
-                                    );
-
-                                    return {
-                                        ...msg,
-                                        attachment: updatedAttachments,
-                                    };
-                                }
-
-                                return msg;
-                            })
-                        );
-
-                        const updatedUsers = await Promise.all(
-                            chat.users.map(async (user: any) => {
-                                if (user.avatar) {
-                                    let cachedAvatar = await getCachedMedia(user.avatar);
-                                    if (!cachedAvatar) {
-                                        try {
-                                            console.log(`📌 Кэшируем аватарку: ${user.avatar}`);
-                                            const res = await fetch(user.avatar);
-                                            const blob = await res.blob();
-                                            await cacheMedia(user.avatar, blob);
-                                            cachedAvatar = URL.createObjectURL(blob);
-                                        } catch (err) {
-                                            console.warn(`❌ Ошибка загрузки аватарки: ${user.avatar}`);
-                                        }
-                                    }
-                                    return { ...user, avatar: cachedAvatar || user.avatar };
-                                }
-                                return user;
-                            })
-                        );
-
-                        return { ...chat, messages: updatedMessages, users: updatedUsers };
-                    })
-                );
-
-                const sortedChats = updatedChats.sort((a, b) => {
-                    const getLastMessageTime = (chat: any) => {
-                        if (chat.lastMessage) return new Date(chat.lastMessage.createdAt).getTime();
-                        if (chat.messages.length > 0) {
-                            return new Date(chat.messages[chat.messages.length - 1].createdAt).getTime();
-                        }
-                        return 0;
-                    };
-
-                    return getLastMessageTime(b) - getLastMessageTime(a);
-                });
-
-                console.log("📌 Обновлённые и отсортированные чаты:", sortedChats);
-                setChats(sortedChats);
-
-            } catch (error) {
-                console.error("❌ Ошибка загрузки чатов:", error);
-                setError("Failed to load chats.");
-            } finally {
+            setLoading(true);
+            const token = localStorage.getItem("token");
+            if (!token) {
+                setError("Authorization token is missing");
                 setLoading(false);
+                return;
             }
+
+            // Загрузка сессий
+            try {
+                const sessionList = await loadAndCacheSessions(currentUser.id, token);
+                setSessions(sessionList);
+            } catch (err) {
+                console.warn("⚠️ Не удалось загрузить сессии");
+            }
+
+            // 1. Загружаем чаты из кэша и сразу показываем
+            try {
+                const cachedChats = await getCachedChats() || [];
+                const processedCachedChats = await processChats(cachedChats);
+                setChats(sortChats(processedCachedChats));
+            } catch (err) {
+                console.warn("⚠️ Ошибка при обработке кэша:", err);
+            }
+
+            // 2. Параллельно — пытаемся обновить с сервера
+            try {
+                const fetchedChats = await fetchChatsFromServer(currentUser.id, token);
+                if (fetchedChats.length > 0) {
+                    await cacheChats(fetchedChats);
+                    const processedServerChats = await processChats(fetchedChats);
+                    setChats(sortChats(processedServerChats));
+                    console.log("📌 Обновлённые и отсортированные чаты:", processedServerChats);
+                }
+            } catch (err) {
+                console.warn("⚠️ Сервер не отвечает, используем кэшированные данные.");
+            }
+
+            setLoading(false);
+        };
+
+        const processChats = async (chats: any[]) => {
+            return await Promise.all(
+                chats.map(async (chat) => {
+                    const updatedMessages = await Promise.all(
+                        chat.messages.map(async (msg: any) => {
+                            if (Array.isArray(msg.attachment)) {
+                                const updatedAttachments = await Promise.all(
+                                    msg.attachment.map(async (file: any) => {
+                                        let cachedFile = await getCachedMedia(file.filePath);
+                                        if (!cachedFile) {
+                                            try {
+                                                console.log(`📌 Кэшируем файл: ${file.filePath}`);
+                                                const res = await fetch(file.filePath);
+                                                const blob = await res.blob();
+                                                await cacheMedia(file.filePath, blob);
+                                                cachedFile = URL.createObjectURL(blob);
+                                            } catch (err) {
+                                                console.warn(`❌ Ошибка загрузки файла: ${file.filePath}`, err);
+                                            }
+                                        }
+                                        return { ...file, filePath: cachedFile || file.filePath };
+                                    })
+                                );
+                                return { ...msg, attachment: updatedAttachments };
+                            }
+                            return msg;
+                        })
+                    );
+
+                    const updatedUsers = await Promise.all(
+                        chat.users.map(async (user: any) => {
+                            if (user.avatar) {
+                                let cachedAvatar = await getCachedMedia(user.avatar);
+                                if (!cachedAvatar) {
+                                    try {
+                                        console.log(`📌 Кэшируем аватарку: ${user.avatar}`);
+                                        const res = await fetch(user.avatar);
+                                        const blob = await res.blob();
+                                        await cacheMedia(user.avatar, blob);
+                                        cachedAvatar = URL.createObjectURL(blob);
+                                    } catch (err) {
+                                        console.warn(`❌ Ошибка загрузки аватарки: ${user.avatar}`);
+                                    }
+                                }
+                                return { ...user, avatar: cachedAvatar || user.avatar };
+                            }
+                            return user;
+                        })
+                    );
+
+                    return { ...chat, messages: updatedMessages, users: updatedUsers };
+                })
+            );
+        };
+
+        const sortChats = (chats: any[]) => {
+            return chats.sort((a, b) => {
+                const getLastMessageTime = (chat: any) => {
+                    if (chat.lastMessage) return new Date(chat.lastMessage.createdAt).getTime();
+                    if (chat.messages.length > 0) {
+                        return new Date(chat.messages[chat.messages.length - 1].createdAt).getTime();
+                    }
+                    return 0;
+                };
+
+                return getLastMessageTime(b) - getLastMessageTime(a);
+            });
         };
 
         loadChatsAndMessages();
     }, [currentUser]);
+
 
     const GlobalStyle = () => (
         <GlobalStyles

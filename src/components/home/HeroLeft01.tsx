@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Box, Typography, Button } from '@mui/joy';
 import { useMediaQuery } from "react-responsive";
+import { Link as RouterLink } from 'react-router-dom';
 
 const fadeIn = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.8 } } };
 const floatingAnimation = { rotate: [0, 2, -2, 0], transition: { duration: 4, repeat: Infinity, ease: "easeInOut" } };
@@ -96,7 +97,6 @@ export default function HeroMain() {
 
                     <motion.div variants={textVariants} transition={{delay: 0.4}}>
                         <Typography sx={{color: 'rgba(255,255,255,0.7)', mb: 4, fontSize: '1.1rem'}}>
-                            • {t('hero.features.encryption')}<br/>
                             • {t('hero.features.decentralization')}<br/>
                             • {t('hero.features.walletSupport')}
                         </Typography>
@@ -105,6 +105,8 @@ export default function HeroMain() {
                     <motion.div variants={textVariants} transition={{delay: 0.6}}>
                         <Button
                             size="lg"
+                            component={RouterLink}
+                            to="/register"
                             sx={{
                                 background: 'linear-gradient(45deg, #007bff, #00a8ff)',
                                 px: 6,

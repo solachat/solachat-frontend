@@ -10,6 +10,7 @@ import { jwtDecode } from 'jwt-decode';
 import AvatarUploadModal from "../profile/AvatarUploadModal";
 import {checkUsernameAvailability, updateUserProfile} from '../../api/api';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import {cacheAvatar, getCachedAvatar} from "../../utils/cacheStorage";
 
 
 interface DecodedToken {
@@ -58,15 +59,7 @@ const EditProfileScreen = ({
         const trimmedAboutMe = aboutMe.trim();
         const originalUsername = (profile.username || '').trim();
         const originalAboutMe = (profile.aboutMe || '').trim();
-
         const hasChanges = trimmedUsername !== originalUsername || trimmedAboutMe !== originalAboutMe;
-
-        console.log('Profile.username:', profile.username);
-        console.log('Profile.aboutMe:', profile.aboutMe);
-        console.log('Trimmed username:', trimmedUsername);
-        console.log('Trimmed aboutMe:', trimmedAboutMe);
-        console.log('hasChanges:', hasChanges);
-
         setIsModified(hasChanges);
     }, [username, aboutMe, profile.username, profile.aboutMe]);
 
@@ -98,7 +91,6 @@ const EditProfileScreen = ({
         setUsernameError(isAvailable ? '' : t('username_taken'));
     };
 
-
     const handleAboutMeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const words = e.target.value.split(/\s+/).filter(Boolean);
         if (words.length <= MAX_ABOUT_ME_WORDS) {
@@ -122,6 +114,50 @@ const EditProfileScreen = ({
             console.error('Failed to update profile:', error);
         }
     };
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const loadProfile = async () => {
+            try {
+                const decoded = jwtDecode<DecodedToken>(token);
+
+                // Загружаем avatar из кэша (если есть)
+                let avatarUrl = decoded.avatar;
+
+                if (avatarUrl) {
+                    const cached = await getCachedAvatar(avatarUrl);
+                    if (cached) {
+                        avatarUrl = URL.createObjectURL(cached);
+                    } else {
+                        try {
+                            const res = await fetch(avatarUrl);
+                            const blob = await res.blob();
+                            await cacheAvatar(decoded.avatar, blob);
+                            avatarUrl = URL.createObjectURL(blob);
+                        } catch (e) {
+                            console.warn('⚠️ Не удалось загрузить аватарку', e);
+                        }
+                    }
+                }
+
+                setProfile({
+                    avatar: avatarUrl,
+                    publicKey: decoded.publicKey,
+                    username: decoded.username || '',
+                    aboutMe: decoded.aboutMe || ''
+                });
+                setUsername(decoded.username || '');
+                setAboutMe(decoded.aboutMe || '');
+            } catch (e) {
+                console.error('Ошибка при декодировании токена:', e);
+            }
+        };
+
+        loadProfile();
+    }, []);
+
 
     useEffect(() => {
         if (isModified) {

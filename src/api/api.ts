@@ -3,7 +3,9 @@ import {Session} from "../components/core/types";
 import { getCachedSessionsIndexedDB } from '../utils/sessionIndexedDB';
 import api from '../api/axiosConfig';
 import axios from 'axios';
-
+import { v4 as uuidv4 } from 'uuid';
+import { encryptMessage } from '../utils/encryption'; // ты реализуешь свою encryption
+import { getSessionKey } from '../utils/sessionIndexedDB'; // ключ сессии от IndexedDB
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 const VACANCIES_API_URL = process.env.VACANCIES_API_URL || 'http://localhost:5000';
@@ -86,20 +88,6 @@ export const fetchChatsFromServer = async (userId: number, token: string) => {
     }
 };
 
-export const saveSessionKey = async (chatId: number, sessionKey: string) => {
-    await fetch(`${API_URL}/api/session/session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId, sessionKey }),
-    });
-};
-
-export const getSessionKey = async (chatId: number) => {
-    const response = await fetch(`${API_URL}/api/session/session/${chatId}`);
-    if (!response.ok) return null;
-    return await response.json();
-};
-
 export const sendMessage = async (chatId: number, formData: FormData, token: string) => {
     try {
         const response = await axios.post(
@@ -122,6 +110,46 @@ export const sendMessage = async (chatId: number, formData: FormData, token: str
     } catch (error) {
         console.error('❌ Ошибка отправки сообщения:', error);
         throw new Error('Could not send message');
+    }
+};
+
+
+export const sendMessageViaSecuLine = async (
+    chatId: number,
+    messageText: string,
+    senderPublicKey: string,
+    sessionId: string,
+    ws: WebSocket
+) => {
+    try {
+        // 1. Получаем ключ сессии (shared key)
+        const sessionKey = await getSessionKey(sessionId);
+        if (!sessionKey) throw new Error('Session key not found');
+
+        // 2. Шифруем сообщение
+        const { encrypted, nonce } = await encryptMessage(messageText, sessionKey);
+
+        // 3. Объединяем nonce + ciphertext
+        const payload = new Uint8Array([...nonce, ...encrypted]);
+
+        // 4. Создаём пакет
+        const packet = {
+            message_id: uuidv4(),
+            chat_id: chatId,
+            sender: senderPublicKey,
+            timestamp: new Date().toISOString(),
+            msg_type: 'Message',
+            payload: Array.from(payload), // будет сериализовано как JSON-массив
+            ack_id: null,
+            retry_count: 0,
+        };
+
+        // 5. Отправляем в WebSocket
+        ws.send(JSON.stringify(packet));
+
+        console.log('📤 SecuPacket отправлен через WebSocket');
+    } catch (error) {
+        console.error('❌ Ошибка при отправке зашифрованного сообщения:', error);
     }
 };
 

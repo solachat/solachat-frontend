@@ -57,3 +57,27 @@ export async function getCachedSessionsIndexedDB(): Promise<any[] | null> {
 
     return null;
 }
+
+export const getSessionKey = async (sessionId: string): Promise<Uint8Array | null> => {
+    const sessions = await getCachedSessionsIndexedDB();
+
+    if (!sessions || sessions.length === 0) {
+        console.warn('🔐 Нет сессий в кэше IndexedDB');
+        return null;
+    }
+
+    const session = sessions.find((s) => s.sessionId === sessionId);
+
+    if (!session || !session.sharedKey) {
+        console.warn(`🔐 SessionKey для ${sessionId} не найден`);
+        return null;
+    }
+
+    try {
+        const keyBytes = Uint8Array.from(atob(session.sharedKey), c => c.charCodeAt(0));
+        return keyBytes;
+    } catch (e) {
+        console.error('❌ Ошибка при декодировании sharedKey:', e);
+        return null;
+    }
+};

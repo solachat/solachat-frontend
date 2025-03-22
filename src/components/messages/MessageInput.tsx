@@ -7,7 +7,7 @@ import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import FileUploadModal from './FileUploadModal';
-import {sendMessage, editMessage, createPrivateChat} from '../../api/api';
+import {sendMessage, editMessage, createPrivateChat, sendMessageViaSecuLine} from '../../api/api';
 import { useState, useCallback, useEffect } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -19,6 +19,8 @@ import {toast} from "react-toastify";
 import {ChatProps, MessageProps} from "../core/types";
 import {motion} from "framer-motion";
 import {useNavigate} from "react-router-dom";
+import {jwtDecode} from "jwt-decode";
+import {useWebSocket} from "../../api/useWebSocket";
 
 export type UploadedFileData = {
     file: File;
@@ -34,7 +36,7 @@ export type MessageInputProps = {
     setEditingMessage: (message: { id: number | null; content: string | null } | null) => void;
 };
 
-export default function MessageInput(props: MessageInputProps) {
+export default function MessageInput(props: MessageInputProps): JSX.Element | null {
     const { t } = useTranslation();
     const {
         chatId, selectedChat, setSelectedChat, currentUserId,
@@ -53,6 +55,14 @@ export default function MessageInput(props: MessageInputProps) {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
     const [videoSrc, setVideoSrc] = useState<string | null>(null);
     const navigate = useNavigate();
+    const { wsRef } = useWebSocket(() => {});
+    const handleFileSelect = useCallback((file: File) => {
+        setUploadedFiles((prevFiles) => [...prevFiles, { file }]);
+    }, []);
+
+    const removeUploadedFile = useCallback((index: number) => {
+        setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    }, []);
 
     const handleImageClick = (imageUrl: string) => {
         setImageSrc(imageUrl);
@@ -83,6 +93,25 @@ export default function MessageInput(props: MessageInputProps) {
     }, [editingMessage, chatId]);
 
     const [isSending, setIsSending] = useState(false);
+    const token = localStorage.getItem("token");
+    if (!token) {
+        console.error("❌ Токен отсутствует");
+        return null; // ✅ корректно для React-компонентов
+    }
+
+    const decoded: any = jwtDecode(token);
+    const userPublicKey = decoded.public_key;
+
+    const sessionMap: Record<number, string> = {};
+
+    const getSessionIdForChat = async (chatId: number): Promise<string | null> => {
+        return sessionMap[chatId] || null;
+    };
+
+    const setSessionIdForChat = (chatId: number, sessionId: string) => {
+        sessionMap[chatId] = sessionId;
+    };
+
 
     const handleClick = async () => {
         if (isSending) return;
@@ -94,6 +123,9 @@ export default function MessageInput(props: MessageInputProps) {
                 console.error("❌ Ошибка: Authorization token is missing");
                 return;
             }
+
+            const decoded: any = jwtDecode(token);
+            const userPublicKey = decoded.public_key;
 
             const content = message.trim();
             if (content === "" && uploadedFiles.length === 0) {
@@ -154,7 +186,6 @@ export default function MessageInput(props: MessageInputProps) {
                 navigate(`/chat/#${recipientId}`);
             }
 
-
             if (!finalChatId) {
                 console.error("❌ Ошибка: Chat ID отсутствует. Сообщение не отправлено.");
                 return;
@@ -177,7 +208,7 @@ export default function MessageInput(props: MessageInputProps) {
                 createdAt: new Date().toISOString(),
                 pending: true,
                 isRead: false,
-                attachments: optimisticFiles.length > 0 ? optimisticFiles : [],
+                attachment: optimisticFiles.length > 0 ? optimisticFiles : [],
             };
 
             console.log("📩 Добавляем оптимистичное сообщение в UI:", optimisticMessage);
@@ -186,22 +217,16 @@ export default function MessageInput(props: MessageInputProps) {
             const pendingMessages = JSON.parse(localStorage.getItem("pendingMessages") || "[]");
             localStorage.setItem("pendingMessages", JSON.stringify([...pendingMessages, optimisticMessage]));
 
-            const formData = new FormData();
-            formData.append("content", content);
-            formData.append("tempId", String(tempId));
-            uploadedFiles.forEach(fileData => {
-                formData.append("file", fileData.file);
-            });
 
-            console.log("📤 Отправляем сообщение на сервер...");
-            const serverMessage = await sendMessage(finalChatId, formData, token);
-            console.log("✅ Сервер подтвердил отправку:", serverMessage);
+            const sessionId = await getSessionIdForChat(finalChatId);
+            if (!sessionId) {
+                console.error("❌ Сессия для чата не найдена");
+                return;
+            }
 
-            onSubmit((prevMessages: MessageProps[]) =>
-                prevMessages.map((msg: MessageProps) =>
-                    msg.id === optimisticMessage.id ? { ...serverMessage, pending: false } : msg
-                )
-            );
+            if (!wsRef) return;
+            await sendMessageViaSecuLine(finalChatId, content, userPublicKey, sessionId, wsRef);
+
 
             const updatedPendingMessages = JSON.parse(localStorage.getItem("pendingMessages") || "[]")
                 .filter((msg: any) => msg.id !== tempId);
@@ -217,6 +242,7 @@ export default function MessageInput(props: MessageInputProps) {
         }
     };
 
+
     const handleEmojiSelect = (emoji: string) => {
         setMessage((prev) => prev + emoji);
         setAnchorEl(null);
@@ -225,14 +251,6 @@ export default function MessageInput(props: MessageInputProps) {
     const toggleEmojiMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(anchorEl ? null : event.currentTarget);
     };
-
-    const handleFileSelect = useCallback((file: File) => {
-        setUploadedFiles((prevFiles) => [...prevFiles, { file }]);
-    }, []);
-
-    const removeUploadedFile = useCallback((index: number) => {
-        setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-    }, []);
 
     const keyboardOption = sessionStorage.getItem("keyboardOption") || "enter";
 

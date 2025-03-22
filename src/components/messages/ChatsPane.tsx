@@ -231,56 +231,18 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
                 const token = localStorage.getItem("token");
                 if (!token) throw new Error("⛔ Authorization token is missing");
 
-                let cachedChats = await getCachedChats() || [];
-                let chats = cachedChats;
+                // 🟡 1. Загружаем кэш и сразу отображаем
+                const cachedChats = await getCachedChats() || [];
+                const updatedCachedChats = await updateChatUsersAndAttachments(cachedChats);
+                setChats([...updatedCachedChats]);
 
+                // ⚪ 2. Параллельно грузим с сервера
                 const chatsFromServer = await fetchChatsFromServer(currentUser.id, token);
                 if (chatsFromServer) {
-                    chats = chatsFromServer;
                     await cacheChats(chatsFromServer);
+                    const updatedServerChats = await updateChatUsersAndAttachments(chatsFromServer);
+                    setChats([...updatedServerChats]);
                 }
-
-                const updatedChats = await Promise.all(
-                    chats.map(async (chat) => {
-                        if (!chat.messages) return chat;
-
-                        const updatedUsers = await Promise.all(
-                            chat.users.map(async (user: any) => {
-                                if (user.avatar) {
-                                    const cachedAvatar = await getCachedMedia(user.avatar);
-                                    return { ...user, avatar: cachedAvatar || user.avatar };
-                                }
-                                return user;
-                            })
-                        );
-
-                        const updatedMessages = await Promise.all(
-                            chat.messages.map(async (msg: any) => {
-                                if (Array.isArray(msg.attachment)) {
-                                    const updatedAttachments = await Promise.all(
-                                        msg.attachment.map(async (file: any) => {
-                                            if (file.filePath) {
-                                                const cachedPath = await getCachedMedia(file.filePath);
-                                                return {
-                                                    ...file,
-                                                    filePath: cachedPath || file.filePath,
-                                                };
-                                            }
-                                            return file;
-                                        })
-                                    );
-                                    return { ...msg, attachment: updatedAttachments };
-                                }
-                                return msg;
-                            })
-                        );
-
-                        return { ...chat, users: updatedUsers, messages: updatedMessages };
-                    })
-                );
-
-                console.log("📌 Обновлённые чаты:", updatedChats);
-                setChats([...updatedChats]);
 
             } catch (error) {
                 console.error("❌ Ошибка загрузки чатов:", error);
@@ -290,8 +252,50 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
             }
         };
 
+        const updateChatUsersAndAttachments = async (chats: any[]) => {
+            return await Promise.all(
+                chats.map(async (chat) => {
+                    if (!chat.messages) return chat;
+
+                    const updatedUsers = await Promise.all(
+                        chat.users.map(async (user: any) => {
+                            if (user.avatar) {
+                                const cachedAvatar = await getCachedMedia(user.avatar);
+                                return { ...user, avatar: cachedAvatar || user.avatar };
+                            }
+                            return user;
+                        })
+                    );
+
+                    const updatedMessages = await Promise.all(
+                        chat.messages.map(async (msg: any) => {
+                            if (Array.isArray(msg.attachment)) {
+                                const updatedAttachments = await Promise.all(
+                                    msg.attachment.map(async (file: any) => {
+                                        if (file.filePath) {
+                                            const cachedPath = await getCachedMedia(file.filePath);
+                                            return {
+                                                ...file,
+                                                filePath: cachedPath || file.filePath,
+                                            };
+                                        }
+                                        return file;
+                                    })
+                                );
+                                return { ...msg, attachment: updatedAttachments };
+                            }
+                            return msg;
+                        })
+                    );
+
+                    return { ...chat, users: updatedUsers, messages: updatedMessages };
+                })
+            );
+        };
+
         loadChats();
     }, [currentUser.id]);
+
 
 
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

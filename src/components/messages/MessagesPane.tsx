@@ -103,7 +103,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
 
 
 
-
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -279,7 +278,6 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         setEditingMessageId(messageId);
         setTextAreaValue(content);
     };
-
 
     const interlocutor = React.useMemo(() => {
         if (!chat?.isGroup) {
