@@ -260,27 +260,34 @@ export default function MyProfile() {
                     chatsToProcess.map(async (chat) => {
                         const updatedMessages = await Promise.all(
                             chat.messages.map(async (msg: any) => {
-                                if (msg.attachment?.filePath) {
-                                    let cachedFile = await getCachedMedia(msg.attachment.filePath);
-                                    if (!cachedFile) {
-                                        try {
-                                            console.log(`📌 Кэшируем файл: ${msg.attachment.filePath}`);
-                                            const res = await fetch(msg.attachment.filePath);
-                                            const blob = await res.blob();
-                                            await cacheMedia(msg.attachment.filePath, blob);
-                                            cachedFile = URL.createObjectURL(blob);
-                                        } catch (err) {
-                                            console.warn(`❌ Ошибка загрузки файла: ${msg.attachment.filePath}`);
-                                        }
-                                    }
+                                if (Array.isArray(msg.attachment)) {
+                                    const updatedAttachments = await Promise.all(
+                                        msg.attachment.map(async (file: any) => {
+                                            let cachedFile = await getCachedMedia(file.filePath);
+                                            if (!cachedFile) {
+                                                try {
+                                                    console.log(`📌 Кэшируем файл: ${file.filePath}`);
+                                                    const res = await fetch(file.filePath);
+                                                    const blob = await res.blob();
+                                                    await cacheMedia(file.filePath, blob);
+                                                    cachedFile = URL.createObjectURL(blob);
+                                                } catch (err) {
+                                                    console.warn(`❌ Ошибка загрузки файла: ${file.filePath}`, err);
+                                                }
+                                            }
+                                            return {
+                                                ...file,
+                                                filePath: cachedFile || file.filePath,
+                                            };
+                                        })
+                                    );
+
                                     return {
                                         ...msg,
-                                        attachment: {
-                                            ...msg.attachment,
-                                            filePath: cachedFile || msg.attachment.filePath
-                                        }
+                                        attachment: updatedAttachments,
                                     };
                                 }
+
                                 return msg;
                             })
                         );
@@ -422,8 +429,9 @@ export default function MyProfile() {
                                 left: 0,
                                 right: 0,
                                 bottom: 0,
-                                zIndex: 999,
-                                transition: 'all 0.3s ease-in-out'
+
+                                transition: 'all 0.3s ease-in-out',
+
                             }}
                         >
                             {error ? (

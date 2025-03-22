@@ -256,11 +256,20 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
 
                         const updatedMessages = await Promise.all(
                             chat.messages.map(async (msg: any) => {
-                                if (msg.attachment?.filePath) {
-                                    const cachedFile = await getCachedMedia(msg.attachment.filePath);
-                                    return cachedFile
-                                        ? { ...msg, attachment: { ...msg.attachment, filePath: cachedFile } }
-                                        : msg;
+                                if (Array.isArray(msg.attachment)) {
+                                    const updatedAttachments = await Promise.all(
+                                        msg.attachment.map(async (file: any) => {
+                                            if (file.filePath) {
+                                                const cachedPath = await getCachedMedia(file.filePath);
+                                                return {
+                                                    ...file,
+                                                    filePath: cachedPath || file.filePath,
+                                                };
+                                            }
+                                            return file;
+                                        })
+                                    );
+                                    return { ...msg, attachment: updatedAttachments };
                                 }
                                 return msg;
                             })
@@ -345,7 +354,7 @@ export default function ChatsPane({ chats: initialChats, setSelectedChat, select
         setIsSidebarOpen(false);
     };
 
-    const headerHeight = 68; // Общая высота заголовков
+    const headerHeight = 68;
     const borderStyle = '1px solid rgba(0, 168, 255, 0.3)';
     const gradientBorder = 'linear-gradient(90deg, transparent 0%, rgba(0, 168, 255, 0.4) 50%, transparent 100%)';
     const backdropStyles = {

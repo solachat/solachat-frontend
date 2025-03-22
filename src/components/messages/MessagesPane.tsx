@@ -354,7 +354,7 @@ export default function MessagesPane({ chat, chats, members = [], setSelectedCha
         >
             <Box
                 sx={{
-                    flex: '1 1 auto', // Занимает всю доступную ширину
+                    flex: '1 1 auto',
                     maxWidth: showInfoPanel ? 'calc(100% - 450px)' : '100%',
                     display: 'flex',
                     flexDirection: 'column',

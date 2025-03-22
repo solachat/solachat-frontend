@@ -17,6 +17,7 @@ import {JwtPayload} from "jsonwebtoken";
 import CustomAudioPlayer from '../core/CustomAudioPlayer';
 import CheckIcon from "@mui/icons-material/Check";
 import {motion} from "framer-motion";
+import ImageViewer from "./ImageViewer";
 
 type DecodedToken = JwtPayload & { id?: number };
 
@@ -115,6 +116,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const [pendingImage, setPendingImage] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
 
+
     const [isImageOpen, setIsImageOpen] = useState(false);
     const [isVideoOpen, setIsVideoOpen] = useState(false);
     const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -140,18 +142,19 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const isAudio = isAudioFile(attachment?.[0]?.filePath || '', attachment?.[0]?.fileType);
 
 
-    const handleImageClick = (imageUrl: string) => {
-        setImageSrc(imageUrl);
+    const imgRefs = useRef<(HTMLImageElement | null)[]>([]);
+
+
+    const handleImageClick = (src: string, index: number) => {
+        const img = imgRefs.current[index];
+
+        setImageSrc(src);
         setIsImageOpen(true);
     };
 
 
     const handleClose = () => {
         setIsClosing(true);
-        setTimeout(() => {
-            setIsImageOpen(false);
-            setIsClosing(false);
-        }, 100);
     };
 
     const syncVideoWithModal = () => {
@@ -162,6 +165,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
             modalVideoRef.current.play();
         }
     };
+
+
+    const [clickedImageIndex, setClickedImageIndex] = useState<number>(0);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(content);
@@ -393,12 +399,14 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             sx={{
                                 display: 'grid',
                                 gap: '4px',
-                                maxWidth: '800px',
+                                maxWidth: '600px',
                                 gridTemplateColumns:
                                     attachment.length === 1 ? '1fr' :
                                         attachment.length === 2 ? 'repeat(2, 1fr)' :
                                             attachment.length === 3 ? '2fr 1fr' :
-                                                'repeat(2, 1fr)',
+                                                attachment.length === 4 ? 'repeat(2, 1fr)' :
+                                                    attachment.length === 5 ? 'repeat(3, 1fr)' :
+                                                        'repeat(3, 1fr)',
                                 gridTemplateRows: 'auto',
                                 alignItems: 'stretch',
                                 justifyItems: 'stretch',
@@ -420,30 +428,44 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                             overflow: 'hidden',
                                             cursor: isImage ? 'pointer' : 'default',
                                             width: '100%',
-                                            height:
-                                                attachment.length === 1 ? '400px' :
-                                                    attachment.length === 2 ? 'auto' :
-                                                        attachment.length === 3 && index === 0 ? '100%' :
-                                                            attachment.length === 3 ? 'calc(100% - 2px)' :
-                                                                'auto',
-                                            gridColumn: attachment.length === 3 && index === 0 ? '1 / 2' : 'auto',
+
+                                            gridColumn: attachment.length === 3 && index === 0 ? '1 / 2' :
+                                                attachment.length === 5 && index === 3 ? '1 / 3' :
+                                                    attachment.length === 5 && index === 4 ? '3 / 4' :
+                                                        'auto',
                                             gridRow: attachment.length === 3 && index === 0 ? '1 / 3' : 'auto',
                                         }}
-                                        onClick={() => isImage ? handleImageClick(file.filePath) : null}
+                                        onClick={() => isImage ? handleImageClick(file.filePath, index) : null}
                                     >
                                         {isImage && (
-                                            <img
-                                                src={file.filePath}
-                                                alt={`attachment-${index}`}
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    objectFit: 'cover',
-                                                    opacity: imageLoading ? 0.5 : 1,
-                                                    transition: 'opacity 0.3s ease',
-                                                }}
-                                                onLoad={handleImageLoad}
-                                            />
+                                            <div style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                display: 'flex',
+                                                justifyContent: 'center'
+                                            }}>
+                                                <img
+                                                    ref={el => imgRefs.current[index] = el}
+                                                    src={file.filePath}
+                                                    alt={`attachment-${index}`}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: 'auto',
+                                                        maxWidth: '100%',
+                                                        maxHeight: '400px',
+                                                        opacity: imageLoading ? 0.5 : 1,
+                                                        transition: 'opacity 0.3s ease',
+                                                        objectFit: 'cover',
+
+                                                        ...(attachment.length === 1 && {
+                                                            height: '100%',
+                                                            maxHeight: '400px',
+                                                            objectFit: 'contain'
+                                                        })
+                                                    }}
+                                                    onLoad={handleImageLoad}
+                                                />
+                                            </div>
                                         )}
 
                                         {isVideo && (
@@ -454,7 +476,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                                     width: '100%',
                                                     objectFit: 'cover',
                                                     height: '100%',
-
                                                 }}
                                             />
                                         )}
@@ -672,88 +693,87 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 </Sheet>
             </Box>
 
-            {isImageOpen && imageSrc && (
-                <Box
-                    sx={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        width: '100vw',
-                        height: '100vh',
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 999,
-                        cursor: 'pointer',
-                        animation: `${isClosing ? 'fade-out' : 'fade-in'} 0.2s ease-in-out`,
-                    }}
-                    onClick={handleClose}
-                >
-                    {pending && (
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)',
-                            }}
-                        >
-                            <CircularProgress size='md' sx={{ color: 'white' }} />
-                        </Box>
-                    )}
-                    <Box
-                        sx={{
-                            position: 'relative',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        <img
-                            src={imageSrc}
-                            alt="attachment-preview"
-                            style={{
-                                objectFit: 'contain',
-                                maxWidth: '70%',
-                                maxHeight: '70%',
-                            }}
-                        />
-                    </Box>
+            {/*{isImageOpen && imageSrc && (*/}
+            {/*    <Box*/}
+            {/*        sx={{*/}
+            {/*            position: 'fixed',*/}
+            {/*            top: 0,*/}
+            {/*            left: 0,*/}
+            {/*            width: '100vw',*/}
+            {/*            height: '100vh',*/}
+            {/*            backgroundColor: 'rgba(0, 0, 0, 0.8)',*/}
+            {/*            display: 'flex',*/}
+            {/*            alignItems: 'center',*/}
+            {/*            justifyContent: 'center',*/}
+            {/*                zIndex: 1300,*/}
+            {/*            cursor: 'pointer',*/}
+            {/*            animation: `${isClosing ? 'fade-out' : 'fade-in'} 0.2s ease-in-out`,*/}
+            {/*        }}*/}
+            {/*        onClick={handleClose}*/}
+            {/*    >*/}
+            {/*        {pending && (*/}
+            {/*            <Box*/}
+            {/*                sx={{*/}
+            {/*                    position: 'absolute',*/}
+            {/*                    top: '50%',*/}
+            {/*                    left: '50%',*/}
+            {/*                    transform: 'translate(-50%, -50%)',*/}
+            {/*                }}*/}
+            {/*            >*/}
+            {/*                <CircularProgress size='md' sx={{ color: 'white' }} />*/}
+            {/*            </Box>*/}
+            {/*        )}*/}
+            {/*        <Box*/}
+            {/*            sx={{*/}
+            {/*                position: 'relative',*/}
+            {/*                display: 'flex',*/}
+            {/*                flexDirection: 'column',*/}
+            {/*                alignItems: 'center',*/}
+            {/*                justifyContent: 'center',*/}
+            {/*            }}*/}
+            {/*        >*/}
+            {/*            <img*/}
+            {/*                src={imageSrc}*/}
+            {/*                alt="attachment-preview"*/}
+            {/*                style={{*/}
+            {/*                    objectFit: 'contain',*/}
+            {/*                    maxWidth: '70%',*/}
+            {/*                    maxHeight: '70%',*/}
+            {/*                }}*/}
+            {/*            />*/}
+            {/*        </Box>*/}
 
-                    {content && (
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                bottom: '20px',
-                                width: '100%',
-                                display: 'flex',
-                                justifyContent: 'center',
-                            }}
-                        >
-                            <Typography
-                                sx={{
-                                    color: 'rgba(255, 255, 255, 0.7)',
-                                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                                    textAlign: 'center',
-                                    padding: '6px 12px',
-                                    wordWrap: 'break-word',
-                                    borderRadius: '12px',
-                                    maxWidth: '90%',
-                                    transition: 'color 0.2s ease-in-out, background-color 0.2s ease-in-out',
-                                    '&:hover': {
-                                        color: 'white',
-                                    }
-                                }}
-                            >
-                                {content}
-                            </Typography>
-                        </Box>
-                    )}
-                </Box>
-            )}
-
+            {/*        {content && (*/}
+            {/*            <Box*/}
+            {/*                sx={{*/}
+            {/*                    position: 'absolute',*/}
+            {/*                    bottom: '20px',*/}
+            {/*                    width: '100%',*/}
+            {/*                    display: 'flex',*/}
+            {/*                    justifyContent: 'center',*/}
+            {/*                }}*/}
+            {/*            >*/}
+            {/*                <Typography*/}
+            {/*                    sx={{*/}
+            {/*                        color: 'rgba(255, 255, 255, 0.7)',*/}
+            {/*                        backgroundColor: 'rgba(0, 0, 0, 0.6)',*/}
+            {/*                        textAlign: 'center',*/}
+            {/*                        padding: '6px 12px',*/}
+            {/*                        wordWrap: 'break-word',*/}
+            {/*                        borderRadius: '12px',*/}
+            {/*                        maxWidth: '90%',*/}
+            {/*                        transition: 'color 0.2s ease-in-out, background-color 0.2s ease-in-out',*/}
+            {/*                        '&:hover': {*/}
+            {/*                            color: 'white',*/}
+            {/*                        }*/}
+            {/*                    }}*/}
+            {/*                >*/}
+            {/*                    {content}*/}
+            {/*                </Typography>*/}
+            {/*            </Box>*/}
+            {/*        )}*/}
+            {/*    </Box>*/}
+            {/*)}*/}
 
 
             {isVideoOpen && videoSrc && (
@@ -787,6 +807,26 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         onVolumeChange={updateVideoState}
                     />
                 </Box>
+            )}
+
+            {Array.isArray(attachment) && attachment.length > 0 && (
+                <ImageViewer
+                    open={isImageOpen}
+                    imageSrcList={attachment.map(file => file.filePath)}
+                    initialIndex={clickedImageIndex || 0}
+                    senderAvatar={user?.avatar || ''}
+                    senderPublicKey={user?.public_key || ''}
+                    date={new Date(createdAt).toLocaleString('ru-RU', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    })}
+                    onClose={() => setIsImageOpen(false)}
+                    onDelete={() => console.log("Удаление изображения")}
+                    loading={!!pendingImage}
+
+                />
             )}
 
             <ContextMenu
