@@ -106,7 +106,7 @@ const renderMessageContent = (text: string) => {
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { content, attachment, variant, createdAt, id, isEdited, onEditMessage, messageCreatorId, user, isGroupChat, isRead, pending } = props;
     const isSent = variant === 'sent';
     const formattedTime = new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -145,10 +145,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
     const imgRefs = useRef<(HTMLImageElement | null)[]>([]);
 
 
-    const handleImageClick = (src: string, index: number) => {
-        const img = imgRefs.current[index];
-
-        setImageSrc(src);
+    const handleImageClick = ( index: number) => {
+        setClickedImageIndex(index);
         setIsImageOpen(true);
     };
 
@@ -269,6 +267,13 @@ export default function ChatBubble(props: ChatBubbleProps) {
         };
     }, []);
 
+    const formattedDateTooltip = new Date(createdAt).toLocaleString(i18n.language, {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
     return (
         <Box
             component={motion.div}
@@ -325,7 +330,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         minWidth: 'unset',
                         p: !isImage && !isVideo && !isAudio ? { xs: '4px 8px', sm: '6px 8px' } : 0,
                         borderRadius: 'lg',
-                        bgcolor: isSent
+                        bgcolor:
+                             isSent
                             ? 'rgba(0, 168, 255, 0.15)'
                             : 'rgba(255, 255, 255, 0.05)',
                         border: '1px solid rgba(0, 168, 255, 0.3)',
@@ -348,7 +354,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             bottom: 0,
                             backdropFilter: 'blur(10px)',
                             zIndex: -1,
-                        }
+                        },
                     })}
                 >
                     {isGroupChat && !isSent && (
@@ -397,19 +403,16 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     {Array.isArray(attachment) && attachment.length > 0 && (
                         <Box
                             sx={{
-                                display: 'grid',
+                                display: attachment.length === 1 ? 'flex' : 'grid',
+                                justifyContent: 'flex-start',
                                 gap: '4px',
                                 maxWidth: '600px',
-                                gridTemplateColumns:
-                                    attachment.length === 1 ? '1fr' :
-                                        attachment.length === 2 ? 'repeat(2, 1fr)' :
-                                            attachment.length === 3 ? '2fr 1fr' :
-                                                attachment.length === 4 ? 'repeat(2, 1fr)' :
-                                                    attachment.length === 5 ? 'repeat(3, 1fr)' :
-                                                        'repeat(3, 1fr)',
-                                gridTemplateRows: 'auto',
-                                alignItems: 'stretch',
-                                justifyItems: 'stretch',
+                                gridTemplateColumns: (() => {
+                                    if (attachment.length === 1) return undefined;
+                                    if (attachment.length === 2) return 'repeat(2, 1fr)';
+                                    if (attachment.length === 3 || attachment.length === 4) return '2fr 1fr';
+                                    if (attachment.length >= 5) return 'repeat(3, 1fr)';
+                                })(),
                                 mb: content ? 1 : 0,
                             }}
                         >
@@ -418,74 +421,76 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                 .map((file, index) => {
                                     const isImage = isImageFile(file.filePath, file.fileType);
                                     const isVideo = isVideoFile(file.filePath, file.fileType);
+                                    const isSingle = attachment.length === 1;
 
+                                    const gridColumn =
+                                        attachment.length === 3 && index === 0 ? '1 / 2' :
+                                            attachment.length === 4 && index === 0 ? '1 / 2' :
+                                                attachment.length === 5 && index === 0 ? '1 / 2' :
+                                                    attachment.length === 5 && index === 1 ? '2 / 3' :
+                                                        attachment.length === 5 && index === 2 ? '3 / 4' :
+                                                            attachment.length === 5 && index === 3 ? '1 / 3' :
+                                                                attachment.length === 5 && index === 4 ? '3 / 4' :
+                                                                    'auto';
 
-                                return (
-                                    <Box
-                                        key={index}
-                                        sx={{
-                                            position: 'relative',
-                                            overflow: 'hidden',
-                                            cursor: isImage ? 'pointer' : 'default',
-                                            width: '100%',
+                                    const gridRow =
+                                        attachment.length === 3 && index === 0 ? '1 / 3' :
+                                            attachment.length === 4 && index === 0 ? '1 / 4' :
+                                                attachment.length === 5 && index >= 3 ? '2 / 3' :
+                                                    'auto';
 
-                                            gridColumn: attachment.length === 3 && index === 0 ? '1 / 2' :
-                                                attachment.length === 5 && index === 3 ? '1 / 3' :
-                                                    attachment.length === 5 && index === 4 ? '3 / 4' :
-                                                        'auto',
-                                            gridRow: attachment.length === 3 && index === 0 ? '1 / 3' : 'auto',
-                                        }}
-                                        onClick={() => isImage ? handleImageClick(file.filePath, index) : null}
-                                    >
-                                        {isImage && (
-                                            <div style={{
+                                    return (
+                                        <Box
+                                            key={index}
+                                            onClick={() => isImage ? handleImageClick(index) : null}
+                                            sx={{
+                                                position: 'relative',
+                                                cursor: isImage ? 'pointer' : 'default',
+                                                overflow: 'hidden',
                                                 width: '100%',
-                                                height: '100%',
-                                                display: 'flex',
-                                                justifyContent: 'center'
-                                            }}>
+                                                maxWidth: isSingle ? '500px' : undefined,
+                                                gridColumn,
+                                                gridRow,
+                                                backgroundColor: '#00000010',
+                                            }}
+                                        >
+                                            {isImage && (
                                                 <img
                                                     ref={el => imgRefs.current[index] = el}
                                                     src={file.filePath}
                                                     alt={`attachment-${index}`}
                                                     style={{
                                                         width: '100%',
-                                                        height: 'auto',
-                                                        maxWidth: '100%',
-                                                        maxHeight: '400px',
+                                                        height: '100%',
+                                                        objectFit: isSingle ? 'contain' : 'cover',
+
                                                         opacity: imageLoading ? 0.5 : 1,
                                                         transition: 'opacity 0.3s ease',
-                                                        objectFit: 'cover',
-
-                                                        ...(attachment.length === 1 && {
-                                                            height: '100%',
-                                                            maxHeight: '400px',
-                                                            objectFit: 'contain'
-                                                        })
+                                                        display: 'block',
+                                                        maxHeight: isSingle ? '400px' : undefined,
                                                     }}
                                                     onLoad={handleImageLoad}
                                                 />
-                                            </div>
-                                        )}
+                                            )}
 
-                                        {isVideo && (
-                                            <video
-                                                src={file.filePath}
-                                                controls
-                                                style={{
-                                                    width: '100%',
-                                                    objectFit: 'cover',
-                                                    height: '100%',
-                                                }}
-                                            />
-                                        )}
-                                    </Box>
-                                );
-                            })}
+                                            {isVideo && (
+                                                <video
+                                                    src={file.filePath}
+                                                    controls
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover',
+                                                        borderRadius: '10px',
+                                                        display: 'block',
+                                                    }}
+                                                />
+                                            )}
+                                        </Box>
+                                    );
+                                })}
                         </Box>
                     )}
-
-
                     {isAudio && !isVideo && (
                         <Box sx={{
                             width: '100%',
@@ -548,7 +553,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                             fontSize: '12px',
                             color: '#00a8ff'
                         }}>
-                            <Typography component="span" sx={{ fontSize: '12px' }}>
+                            <Typography component="span" sx={{ fontSize: '12px' }}  title={formattedDateTooltip}>
                                 {new Date(createdAt).toLocaleTimeString([], {
                                     hour: '2-digit',
                                     minute: '2-digit'
@@ -596,6 +601,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                                     alignItems: 'center',
                                     width: '100%',
                                     position: 'relative',
+                                    textDecoration: 'none',
                                 }}
                                 component="a"
                                 href={attachment[0].filePath}
@@ -816,12 +822,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     initialIndex={clickedImageIndex || 0}
                     senderAvatar={user?.avatar || ''}
                     senderPublicKey={user?.public_key || ''}
-                    date={new Date(createdAt).toLocaleString('ru-RU', {
-                        day: '2-digit',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    })}
+                    date={formattedDateTooltip}
                     onClose={() => setIsImageOpen(false)}
                     onDelete={() => console.log("Удаление изображения")}
                     loading={!!pendingImage}

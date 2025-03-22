@@ -507,5 +507,13 @@
   "terminate_other_sessions": "Завершить все другие сеансы",
   "this_device": "Это устройство",
   "active_sessions": "Активные сеансы",
-  "devices": "Устройства"
+  "devices": "Устройства",
+  "today": "Сегодня",
+  "yesterday": "Вчера",
+  "atTime": "{{date}}, {{time}}",
+  "tabs": {
+    "media": "Медиа",
+    "files": "Файлы",
+    "links": "Ссылки"
+  }
 }

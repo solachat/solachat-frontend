@@ -425,5 +425,13 @@
   "terminate_other_sessions": "Terminate other sessions",
   "this_device": "This device",
   "active_sessions": "Active sessions",
-  "devices": "Devices"
+  "devices": "Devices",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "atTime": "{{date}}, {{time}}",
+  "tabs": {
+    "media": "Media",
+    "files": "Files",
+    "links": "Links"
+  }
 }

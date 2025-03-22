@@ -83,7 +83,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
                         flexDirection: 'column',
                     }}
                 >
-                    {/* Верхняя панель */}
                     <Box
                         sx={{
                             height: '64px',
@@ -95,36 +94,42 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
                         }}
                     >
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Avatar src={senderAvatar} size="sm" />
+                            <Avatar src={senderAvatar} size="lg" />
                             <Box>
-                                <Typography level="body-sm" sx={{ color: 'white' }}>
+                                <Typography level="body-sm"                       sx={{
+                                    cursor: 'pointer',
+                                    color: '#a0d4ff',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        color: '#00a8ff',
+                                        textShadow: '0 0 8px rgba(0, 168, 255, 0.4)',
+                                    },
+                                }}>
                                     {senderPublicKey}
                                 </Typography>
-                                <Typography level="body-xs" sx={{ color: 'grey' }}>
+                                <Typography level="body-xs" sx={{ color: 'rgba(160, 212, 255, 0.6)' }}>
                                     {date}
                                 </Typography>
                             </Box>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             {loading && <CircularProgress size="sm" sx={{ color: 'white' }} />}
-                            <IconButton onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.2))} sx={{ color: 'white' }}>
+                            <IconButton onClick={() => setZoom(prev => Math.max(prev - 0.1, 0.2))} sx={{ color: '#a0d4ff'}}>
                                 <ZoomOutIcon />
                             </IconButton>
-                            <IconButton onClick={() => setZoom(prev => Math.min(prev + 0.1, 3))} sx={{ color: 'white' }}>
+                            <IconButton onClick={() => setZoom(prev => Math.min(prev + 0.1, 3))} sx={{ color: '#a0d4ff' }}>
                                 <ZoomInIcon />
                             </IconButton>
                             {onDelete && (
-                                <IconButton onClick={onDelete} sx={{ color: 'white' }}>
+                                <IconButton onClick={onDelete} sx={{ color: '#a0d4ff' }}>
                                     <DeleteIcon />
                                 </IconButton>
                             )}
-                            <IconButton onClick={onClose} sx={{ color: 'white' }}>
+                            <IconButton onClick={onClose} sx={{ color: '#a0d4ff' }}>
                                 <CloseIcon />
                             </IconButton>
                         </Box>
                     </Box>
-
-                    {/* Картинка по центру */}
                     <Box
                         sx={{
                             flex: 1,
